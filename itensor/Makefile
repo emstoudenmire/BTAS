@@ -22,7 +22,7 @@ SOURCES+= itensor.cc
 #SOURCES+= tevol.cc
 
 HEADERS=option.h global.h real.h index.h error.h \
-        permutation.h indexset.h counter.h itensor.h 
+        indexset.h counter.h itensor.h 
         #qn.h iqindex.h iqtdat.h iqtensor.h \
         condenser.h combiner.h qcounter.h iqcombiner.h \
         spectrum.h svdalgs.h mps.h mpo.h core.h observer.h DMRGObserver.h \
@@ -99,7 +99,7 @@ option.o: $(DEPHEADERS)
 DEPHEADERS+= global.h index.h
 index.o: $(DEPHEADERS)
 .debug_objs/index.o: $(DEPHEADERS)
-DEPHEADERS+= indexset.h permutation.h
+DEPHEADERS+= indexset.h 
 indexset.o: $(DEPHEADERS)
 .debug_objs/indexset.o: $(DEPHEADERS)
 DEPHEADERS+= itensor.h counter.h

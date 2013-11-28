@@ -40,6 +40,7 @@ ITensor(Real val)
 ITensor::
 ITensor(const Index& i1) 
     :
+    r_(boost::make_shared<RTensor>(i1.m())),
     is_(i1),
     scale_(1)
 	{ 
@@ -49,6 +50,7 @@ ITensor(const Index& i1)
 ITensor::
 ITensor(const Index& i1,const Index& i2) 
     :
+    r_(boost::make_shared<RTensor>(i1.m(),i2.m())),
     is_(i1,i2),
     scale_(1)
 	{ 
@@ -70,12 +72,17 @@ ITensor(const Index& i1, const Index& i2, const Index& i3,
     if(i3 == Index::Null())
         Error("i3 is null");
 #endif
+    //                        0   1   2   3   4   5   6    7
 	Array<Index,NMAX> ii = {{ i1, i2, i3, i4, i5, i6, i7, i8 }};
-	int size = 3;
-	while(ii[size] != Index::Null()) ++size;
+    RTensor::shape_type shape = { i1.m(), i2.m(), i3.m() };
+    int r = 3;
+	for(; r < 8 && ii[r] != Index::Null(); ++r)
+        {
+        shape.push_back(ii[r].m());
+        }
 	int alloc_size = -1; 
-    is_ = IndexSet<Index>(ii,size,alloc_size,0);
-	allocate(alloc_size);
+    is_ = IndexSet<Index>(ii,r,alloc_size,0);
+    r_ = boost::make_shared<RTensor>(shape);
 	}
 
 Real ITensor::
@@ -135,29 +142,47 @@ operator()(const IndexVal& iv1, const IndexVal& iv2)
     {
     solo(); 
     scaleTo(1);
-    return r_->at(iv1.i-1,iv2.i-1);
+    if(is_[0] == iv1)
+        return r_->at(iv1.i-1,iv2.i-1);
+    else
+        return r_->at(iv2.i-1,iv1.i-1);
     }
 
 Real ITensor::
 operator()(const IndexVal& iv1, const IndexVal& iv2) const
     {
-    return scale_.real()*r_->at(iv1.i-1,iv2.i-1);
+    if(is_[0] == iv1)
+        return scale_.real0()*r_->at(iv1.i-1,iv2.i-1);
+    else
+        return scale_.real0()*r_->at(iv2.i-1,iv1.i-1);
     }
 
 Real& ITensor::
-operator()(const IndexVal& iv1, const IndexVal& iv2, 
+operator()(const IndexVal& iv1, 
+           const IndexVal& iv2, 
            const IndexVal& iv3)
     {
     solo(); 
     scaleTo(1);
-    return r_->at(iv1.i-1,iv2.i-1,iv3.i-1);
+    Array<int,3> ii;
+    for(const auto iv : {iv1, iv2, iv3})
+        {
+        ii[findindex(is_,Index(iv))] = iv.i-1;
+        }
+    return r_->at(ii[0],ii[1],ii[2]);
     }
 
 Real ITensor::
-operator()(const IndexVal& iv1, const IndexVal& iv2, 
+operator()(const IndexVal& iv1, 
+           const IndexVal& iv2, 
            const IndexVal& iv3) const
     {
-    return scale_.real()*r_->at(iv1.i-1,iv2.i-1,iv3.i-1);
+    Array<int,3> ii;
+    for(const auto iv : {iv1, iv2, iv3})
+        {
+        ii[findindex(is_,Index(iv))] = iv.i-1;
+        }
+    return scale_.real0()*r_->at(ii[0],ii[1],ii[2]);
     }
 
 void ITensor::
@@ -253,8 +278,7 @@ void ITensor::
 randomize(const OptSet& opts) 
     { 
     solo(); 
-    //r_->v.Randomize(); 
-    std::mt19937 rgen;
+    std::mt19937 rgen(std::time(NULL)+getpid());
     std::uniform_real_distribution<double> dist(-1.0, 1.0);
     r_->generate(bind(dist, rgen));
     }
@@ -389,8 +413,57 @@ operator<<(ostream & s, const ITensor& t)
     {
     s << "ITensor r = " << t.r() << ": ";
     s << t.indices() << "\n";
-
     s << "  {log(scale)[incl in elems]=" << t.scale().logNum();
+
+    if(Global::printdat())
+        {
+        s << "\n";
+        Real scale = 1.0;
+        if(t.scale().isFiniteReal()) scale = t.scale().real();
+        else s << "  (omitting too large scale factor)" << endl;
+
+        //
+        // Following code just quick and dirty up to rank 3;
+        // need to write general-rank code
+        //
+        const Real* pv = t.data();
+        if(t.r() == 1)
+            {
+            for(size_t i1 = 0; i1 < t.indices()[0].m(); ++i1)
+                {
+                s << format("  (%d) %.10f\n") 
+                     % (i1+1)
+                     % (pv[i1]*scale);
+                }
+            }
+        else
+        if(t.r() == 2)
+            {
+            size_t ind = 0;
+            for(int i1 = 1; i1 <= t.indices()[0].m(); ++i1)
+            for(int i2 = 1; i2 <= t.indices()[1].m(); ++i2)
+                {
+                s << format("  (%d,%d) %.10f\n") 
+                     % i1 % i2 
+                     % (pv[ind]*scale);
+                ++ind;
+                }
+            }
+        else
+        if(t.r() == 3)
+            {
+            size_t ind = 0;
+            for(int i1 = 1; i1 <= t.indices()[0].m(); ++i1)
+            for(int i2 = 1; i2 <= t.indices()[1].m(); ++i2)
+            for(int i3 = 1; i3 <= t.indices()[2].m(); ++i3)
+                {
+                s << format("  (%d,%d,%d) %.10f\n") 
+                     % i1 % i2 % i3
+                     % (pv[ind]*scale);
+                ++ind;
+                }
+            }
+        }
 
     return s;
     }

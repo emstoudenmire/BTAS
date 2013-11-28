@@ -16,6 +16,9 @@ using std::string;
 using std::stringstream;
 using boost::format;
 
+namespace itensor {
+
+
 //typedef boost::random::mt19937 
 //Generator;
 typedef boost::lagged_fibonacci2281 
@@ -387,3 +390,4 @@ operator<<(ostream& s, const IndexVal& iv)
     return s << "IndexVal: i = " << iv.i << ", ind = " << ii << "\n"; 
     }
 
+};

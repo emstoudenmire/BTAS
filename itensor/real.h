@@ -14,6 +14,8 @@
 #define Endl std::endl
 #define Format boost::format
 
+namespace itensor {
+
 typedef double
 Real;
 
@@ -375,6 +377,8 @@ sqrt(LogNumber L)
         Error("Negative LogNumber in sqrt");
     return L.pow(0.5);
     }
+
+}; //namespace itensor
 
 #undef Cout
 #undef Endl

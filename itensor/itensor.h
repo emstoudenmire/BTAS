@@ -12,6 +12,8 @@
 #define Endl std::endl
 #define Format boost::format
 
+namespace itensor {
+
 typedef btas::Tensor<Real>
 RTensor;
 
@@ -334,6 +336,8 @@ deprimed(Tensor A, const IndexT& I)
 
 std::ostream& 
 operator<<(std::ostream & s, const ITensor& T);
+
+}; //namespace itensor
 
 #undef Cout
 #undef Endl

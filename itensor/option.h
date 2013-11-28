@@ -8,6 +8,8 @@
 #include <map>
 #include "real.h"
 
+namespace itensor {
+
 class Opt
     {
     public:
@@ -260,5 +262,6 @@ operator<<(std::ostream & s, const Opt& opt);
 std::ostream& 
 operator<<(std::ostream & s, const OptSet& oset);
 
+}; //namespace itensor
 
 #endif

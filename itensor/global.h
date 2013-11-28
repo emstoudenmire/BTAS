@@ -18,6 +18,8 @@
 #include "itensor/real.h"
 #include "itensor/option.h"
 
+namespace itensor {
+
 enum Direction { Fromright, Fromleft, Both, None };
 
 static const int NMAX = 8;
@@ -365,7 +367,7 @@ class ArrowError : public ITError
         { }
     };
 
+}; //namespace itensor
 
-//void reportnew() { }
 
 #endif

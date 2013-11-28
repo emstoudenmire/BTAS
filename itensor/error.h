@@ -28,6 +28,8 @@ class ITError : public std::runtime_error
     }; //class ITError
     */
 
+namespace itensor {
+
 class ITError
     {
     public:
@@ -62,5 +64,6 @@ operator<<(std::ostream& s, const ITError& e)
     return s;
     }
 
+};
 
 #endif

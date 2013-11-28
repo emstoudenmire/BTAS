@@ -15,6 +15,8 @@ using boost::format;
 using boost::shared_ptr;
 using boost::make_shared;
 
+namespace itensor {
+
 //
 // ITensor
 //
@@ -468,3 +470,4 @@ operator<<(ostream & s, const ITensor& t)
     return s;
     }
 
+};

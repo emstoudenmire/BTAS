@@ -13,6 +13,8 @@ using std::ostream;
 using std::istream;
 
 
+namespace itensor {
+
 Opt::
 Opt()
     :
@@ -448,3 +450,5 @@ operator<<(ostream & s, const OptSet& oset)
     s <<    "\\-----------------------" << endl;
     return s;
     }
+
+};

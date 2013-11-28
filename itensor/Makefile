@@ -4,7 +4,7 @@
 ################################
 
 #include ../this_dir.mk
-include options.mk
+include ../options.mk
 
 ####################################
 

@@ -4,8 +4,8 @@
 //
 #ifndef __ITENSOR_INDEXSET_H
 #define __ITENSOR_INDEXSET_H
-#include "index.h"
 #include "boost/make_shared.hpp"
+#include "itensor/index.h"
 
 #define Cout std::cout
 #define Endl std::endl

@@ -5,7 +5,7 @@
 #ifndef __ITENSOR_COUNTER_H
 #define __ITENSOR_COUNTER_H
 
-#include "indexset.h"
+#include "itensor/indexset.h"
 
 #define Cout std::cout
 #define Endl std::endl

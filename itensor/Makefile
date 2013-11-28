@@ -38,25 +38,13 @@ HEADERS=option.h global.h real.h index.h error.h \
 
 ####################################
 
-CCFLAGS= $(ITENSOR_INCLUDEFLAGS) $(OPTIMIZATIONS) -Wno-tautological-compare
-CCGFLAGS= $(ITENSOR_INCLUDEFLAGS) $(DEBUGFLAGS) -Wno-tautological-compare
+CCFLAGS=-I.. $(ITENSOR_INCLUDEFLAGS) $(OPTIMIZATIONS) -Wno-tautological-compare
+CCGFLAGS=-I.. $(ITENSOR_INCLUDEFLAGS) $(DEBUGFLAGS) -Wno-tautological-compare
 
 OBJECTS= $(patsubst %.cc,%.o, $(SOURCES))
 GOBJECTS= $(patsubst %.cc,.debug_objs/%.o, $(SOURCES))
-INCLUDE_HEADERS= $(patsubst %,$(ITENSOR_INCLUDEDIR)/%, $(HEADERS))
 
 .SUFFIXES: .cc $(SUFFIXES)
-
-$(ITENSOR_INCLUDEDIR)/hams/%.h: hams/%.h
-	mkdir -p $(ITENSOR_INCLUDEDIR)/hams
-	cp $^ $(ITENSOR_INCLUDEDIR)/hams
-
-$(ITENSOR_INCLUDEDIR)/model/%.h: model/%.h
-	mkdir -p $(ITENSOR_INCLUDEDIR)/model
-	cp $^ $(ITENSOR_INCLUDEDIR)/model
-
-$(ITENSOR_INCLUDEDIR)/%.h: %.h
-	cp $^ $(ITENSOR_INCLUDEDIR)
 
 %.o: %.cc
 	$(CCCOM) -c $(CCFLAGS) -o $@ $<
@@ -74,21 +62,19 @@ libitensor-g.a: mkdebugdir $(GOBJECTS)
 	ar rv libitensor-g.a $(GOBJECTS)
 	ranlib libitensor-g.a
 
-headerscopy: $(INCLUDE_HEADERS)
-
-libs: libitensor.a 
-	cp libitensor.a $(ITENSOR_LIBDIR)
-
-installo: headerscopy libitensor.a
+installo: mklibdir libitensor.a
 	cp libitensor.a $(ITENSOR_LIBDIR)
 	ranlib $(ITENSOR_LIBDIR)/libitensor.a
 
-installg: headerscopy libitensor-g.a
+installg: mklibdir libitensor-g.a
 	cp libitensor-g.a $(ITENSOR_LIBDIR)
 	ranlib $(ITENSOR_LIBDIR)/libitensor-g.a
 
 mkdebugdir:
 	mkdir -p .debug_objs
+
+mklibdir:
+	mkdir -p $(ITENSOR_LIBDIR)
 
 clean:	
 	rm -fr *.o .debug_objs libitensor.a libitensor-g.a

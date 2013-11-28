@@ -4,8 +4,8 @@
 //
 #ifndef __ITENSOR_INDEX_H
 #define __ITENSOR_INDEX_H
-#include "global.h"
 #include "boost/shared_ptr.hpp"
+#include "itensor/global.h"
 
 #define Cout std::cout
 #define Endl std::endl

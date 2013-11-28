@@ -6,8 +6,9 @@
 #define __ITENSOR_REAL_H
 #include <limits>
 #include "math.h"
-#include "error.h"
 #include <cmath>
+
+#include "itensor/error.h"
 
 #define Cout std::cout
 #define Endl std::endl

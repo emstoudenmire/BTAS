@@ -10,11 +10,13 @@
 #include <iostream>
 #include <fstream>
 #include <complex>
-#include "error.h"
-#include "option.h"
 #include "assert.h"
+
 #include "boost/array.hpp"
 #include "boost/format.hpp"
+
+#include "itensor/real.h"
+#include "itensor/option.h"
 
 enum Direction { Fromright, Fromleft, Both, None };
 

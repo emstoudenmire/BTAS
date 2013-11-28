@@ -4,8 +4,8 @@
 //
 #ifndef __ITENSOR_ITENSOR_H
 #define __ITENSOR_ITENSOR_H
-#include "real.h"
-#include "counter.h"
+#include "itensor/real.h"
+#include "itensor/indexset.h"
 #include "btas/tensor.h"
 
 #define Cout std::cout

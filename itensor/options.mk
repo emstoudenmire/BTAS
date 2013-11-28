@@ -1,0 +1,31 @@
+### User Configurable Options
+
+CCCOM=clang++ -std=c++11
+
+PREFIX=..
+ITENSOR_LIBDIR=$(PREFIX)/lib
+ITENSOR_INCLUDEDIR=$(PREFIX)/include
+BOOST_DIR=/opt/local/include
+OPTIMIZATIONS=-O2 -DNDEBUG -DBOOST_DISABLE_ASSERTS
+DEBUGFLAGS=-DDEBUG -DMATRIXBOUNDS -DITENSOR_USE_AT -DBOUNDS -g -O0 -Wall -Wno-long-long
+
+###BLAS/LAPACK Related Options
+
+##For a recent Mac OSX system (include flags intentionally left blank)
+PLATFORM=macos
+BLAS_LAPACK_LIBFLAGS=-framework Accelerate -ltcmalloc_minimal
+BLAS_LAPACK_INCLUDEFLAGS=
+
+###End BLAS/LAPACK Related Options
+
+###Other variables defined for convenience
+
+ITENSOR_LIBNAMES=itensor
+ITENSOR_LIBFLAGS=$(patsubst %,-l%, $(ITENSOR_LIBNAMES))
+ITENSOR_LIBFLAGS+= $(BLAS_LAPACK_LIBFLAGS)
+ITENSOR_LIBGFLAGS=$(patsubst %,-l%-g, $(ITENSOR_LIBNAMES))
+ITENSOR_LIBGFLAGS+= $(BLAS_LAPACK_LIBFLAGS)
+ITENSOR_LIBS=$(patsubst %,$(ITENSOR_LIBDIR)/lib%.a, $(ITENSOR_LIBNAMES))
+ITENSOR_GLIBS=$(patsubst %,$(ITENSOR_LIBDIR)/lib%-g.a, $(ITENSOR_LIBNAMES))
+
+ITENSOR_INCLUDEFLAGS=-I$(ITENSOR_INCLUDEDIR) -I$(BOOST_DIR) $(BLAS_LAPACK_INCLUDEFLAGS) -I..

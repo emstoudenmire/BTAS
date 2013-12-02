@@ -6,6 +6,7 @@
 
 #include <functional>
 #include <random>
+#include "btas/nditerator.h"
 
 using std::ostream;
 using std::cout;
@@ -16,6 +17,9 @@ using boost::shared_ptr;
 using boost::make_shared;
 
 namespace itensor {
+
+typedef btas::NDIterator<Real*,typename RTensor::shape_type> 
+NDIter;
 
 //
 // ITensor
@@ -420,49 +424,28 @@ operator<<(ostream & s, const ITensor& t)
     if(Global::printdat())
         {
         s << "\n";
-        Real scale = 1.0;
-        if(t.scale().isFiniteReal()) scale = t.scale().real();
+        Real scalefac = 1.0;
+        if(t.scale().isFiniteReal()) scalefac = t.scale().real();
         else s << "  (omitting too large scale factor)" << endl;
 
-        //
-        // Following code just quick and dirty up to rank 3;
-        // need to write general-rank code
-        //
-        const Real* pv = t.data();
-        if(t.r() == 1)
+        NDIter it(t.r_->data(),t.r_->shape(),t.r_->stride());
+
+        const auto rr = t.r_->rank();
+        if(rr > 0)
             {
-            for(size_t i1 = 0; i1 < t.indices()[0].m(); ++i1)
+            for(; it.valid(); ++it)
                 {
-                s << format("  (%d) %.10f\n") 
-                     % (i1+1)
-                     % (pv[i1]*scale);
-                }
-            }
-        else
-        if(t.r() == 2)
-            {
-            size_t ind = 0;
-            for(int i1 = 1; i1 <= t.indices()[0].m(); ++i1)
-            for(int i2 = 1; i2 <= t.indices()[1].m(); ++i2)
-                {
-                s << format("  (%d,%d) %.10f\n") 
-                     % i1 % i2 
-                     % (pv[ind]*scale);
-                ++ind;
-                }
-            }
-        else
-        if(t.r() == 3)
-            {
-            size_t ind = 0;
-            for(int i1 = 1; i1 <= t.indices()[0].m(); ++i1)
-            for(int i2 = 1; i2 <= t.indices()[1].m(); ++i2)
-            for(int i3 = 1; i3 <= t.indices()[2].m(); ++i3)
-                {
-                s << format("  (%d,%d,%d) %.10f\n") 
-                     % i1 % i2 % i3
-                     % (pv[ind]*scale);
-                ++ind;
+                const Real val = (*it)*scalefac;
+                if(fabs(val) > Global::printScale())
+                    {
+                    s << "  (";
+                    for(size_t n = 0; n < rr-1; ++n)
+                        {
+                        s << (1+it.index(n)) << ",";
+                        }
+                    s << (1+it.index(rr-1));
+                    s << format(")  %.10f\n") % val;
+                    }
                 }
             }
         }

@@ -86,7 +86,6 @@ public:
 
    /// copy constructor
    template<class _Tensor, class = typename std::enable_if<is_tensor<_Tensor>::value>::type>
-   explicit
    Tensor (const _Tensor& x)
    : shape_ (x.rank()), stride_ (x.rank())
    {

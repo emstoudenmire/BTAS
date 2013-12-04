@@ -61,11 +61,11 @@ class TensorRef
 
     /// \return stride object
     const shape_type&
-    stride() const { return iter_.stride(); }
+    stride() const { return stride_; }
 
     /// \return n-th stride
     const typename shape_type::value_type&
-    stride(const size_type& n) const { return iter_.stride(n); }
+    stride(const size_type& n) const { return stride_[n]; }
 
     /// test whether storage is empty
     bool
@@ -215,15 +215,34 @@ class TensorRef
     TensorRef(const _Tensor& T)
         : 
         iter_(T.data(),T.shape(),T.stride()),
+        stride_(T.stride()),
         contig_(true)
         { }
 
     /// construct from NDIterator
     explicit
-    TensorRef(const NDIterator<value_type*,shape_type>& iter)
+    TensorRef(const iterator& iter)
         : 
         iter_(iter)
         { 
+        _set_stride();
+        __check_contig();
+        }
+
+    /// move construct from NDIterator
+    TensorRef(iterator&& iter)
+        : iter_(iter)
+        { 
+        _set_stride();
+        __check_contig();
+        }
+
+    /// move assign from NDIterator
+    TensorRef&
+    operator=(iterator&& iter)
+        {
+        iter_.swap(iter);
+        _set_stride();
         __check_contig();
         }
 
@@ -232,12 +251,11 @@ class TensorRef
     operator=(const _Tensor& T)
         {
         iter_ = iterator(T.data(),T.shape(),T.stride());
+        stride_ = T.stride();
         contig_ = true;
         return *this;
         }
 
-    //TODO: copies data from one TensorRef to another
-    //TensorRef& operator=(const TensorRef&);
 
     // copy constructor not implemented to avoid extending lifetime
     TensorRef(const TensorRef&);
@@ -276,6 +294,20 @@ class TensorRef
         return adr;
         }
 
+   /// calculate stride_ from given shape_
+   void
+   _set_stride ()
+        {
+        stride_.resize(rank());
+        size_type str = 1;
+        for(size_type i = rank()-1; i > 0; --i) 
+            {
+            stride_[i] = str;
+            str *= shape(i);
+            }
+        stride_[0] = str;
+        }
+
     /// test whether index is in range
     template<size_type i, typename... _args>
     bool
@@ -312,6 +344,7 @@ class TensorRef
     // Data members
 
     iterator iter_; ///< iterator over referenced data
+    shape_type stride_; ///< stride
     bool contig_; ///< true if data referenced is contiguous in memory
 
     ///////////////////////

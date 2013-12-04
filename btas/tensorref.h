@@ -95,6 +95,21 @@ class TensorRef
     iterator
     end() { return iter_.end(); }
 
+    /// copy data elementwise from one TensorRef to another
+    TensorRef& 
+    operator=(const TensorRef& other)
+        {
+        //TODO: if contiguous use std::copy
+        //if(contig_ && other.contig_) { ... }
+        auto t = iter_;
+        auto o = other.iter_;
+        for(; t.valid(); ++t, ++o)
+            {
+            *t = *o;
+            }
+        return *this;
+        }
+
     /// \return element without shape check
     template<typename... _args>
     const value_type& 

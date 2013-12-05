@@ -10,16 +10,19 @@ namespace btas {
 
 
 //
-// Forward declarations of slice functions
+// Forward declarations of make_ref template methods
 //
 
 template<class _Tensor>
 class TensorRef;
 
-template <typename _T>
-TensorRef<_T>
-slice(_T& T, const Range1& r1, const Range1& r2);
+template <class _Tensor>
+TensorRef<_Tensor>
+make_ref(_Tensor& T);
 
+template <class _Tensor>
+TensorRef<_Tensor>
+make_ref(typename TensorRef<_Tensor>::iterator&& it);
 
 //
 // class TensorRef
@@ -227,7 +230,7 @@ class TensorRef
 
     /// construct from Tensor
     explicit
-    TensorRef(const _Tensor& T)
+    TensorRef(_Tensor& T)
         : 
         iter_(T.data(),T.shape(),T.stride()),
         stride_(T.stride()),
@@ -366,14 +369,18 @@ class TensorRef
 
     public:
 
-    //
-    // slice function declarations of friendship
-    //
-
-    friend TensorRef<_Tensor>
-    slice <> (_Tensor& T, const Range1& r1, const Range1& r2);
+    friend TensorRef<_Tensor> make_ref <> (_Tensor&);
+    friend TensorRef<_Tensor> make_ref <> (iterator&&);
 
     };
+
+template <class _Tensor>
+TensorRef<_Tensor>
+make_ref(_Tensor& T) { return TensorRef<_Tensor>(T); }
+
+template <class _Tensor>
+TensorRef<_Tensor>
+make_ref(typename TensorRef<_Tensor>::iterator&& it) { return TensorRef<_Tensor>(it); }
 
 
 } // namespace btas

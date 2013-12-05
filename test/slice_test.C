@@ -85,6 +85,12 @@ main()
     Print(slice(T,{1,2,1},{1,2,1}));
     Print(slice(T,{0,2,1},{0,2,1}));
     Print(slice(T,{},{0,2,1}));
+    Print(slice(T,{},{0,2,1})(0,0));
+    Print(slice(T,{},{0,2,1})(0,1));
+    Print(slice(T,{},{0,2,1})(1,0));
+    Print(slice(T,{},{0,2,1})(1,1));
+    Print(slice(T,{},{0,2,1})(2,0));
+    Print(slice(T,{},{0,2,1})(2,1));
     Print(slice(T,{1,3,1},{}));
 
     //

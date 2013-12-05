@@ -287,7 +287,7 @@ class TensorRef
     size_type
     _address (const size_type& first, const _args&... rest) const
         {
-        return first*iter_.stride(i) + _address<i+1>(rest...);
+        return first*stride(i) + _address<i+1>(rest...);
         }
 
     /// \return address pointed by index

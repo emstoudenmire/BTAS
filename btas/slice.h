@@ -24,6 +24,23 @@ diag(_Tensor& T)
     return make_ref<_Tensor>( NDIter(T.data(),{shape},{stride}) );
     }
 
+template <class _Tensor>
+TensorRef<_Tensor>
+diag(TensorRef<_Tensor>&& T)
+    {
+    typedef typename TensorRef<_Tensor>::size_type size_type;
+    typedef typename TensorRef<_Tensor>::iterator NDIter;
+
+    size_type stride = 0,
+              shape = (size_type)-1;
+    for(size_type i = 0; i < T.rank(); ++i)
+        {
+        stride += T.begin().stride(i);
+        shape = std::min(shape,T.begin().shape(i));
+        }
+    return make_ref<_Tensor>( NDIter(T.data(),{shape},{stride}) );
+    }
+
 /// construct TensorRef "fusing" the specified indices of T
 /// for example tie(T,0,2)(i,j) = T(i,j,i)
 template <class _Tensor, typename... _args>

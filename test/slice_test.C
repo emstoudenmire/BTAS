@@ -163,5 +163,20 @@ main()
     Print(tie(F,1,2));
     Print(tie(F,0,1,2));
 
+    cout << "-------------------------------------" << endl;
+    cout << "Composing methods that produce TensorRefs" << endl;
+    cout << "-------------------------------------" << endl;
+
+    Print(diag(tie(F,0,1)));
+    Print(diag(tie(F,1,2)));
+    Print(diag(tie(F,0,1,2)));
+
+    Print(slice(F,{},{0,3,2},{}));
+    Print(diag(slice(F,{},{0,3,2},{})));
+
+    Print(diag(tie(T,0,1)));
+
+    Print(diag(diag(T)));
+
     return 0;
     }

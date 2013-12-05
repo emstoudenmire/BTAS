@@ -128,6 +128,60 @@ slice(_Tensor& T,
     return slice_impl(T,r0,r1,r2,r3);
     }
 
+template <class _Tensor>
+TensorRef<_Tensor>
+slice(_Tensor& T, 
+      const Range1& r0,
+      const Range1& r1,
+      const Range1& r2,
+      const Range1& r3,
+      const Range1& r4)
+    {
+    return slice_impl(T,r0,r1,r2,r3,r4);
+    }
+
+template <class _Tensor>
+TensorRef<_Tensor>
+slice(_Tensor& T, 
+      const Range1& r0,
+      const Range1& r1,
+      const Range1& r2,
+      const Range1& r3,
+      const Range1& r4,
+      const Range1& r5)
+    {
+    return slice_impl(T,r0,r1,r2,r3,r4,r5);
+    }
+
+template <class _Tensor>
+TensorRef<_Tensor>
+slice(_Tensor& T, 
+      const Range1& r0,
+      const Range1& r1,
+      const Range1& r2,
+      const Range1& r3,
+      const Range1& r4,
+      const Range1& r5,
+      const Range1& r6)
+    {
+    return slice_impl(T,r0,r1,r2,r3,r4,r5,r6);
+    }
+
+template <class _Tensor>
+TensorRef<_Tensor>
+slice(_Tensor& T, 
+      const Range1& r0,
+      const Range1& r1,
+      const Range1& r2,
+      const Range1& r3,
+      const Range1& r4,
+      const Range1& r5,
+      const Range1& r6,
+      const Range1& r7)
+    {
+    return slice_impl(T,r0,r1,r2,r3,r4,r5,r6,r7);
+    }
+
 template <class _Tensor, typename... _args>
 TensorRef<_Tensor>
 slice_impl(_Tensor& T, const Range1& r0, const _args&... rest)

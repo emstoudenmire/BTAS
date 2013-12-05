@@ -197,9 +197,17 @@ slice_impl(_Tensor& T, const Range1& r0, const _args&... rest)
     size_type offset = 0;
     for(size_type i = 0; i < size; ++i)
         {
-        slice_shape[i] = ranges[i].size();
-        slice_stride[i] = T.stride(i)*ranges[i].stride();
-        offset += T.stride(i)*ranges[i].start();
+        if(ranges[i].size() == 0)
+            {
+            slice_shape[i] = T.shape(i);
+            slice_stride[i] = T.stride(i);
+            }
+        else
+            {
+            slice_shape[i] = ranges[i].size();
+            slice_stride[i] = T.stride(i)*ranges[i].stride();
+            offset += T.stride(i)*ranges[i].start();
+            }
         }
 
     return make_ref<_Tensor>( NDIter(T.data()+offset,slice_shape,slice_stride) );

@@ -84,6 +84,8 @@ main()
     Print(slice(T,3,{1,2,2}));
     Print(slice(T,{1,2,1},{1,2,1}));
     Print(slice(T,{0,2,1},{0,2,1}));
+    Print(slice(T,{},{0,2,1}));
+    Print(slice(T,{1,3,1},{}));
 
     //
     // Assignment of slice to slice

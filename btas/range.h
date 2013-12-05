@@ -84,6 +84,7 @@ class Range<1>
     /// \return the total number of elements in the Range
     size_type size() const 
         { 
+        if(stride_ == 0) return 0;
         auto extent = finish_-start_;
         return (extent/stride_ + extent%stride_);
         }

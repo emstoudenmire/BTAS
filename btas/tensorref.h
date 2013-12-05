@@ -216,13 +216,12 @@ class TensorRef
         std::generate(iter_, iter_.end(), gen);
         }
 
-    private:
+
+    //private:
 
     //
     //  Constructors
     //
-    //  TensorRef has private constructors and assignment
-    //  to prevent it from outliving the Tensor data it references.
     //
 
     /// default constructor
@@ -276,7 +275,7 @@ class TensorRef
 
 
     // copy constructor not implemented to avoid extending lifetime
-    TensorRef(const TensorRef&);
+    //TensorRef(const TensorRef&);
 
 
     //

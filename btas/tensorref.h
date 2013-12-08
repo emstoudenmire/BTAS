@@ -39,11 +39,11 @@ class TensorRef
     //
 
     typedef typename _Tensor::value_type value_type; ///< element type
-    typedef typename _Tensor::container_type container_type; ///< type of array storing data
+    //typedef typename _Tensor::container_type container_type; ///< type of array storing data
     typedef typename _Tensor::size_type size_type; ///< size type
     typedef typename _Tensor::shape_type shape_type; ///< type of array for index shapes
-    typedef NDIterator<value_type*,shape_type> iterator; ///< iterator over elements
-    typedef NDIterator<const value_type*,shape_type> const_iterator; ///< const iterator over elements
+    typedef NDIterator<_Tensor,typename _Tensor::iterator> iterator; ///< iterator over elements
+    typedef NDIterator<_Tensor,typename _Tensor::const_iterator> const_iterator; ///< const iterator over elements
 
     public:
 
@@ -88,7 +88,7 @@ class TensorRef
 
     /// \return const iterator last even if this is not itself const
     const_iterator
-    cend() const { return iter_.end(); }
+    cend() const { return end(iter_); }
 
     /// \return iterator first
     iterator
@@ -96,7 +96,7 @@ class TensorRef
 
     /// \return iterator last
     iterator
-    end() { return iter_.end(); }
+    end() { return end(iter_); }
 
     /// copy data elementwise from one TensorRef to another
     TensorRef& 
@@ -205,7 +205,7 @@ class TensorRef
     void
     fill(const value_type& val)
         {
-        std::fill(iter_, iter_.end(), val);
+        std::fill(iter_, end(iter_), val);
         }
 
     /// generate all elements by gen()
@@ -213,7 +213,7 @@ class TensorRef
     void 
     generate(Generator gen)
         {
-        std::generate(iter_, iter_.end(), gen);
+        std::generate(iter_, end(iter_), gen);
         }
 
 

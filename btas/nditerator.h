@@ -405,6 +405,15 @@ public:
       return NDIterator(x.shape_, x.stride_, x.start_, x.start_+x.shape_[0]*x.stride_[0]);
    }
 
+   /// \return iterator to end (hack needed to get TensorRef to work)
+   NDIterator
+   end() const
+   {
+      NDIterator _end(shape_, stride_, start_, start_+shape_[0]*stride_[0]);
+      return _end;
+   }
+
+
 private:
 
    //

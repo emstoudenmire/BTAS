@@ -161,26 +161,26 @@ main()
     Print(diag(F));
 
     cout << "-------------------------------------" << endl;
-    cout << "tie function" << endl;
+    cout << "tieIndex function" << endl;
     cout << "-------------------------------------" << endl;
 
-    Print(tie(F,0,2));
-    Print(tie(F,0,1));
-    Print(tie(F,1,2));
-    Print(tie(F,0,1,2));
+    Print(tieIndex(F,0,2));
+    Print(tieIndex(F,0,1));
+    Print(tieIndex(F,1,2));
+    Print(tieIndex(F,0,1,2));
 
     //cout << "-------------------------------------" << endl;
     //cout << "Composing methods that produce TensorRefs" << endl;
     //cout << "-------------------------------------" << endl;
 
-    //Print(diag(tie(F,0,1)));
-    //Print(diag(tie(F,1,2)));
-    //Print(diag(tie(F,0,1,2)));
+    //Print(diag(tieIndex(F,0,1)));
+    //Print(diag(tieIndex(F,1,2)));
+    //Print(diag(tieIndex(F,0,1,2)));
 
     //Print(slice(F,{},{0,3,2},{}));
     //Print(diag(slice(F,{},{0,3,2},{})));
 
-    //Print(diag(tie(T,0,1)));
+    //Print(diag(tieIndex(T,0,1)));
 
     //Print(diag(diag(T)));
 
@@ -390,9 +390,9 @@ main()
 //     (1) 9111
 //   
 //   -------------------------------------
-//   tie function
+//   tieIndex function
 //   -------------------------------------
-//   tie(F,0,2) =
+//   tieIndex(F,0,2) =
 //     (0,0) 9000
 //     (0,1) 9010
 //     (0,2) 9020
@@ -400,7 +400,7 @@ main()
 //     (1,1) 9111
 //     (1,2) 9121
 //   
-//   tie(F,0,1) =
+//   tieIndex(F,0,1) =
 //     (0,0) 9000
 //     (0,1) 9001
 //     (0,2) 9002
@@ -408,7 +408,7 @@ main()
 //     (1,1) 9111
 //     (1,2) 9112
 //   
-//   tie(F,1,2) =
+//   tieIndex(F,1,2) =
 //     (0,0) 9000
 //     (0,1) 9011
 //     (0,2) 9022
@@ -416,22 +416,22 @@ main()
 //     (1,1) 9111
 //     (1,2) 9122
 //   
-//   tie(F,0,1,2) =
+//   tieIndex(F,0,1,2) =
 //     (0) 9000
 //     (1) 9111
 //   
 //   -------------------------------------
 //   Composing methods that produce TensorRefs
 //   -------------------------------------
-//   diag(tie(F,0,1)) =
+//   diag(tieIndex(F,0,1)) =
 //     (0) 9000
 //     (1) 9111
 //   
-//   diag(tie(F,1,2)) =
+//   diag(tieIndex(F,1,2)) =
 //     (0) 9000
 //     (1) 9111
 //   
-//   diag(tie(F,0,1,2)) =
+//   diag(tieIndex(F,0,1,2)) =
 //     (0) 9000
 //     (1) 9111
 //   
@@ -453,7 +453,7 @@ main()
 //     (0) 9000
 //     (1) 9121
 //   
-//   diag(tie(T,0,1)) =
+//   diag(tieIndex(T,0,1)) =
 //     (0) 900
 //     (1) 911
 //     (2) 922

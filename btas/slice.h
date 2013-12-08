@@ -42,25 +42,23 @@ diag(_Tensor& T)
 //    }
 
 /// construct TensorRef "fusing" the specified indices of T
-/// for example tie(T,0,2)(i,j) = T(i,j,i)
-template <class _Tensor, typename... _args>
+/// passed as an array, for example:
+/// std::vector<std::size_t> inds = { 0, 2 };
+/// tie(T,inds,inds.size())(i,j) = T(i,j,i)
+template <class _Tensor, typename ArrayType>
 TensorRef<_Tensor>
-tie(_Tensor& T, 
-    const typename _Tensor::size_type& i0, 
-    const typename _Tensor::size_type& i1, 
-    const _args&... rest)
+tieIndex(_Tensor& T, 
+         const ArrayType& inds)
     {
     typedef typename TensorRef<_Tensor>::shape_type shape_type;
     typedef typename TensorRef<_Tensor>::size_type size_type;
     typedef typename TensorRef<_Tensor>::iterator NDIter;
 
-    const auto size = 2 + sizeof...(rest);
-    size_type inds[size] = { i0, i1, static_cast<size_type>(rest)...};
-
+    size_type size = inds.size();
     auto new_r = (1+T.rank())-size;
     size_type tpos = T.rank()+1,
               tstride = 0,
-              tshape = (size_type)-1;
+              tshape = T.shape(0);
     shape_type tied_shape(new_r),
                tied_stride(new_r);
 
@@ -102,6 +100,22 @@ tie(_Tensor& T,
 
     return make_ref<_Tensor>( NDIter(tied_shape,tied_stride,T.begin()) );
     }
+
+/// construct TensorRef "fusing" the specified indices of T
+/// for example tie(T,0,2)(i,j) = T(i,j,i)
+template <class _Tensor, typename... _args>
+TensorRef<_Tensor>
+tieIndex(_Tensor& T, 
+    const typename _Tensor::size_type& i0, 
+    const typename _Tensor::size_type& i1, 
+    const _args&... rest)
+    {
+    typedef typename TensorRef<_Tensor>::size_type size_type;
+    const auto size = 2 + sizeof...(rest);
+    std::array<size_type,size> inds = { i0, i1, static_cast<size_type>(rest)...};
+    return tieIndex(T,inds);
+    }
+
 
 //
 // Slice - restrict tensor ranges to only subranges possibly with strides other than 1
@@ -208,7 +222,7 @@ slice_impl(_Tensor& T, const Range1& r0, const _args&... rest)
     typedef typename TensorRef<_Tensor>::iterator NDIter;
 
     const auto size = 1 + sizeof...(rest);
-    Range1 ranges[size] = { r0, rest...};
+    std::array<Range1,size> ranges = { r0, static_cast<Range1>(rest)... };
     shape_type slice_shape(size),
                slice_stride(size);
     size_type offset = 0;

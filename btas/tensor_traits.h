@@ -78,8 +78,9 @@ template<class _Tensor>
 class is_tensor {
 public:
    static constexpr const bool
-   value = has_value_type<_Tensor>::value & has_shape_type<_Tensor>::value &
-           has_container<_Tensor>::value & has_rank<_Tensor>::value;
+   value = has_value_type<_Tensor>::value & has_shape_type<_Tensor>::value 
+           //& has_container<_Tensor>::value 
+           & has_rank<_Tensor>::value;
 };
 
 } // namespace btas

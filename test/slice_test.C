@@ -9,16 +9,16 @@ using namespace std;
 
 typedef Tensor<double> DTensor;
 
-typedef NDIterator<double*,typename DTensor::shape_type> 
+typedef NDIterator<DTensor,typename DTensor::iterator>
 NDIter;
 
-typedef NDIterator<const double*,typename DTensor::shape_type> 
+typedef NDIterator<const DTensor, typename DTensor::const_iterator>
 cNDIter;
 
 ostream& 
 operator<<(ostream& s, const DTensor& T)
     {
-    cNDIter it(T.data(),T.shape(),T.stride());
+    cNDIter it(T.shape(),T.stride(),T.begin());
     for(; it.valid(); ++it)
         {
         s << "  (";
@@ -169,20 +169,20 @@ main()
     Print(tie(F,1,2));
     Print(tie(F,0,1,2));
 
-    cout << "-------------------------------------" << endl;
-    cout << "Composing methods that produce TensorRefs" << endl;
-    cout << "-------------------------------------" << endl;
+    //cout << "-------------------------------------" << endl;
+    //cout << "Composing methods that produce TensorRefs" << endl;
+    //cout << "-------------------------------------" << endl;
 
-    Print(diag(tie(F,0,1)));
-    Print(diag(tie(F,1,2)));
-    Print(diag(tie(F,0,1,2)));
+    //Print(diag(tie(F,0,1)));
+    //Print(diag(tie(F,1,2)));
+    //Print(diag(tie(F,0,1,2)));
 
-    Print(slice(F,{},{0,3,2},{}));
-    Print(diag(slice(F,{},{0,3,2},{})));
+    //Print(slice(F,{},{0,3,2},{}));
+    //Print(diag(slice(F,{},{0,3,2},{})));
 
-    Print(diag(tie(T,0,1)));
+    //Print(diag(tie(T,0,1)));
 
-    Print(diag(diag(T)));
+    //Print(diag(diag(T)));
 
     return 0;
     }

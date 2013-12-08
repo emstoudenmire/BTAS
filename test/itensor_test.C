@@ -9,6 +9,7 @@ main(int argc, char* argv[])
     {
 
     Index i1("i1",2,Site),
+          i2("i2",2,Site),
           l2("l2",10);
 
     Print(i1);
@@ -31,6 +32,13 @@ main(int argc, char* argv[])
 
     Print(T(i1(2),l2(5)));
     Print(T(l2(5),i1(2)));
+
+    ITensor T2(i2,l2,i1);
+    T2.randomize();
+    PrintDat(T2);
+    T2.tieIndices(i1,i2,i1);
+    PrintDat(T2);
+
 
     return 0;
     }

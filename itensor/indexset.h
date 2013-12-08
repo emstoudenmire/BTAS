@@ -40,9 +40,6 @@ class IndexSet
     explicit
     IndexSet(const Iterable& ii, int size = -1, int offset = 0);
 
-    template <class Iterable>
-    IndexSet(const Iterable& ii, int size, int& alloc_size, int offset);
-
     //
     // Type definitions
     //
@@ -188,7 +185,7 @@ class IndexSet
 
     template <class Iterable>
     void
-    sortIndices(const Iterable& I, int ninds, int& alloc_size, int offset = 0);
+    sortIndices(const Iterable& I, int ninds, int offset = 0);
 
     };
 
@@ -261,8 +258,7 @@ IndexSet(IndexT i1, IndexT i2, IndexT i3,
 #endif
 	Array<IndexT,NMAX> ii = {{ i1, i2, i3, i4, i5, i6, i7, i8 }};
 	while(r_ < NMAX && ii[r_] != IndexT::Null()) ++r_;
-    int alloc_size;
-    sortIndices(ii,r_,alloc_size,0);
+    sortIndices(ii,r_,0);
     setUniqueReal();
     }
 
@@ -272,19 +268,7 @@ IndexSet<IndexT>::
 IndexSet(const Iterable& ii, int size, int offset)
     { 
     r_ = (size < 0 ? ii.size() : size);
-    int alloc_size = -1;
-    sortIndices(ii,r_,alloc_size,offset);
-    setUniqueReal();
-    }
-
-template <class IndexT>
-template <class Iterable>
-IndexSet<IndexT>::
-IndexSet(const Iterable& ii, int size, int& alloc_size, int offset)
-    :
-    r_(size)
-    { 
-    sortIndices(ii,size,alloc_size,offset);
+    sortIndices(ii,r_,offset);
     setUniqueReal();
     }
 
@@ -694,7 +678,7 @@ write(std::ostream& s) const
 template <class IndexT>
 template <class Iterable>
 void IndexSet<IndexT>::
-sortIndices(const Iterable& I, int ninds, int& alloc_size, int offset)
+sortIndices(const Iterable& I, int ninds, int offset)
     {
 #ifdef DEBUG
     if(ninds > NMAX)
@@ -702,7 +686,6 @@ sortIndices(const Iterable& I, int ninds, int& alloc_size, int offset)
 #endif
 
     rn_ = 0;
-    alloc_size = 1;
 
     int r1_ = 0;
     Array<const IndexT*,NMAX> index1_;
@@ -722,7 +705,6 @@ sortIndices(const Iterable& I, int ninds, int& alloc_size, int offset)
             { 
             index_[rn_] = i; 
             ++rn_;
-            alloc_size *= i.m(); 
             }
         }
     for(int l = 0; l < r1_; ++l) 

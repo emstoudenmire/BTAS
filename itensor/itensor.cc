@@ -7,19 +7,25 @@
 #include <functional>
 #include <random>
 #include "btas/nditerator.h"
+#include "btas/generic/scal_impl.h"
+#include "btas/slice.h"
 
 using std::ostream;
 using std::cout;
 using std::cerr;
 using std::endl;
+using std::vector;
 using boost::format;
 using boost::shared_ptr;
 using boost::make_shared;
 
 namespace itensor {
 
-typedef btas::NDIterator<Real*,typename RTensor::shape_type> 
-NDIter;
+typedef btas::NDIterator<typename ITensor::storage,typename ITensor::storage::iterator> 
+nditer;
+
+typedef btas::NDIterator<typename ITensor::storage,typename ITensor::storage::const_iterator> 
+ndconst_iter;
 
 //
 // ITensor
@@ -46,7 +52,7 @@ ITensor(Real val)
 ITensor::
 ITensor(const Index& i1) 
     :
-    r_(boost::make_shared<RTensor>(i1.m())),
+    r_(boost::make_shared<storage>(i1.m())),
     is_(i1),
     scale_(1)
 	{ 
@@ -56,7 +62,7 @@ ITensor(const Index& i1)
 ITensor::
 ITensor(const Index& i1,const Index& i2) 
     :
-    r_(boost::make_shared<RTensor>(i1.m(),i2.m())),
+    r_(boost::make_shared<storage>(i1.m(),i2.m())),
     is_(i1,i2),
     scale_(1)
 	{ 
@@ -80,15 +86,14 @@ ITensor(const Index& i1, const Index& i2, const Index& i3,
 #endif
     //                        0   1   2   3   4   5   6    7
 	Array<Index,NMAX> ii = {{ i1, i2, i3, i4, i5, i6, i7, i8 }};
-    RTensor::shape_type shape = { i1.m(), i2.m(), i3.m() };
+    storage::shape_type shape = { i1.m(), i2.m(), i3.m() };
     int r = 3;
 	for(; r < 8 && ii[r] != Index::Null(); ++r)
         {
         shape.push_back(ii[r].m());
         }
-	int alloc_size = -1; 
-    is_ = IndexSet<Index>(ii,r,alloc_size,0);
-    r_ = boost::make_shared<RTensor>(shape);
+    is_ = IndexSet<Index>(ii,r,0);
+    r_ = boost::make_shared<storage>(shape);
 	}
 
 Real ITensor::
@@ -201,6 +206,132 @@ void ITensor::
 tieIndices(const Array<Index,NMAX>& indices, int nind,
            const Index& tied)
     {
+    if(nind == 0) Error("No indices given");
+
+    const int tm = tied.m();
+    
+    Array<Index,NMAX+1> new_index;
+    //TODO
+    //Check for possible bug: behavior of btas::tieIndex
+    //is to position new tied index at location of first matching
+    //tied index, not necessarily position 1
+    new_index[1] = tied;
+
+    vector<size_t> totie;
+
+    int nmatched = 0;
+    int new_r = 1;
+    for(size_t k = 0; k < r(); ++k)
+        {
+        const Index& K = is_.index(1+k);
+        bool is_tied = false;
+        for(int j = 0; j < nind; ++j)
+        if(K == indices[j]) 
+            { 
+            if(indices[j].m() != tm)
+                Error("Tied indices must have matching m's");
+            totie.push_back(k);
+            is_tied = true;
+            ++nmatched;
+            break;
+            }
+
+        if(!is_tied)
+            {
+            new_index[++new_r] = K;
+            }
+        }
+
+    //Check that all indices were found
+    if(nmatched != nind)
+        {
+        Print(*this);
+        cout << "indices = " << endl;
+        for(int j = 0; j < nind; ++j)
+            cout << indices[j] << endl;
+        Error("Couldn't find Index to tie");
+        }
+
+    IndexSet<Index> new_is(new_index,new_r,1);
+    is_.swap(new_is);
+
+    //If tied indices have m==1, no work
+    //to do; just replace indices
+    if(tm == 1) return;
+
+    // Call btas::tieIndex and create the new dat
+    storage_ptr np = boost::make_shared<storage>(btas::tieIndex(*r_,totie));
+    r_.swap(np);
+    }
+
+ITensor ITensor::
+testMethod(const Array<Index,NMAX>& indices, int nind,
+           const Index& tied) const
+    {
+    if(nind == 0) Error("No indices given");
+
+    const int tm = tied.m();
+    
+    Array<Index,NMAX+1> new_index;
+    //TODO
+    //Check for possible bug: behavior of btas::tieIndex
+    //is to position new tied index at location of first matching
+    //tied index, not necessarily position 1
+    new_index[1] = tied;
+
+    vector<size_t> totie;
+
+    int nmatched = 0;
+    int new_r = 1;
+    for(size_t k = 0; k < r(); ++k)
+        {
+        const Index& K = is_.index(1+k);
+        bool is_tied = false;
+        for(int j = 0; j < nind; ++j)
+        if(K == indices[j]) 
+            { 
+            if(indices[j].m() != tm)
+                Error("Tied indices must have matching m's");
+            totie.push_back(k);
+            is_tied = true;
+            ++nmatched;
+            break;
+            }
+
+        if(!is_tied)
+            {
+            new_index[++new_r] = K;
+            }
+        }
+
+    //Check that all indices were found
+    if(nmatched != nind)
+        {
+        Print(*this);
+        cout << "indices = " << endl;
+        for(int j = 0; j < nind; ++j)
+            cout << indices[j] << endl;
+        Error("Couldn't find Index to tie");
+        }
+
+    IndexSet<Index> new_is(new_index,new_r,1);
+    ITensor res;
+    res.is_.swap(new_is);
+
+    //If tied indices have m==1, no work
+    //to do; just replace indices
+    if(tm == 1) 
+        {
+        res.scale_ = this->scale_;
+        res.r_ = this->r_;
+        return res;
+        }
+
+    // Call btas::tieIndex and create the new dat
+    storage_ptr np = boost::make_shared<storage>(btas::tieIndex(*r_,totie));
+    res.r_.swap(np);
+
+    return res;
     }
 
 void ITensor::
@@ -428,7 +559,7 @@ operator<<(ostream & s, const ITensor& t)
         if(t.scale().isFiniteReal()) scalefac = t.scale().real();
         else s << "  (omitting too large scale factor)" << endl;
 
-        NDIter it(t.r_->data(),t.r_->shape(),t.r_->stride());
+        nditer it(t.r_->shape(),t.r_->stride(),t.r_->begin());
 
         const auto rr = t.r_->rank();
         if(rr > 0)

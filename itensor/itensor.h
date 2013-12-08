@@ -14,15 +14,15 @@
 
 namespace itensor {
 
-typedef btas::Tensor<Real>
-RTensor;
-
 //
 // ITensor
 //
 class ITensor
     {
     public:
+
+    using storage = btas::Tensor<Real>;
+    using storage_ptr = boost::shared_ptr<storage>;
 
     //
     //Accessor Methods
@@ -238,6 +238,11 @@ class ITensor
     void
     swap(ITensor& other);
 
+    //TODO remove this test
+    ITensor
+    testMethod(const Array<Index,NMAX>& indices, int nind,
+               const Index& tied) const;
+
 
     //Other Methods -------------------------------------------------
 
@@ -274,7 +279,7 @@ class ITensor
     //////////////
 
     //Pointer to ITDat containing tensor data
-    boost::shared_ptr<RTensor> r_; //real part
+    storage_ptr r_; //real part
 
     //Indices, maximum of 8
     IndexSet<Index> is_;

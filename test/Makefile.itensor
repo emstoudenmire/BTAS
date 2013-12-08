@@ -1,8 +1,10 @@
 include ../options.mk
 
+INCLUDEFLAGS=-I. -I..
+
 #Define Flags ----------
-CCFLAGS= -I. $(ITENSOR_INCLUDEFLAGS) $(CPPFLAGS) $(OPTIMIZATIONS)
-CCGFLAGS= -I. $(ITENSOR_INCLUDEFLAGS) $(DEBUGFLAGS)
+CCFLAGS= $(INCLUDEFLAGS) $(ITENSOR_INCLUDEFLAGS) $(CPPFLAGS) $(OPTIMIZATIONS)
+CCGFLAGS= $(INCLUDEFLAGS) $(ITENSOR_INCLUDEFLAGS) $(DEBUGFLAGS)
 LIBFLAGS=-L$(ITENSOR_LIBDIR) $(ITENSOR_LIBFLAGS)
 LIBGFLAGS=-L$(ITENSOR_LIBDIR) $(ITENSOR_LIBGFLAGS)
 
@@ -33,6 +35,12 @@ itensor_test: itensor_test.o $(ITENSOR_LIBS) $(REL_TENSOR_HEADERS)
 
 itensor_test-g: mkdebugdir .debug_objs/itensor_test.o $(ITENSOR_GLIBS) $(REL_TENSOR_HEADERS)
 	$(CCCOM) $(CCGFLAGS) .debug_objs/itensor_test.o -o itensor_test-g $(LIBGFLAGS)
+
+slice_test: slice_test.o
+	$(CCCOM) $(CCFLAGS) slice_test.o -o slice_test $(LIBFLAGS)
+
+slice_test-g: slice_test-g.o
+	$(CCCOM) $(CCFLAGS) slice_test-g.o -o slice_test-g $(LIBFLAGS)
 
 mkdebugdir:
 	mkdir -p .debug_objs

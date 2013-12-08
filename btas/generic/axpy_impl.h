@@ -8,6 +8,7 @@
 #include <btas/tensor_traits.h>
 #include <btas/types.h>
 
+#include <btas/generic/numeric_type.h>
 #include <btas/generic/tensor_iterator_wrapper.h>
 
 namespace btas {
@@ -58,7 +59,7 @@ template<> struct axpy_impl<true>
       const std::complex<float>* itrX, const typename std::iterator_traits<std::complex<float>*>::difference_type& incX,
             std::complex<float>* itrY, const typename std::iterator_traits<std::complex<float>*>::difference_type& incY)
    {
-      cblas_caxpy(Nsize, alpha, itrX, incX, itrY, incY);
+      cblas_caxpy(Nsize, &alpha, itrX, incX, itrY, incY);
    }
 
    static void call (
@@ -67,7 +68,7 @@ template<> struct axpy_impl<true>
       const std::complex<double>* itrX, const typename std::iterator_traits<std::complex<double>*>::difference_type& incX,
             std::complex<double>* itrY, const typename std::iterator_traits<std::complex<double>*>::difference_type& incY)
    {
-      cblas_zaxpy(Nsize, alpha, itrX, incX, itrY, incY);
+      cblas_zaxpy(Nsize, &alpha, itrX, incX, itrY, incY);
    }
 #endif
 };
@@ -113,10 +114,21 @@ void axpy (
 //  ================================================================================================
 
 /// Convenient wrapper to call BLAS AXPY from tensor objects
-template<typename _T, class _TensorX, class _TensorY, class = typename std::enable_if<is_tensor<_TensorX>::value & is_tensor<_TensorY>::value>::type>
-void axpy (const _T& alpha, const _TensorX& X, _TensorY& Y)
+template<
+   typename _T,
+   class _TensorX, class _TensorY,
+   class = typename std::enable_if<
+      is_tensor<_TensorX>::value &
+      is_tensor<_TensorY>::value
+   >::type
+>
+void axpy (
+   const _T& alpha,
+   const _TensorX& X,
+         _TensorY& Y)
 {
-   static_assert(std::is_same<typename _TensorX::value_type, typename _TensorY::value_type>::value, "value type of Y must be the same as that of X");
+   typedef typename _TensorX::value_type value_type;
+   static_assert(std::is_same<value_type, typename _TensorY::value_type>::value, "value type of Y must be the same as that of X");
 
    if (X.empty())
    {
@@ -127,14 +139,15 @@ void axpy (const _T& alpha, const _TensorX& X, _TensorY& Y)
    if (Y.empty())
    {
       Y.resize(X.shape());
+      NumericType<value_type>::fill(Y.begin(), Y.end(), NumericType<value_type>::zero());
    }
    else
    {
       assert(std::equal(X.shape().begin(), X.shape().end(), Y.shape().begin()));
    }
 
-   auto itrX = tensor_iterator_wrapper<has_data<_TensorX>::value>::begin(X);
-   auto itrY = tensor_iterator_wrapper<has_data<_TensorY>::value>::begin(Y);
+   auto itrX = tbegin(X);
+   auto itrY = tbegin(Y);
 
    axpy (X.size(), alpha, itrX, 1, itrY, 1);
 }

@@ -6,6 +6,41 @@
 
 namespace btas {
 
+/// construct view of tensor T with permuted indices
+/// defining std::vector<size_t> perm = {2,0,1};
+/// calling P = permute(T,perm) implies T(i,j,k) == P(k,i,j)
+template <class _Tensor, class ArrayType>
+TensorRef<_Tensor>
+permute(_Tensor& T, 
+        const ArrayType& perm)
+    {
+    typedef typename TensorRef<_Tensor>::shape_type shape_type;
+    typedef typename TensorRef<_Tensor>::iterator NDIter;
+
+    shape_type pshape(T.rank()),
+               pstride(T.rank());
+    for(size_t i = 0; i < T.rank(); ++i)
+        {
+        pshape[i] = T.shape(perm[i]);
+        pstride[i] = T.stride(perm[i]);
+        }
+    return make_ref<_Tensor>( NDIter(pshape,pstride,T.begin()) );
+    }
+
+/// construct view of tensor T with permuted indices
+/// calling P = permute(T,2,0,1) implies T(i,j,k) == P(k,i,j)
+template <class _Tensor, typename... _args>
+TensorRef<_Tensor>
+permute(_Tensor& T, 
+    const typename _Tensor::size_type& i0, 
+    const _args&... rest)
+    {
+    typedef typename TensorRef<_Tensor>::size_type size_type;
+    const auto size = 1 + sizeof...(rest);
+    std::array<size_type,size> perm = { i0, static_cast<size_type>(rest)...};
+    return permute(T,perm);
+    }
+
 /// construct TensorRef representing the diagonal elements of T, that is, T(i,i,i,i)
 template <class _Tensor>
 TensorRef<_Tensor>

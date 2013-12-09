@@ -169,6 +169,34 @@ main()
     Print(tieIndex(F,1,2));
     Print(tieIndex(F,0,1,2));
 
+    cout << "-------------------------------------" << endl;
+    cout << "permute function" << endl;
+    cout << "-------------------------------------" << endl;
+
+    Print(permute(F,0,1,2));
+    Print(permute(F,0,2,1));
+    Print(permute(F,1,2,0));
+    Print(F.shape());
+    Print(F.stride());
+    Print(F.size());
+    Print(permute(F,1,2,0)(2,0,1));
+    Print(permute(F,1,2,0).shape());
+    Print(permute(F,1,2,0).stride());
+    Print(permute(F,1,2,0).size());
+    for(auto x : permute(F,1,2,0))
+        {
+        cout << x << endl;
+        }
+
+    cout << endl;
+
+    const auto P = permute(F,1,2,0);
+    //for(auto it = P.begin(); it.valid(); ++it)
+    for(auto it = P.begin(); it != P.end(); ++it) // <-- problem with defn of nditerator end method
+        {
+        cout << *it << endl;
+        }
+
     //cout << "-------------------------------------" << endl;
     //cout << "Composing methods that produce TensorRefs" << endl;
     //cout << "-------------------------------------" << endl;

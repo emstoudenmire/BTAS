@@ -8,6 +8,7 @@
 #include <random>
 #include "btas/nditerator.h"
 #include "btas/generic/scal_impl.h"
+#include "btas/generic/axpy_impl.h"
 #include "btas/slice.h"
 
 using std::ostream;
@@ -460,7 +461,7 @@ scaleTo(const LogNumber& newscale)
     if(scale_ == newscale) return;
     solo();
     scale_ /= newscale;
-    //r_->operator*=(scale_.real0());
+    btas::scal(scale_.real0(),*r_);
     scale_ = newscale;
     }
 
@@ -482,9 +483,8 @@ solo()
 	{
     if(!r_.unique())
         { 
-        //boost::shared_ptr<ITDat> newr = boost::make_shared<ITDat>();
-        //newr->v = r_->v;
-        //r_.swap(newr);
+        auto newr = boost::make_shared<storage>(*r_);
+        r_.swap(newr);
         }
     }
 
@@ -523,10 +523,60 @@ operator*=(const ITensor& other)
     return *this;
     }
 
+bool static
+checkSameIndOrder(const IndexSet<Index> is1,
+                  const IndexSet<Index> is2)
+    {
+    for(int j = 0; j < is1.rn(); ++j)
+    if(is1[j] != is2[j])
+        { 
+        return false;
+        }
+    return true;
+    }
 
 ITensor& ITensor::
 operator+=(const ITensor& other)
     {
+    if(!r_) return operator=(other);
+
+    if(this == &other) return operator*=(2.);
+
+    if(this->scale_.isZero()) return operator=(other);
+
+    const
+    bool same_ind_order = checkSameIndOrder(is_,other.is_);
+
+    if(is_ != other.is_)
+        {
+        cerr << format("this ur = %.10f, other.ur = %.10f\n")%is_.uniqueReal()%other.is_.uniqueReal();
+        Print(*this);
+        Print(other);
+        Error("ITensor::operator+=: different Index structure");
+        }
+
+    Real scalefac = 1;
+    if(scale_.magnitudeLessThan(other.scale_)) 
+        {
+        this->scaleTo(other.scale_); 
+        }
+    else
+        {
+        scalefac = (other.scale_/scale_).real();
+        }
+
+    solo();
+
+    if(same_ind_order) 
+        { 
+        //axpy computes *r_ += *(other.r_) * scalefac
+        btas::axpy(scalefac,*(other.r_),*r_);
+        }
+    else // not same_ind_order
+        {
+        Error("Can currently only add if same index order");
+        }
+
     return *this;
     } 
 

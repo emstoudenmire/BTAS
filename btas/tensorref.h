@@ -88,7 +88,7 @@ class TensorRef
 
     /// \return const iterator last even if this is not itself const
     const_iterator
-    cend() const { return end(iter_); }
+    cend() const { return iter_.end(); }
 
     /// \return iterator first
     iterator
@@ -96,7 +96,7 @@ class TensorRef
 
     /// \return iterator last
     iterator
-    end() { return end(iter_); }
+    end() { return iter_.end(); }
 
     /// copy data elementwise from one TensorRef to another
     TensorRef& 

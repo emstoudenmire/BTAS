@@ -15,7 +15,6 @@ permute(_Tensor& T,
         const ArrayType& perm)
     {
     typedef typename TensorRef<_Tensor>::shape_type shape_type;
-    typedef typename TensorRef<_Tensor>::iterator NDIter;
 
     shape_type pshape(T.rank()),
                pstride(T.rank());
@@ -24,7 +23,7 @@ permute(_Tensor& T,
         pshape[i] = T.shape(perm[i]);
         pstride[i] = T.stride(perm[i]);
         }
-    return make_ref<_Tensor>( NDIter(pshape,pstride,T.begin()) );
+    return make_ref<_Tensor>( NDIterator<_Tensor>(pshape,pstride,T.begin()) );
     }
 
 /// construct view of tensor T with permuted indices
@@ -47,7 +46,6 @@ TensorRef<_Tensor>
 diag(_Tensor& T)
     {
     typedef typename TensorRef<_Tensor>::size_type size_type;
-    typedef typename TensorRef<_Tensor>::iterator NDIter;
 
     size_type stride = 0,
               shape = (size_type)-1;
@@ -56,7 +54,7 @@ diag(_Tensor& T)
         stride += T.stride(i);
         shape = std::min(shape,T.shape(i));
         }
-    return make_ref<_Tensor>( NDIter({shape},{stride},T.begin()) );
+    return make_ref<_Tensor>( NDIterator<_Tensor>({shape},{stride},T.begin()) );
     }
 
 //template <class _Tensor>
@@ -64,7 +62,6 @@ diag(_Tensor& T)
 //diag(TensorRef<_Tensor>&& T)
 //    {
 //    typedef typename TensorRef<_Tensor>::size_type size_type;
-//    typedef typename TensorRef<_Tensor>::iterator NDIter;
 //
 //    size_type stride = 0,
 //              shape = (size_type)-1;
@@ -73,7 +70,7 @@ diag(_Tensor& T)
 //        stride += T.begin().stride(i);
 //        shape = std::min(shape,T.begin().shape(i));
 //        }
-//    return make_ref<_Tensor>( NDIter({shape},{stride},begin(T.begin())) );
+//    return make_ref<_Tensor>( NDIterator<_Tensor>({shape},{stride},begin(T.begin())) );
 //    }
 
 /// construct TensorRef "fusing" the specified indices of T
@@ -87,7 +84,6 @@ tieIndex(_Tensor& T,
     {
     typedef typename TensorRef<_Tensor>::shape_type shape_type;
     typedef typename TensorRef<_Tensor>::size_type size_type;
-    typedef typename TensorRef<_Tensor>::iterator NDIter;
 
     size_type size = inds.size();
     auto new_r = (1+T.rank())-size;
@@ -133,7 +129,7 @@ tieIndex(_Tensor& T,
             }
         }
 
-    return make_ref<_Tensor>( NDIter(tied_shape,tied_stride,T.begin()) );
+    return make_ref<_Tensor>( NDIterator<_Tensor>(tied_shape,tied_stride,T.begin()) );
     }
 
 /// construct TensorRef "fusing" the specified indices of T
@@ -254,7 +250,6 @@ slice_impl(_Tensor& T, const Range1& r0, const _args&... rest)
     {
     typedef typename TensorRef<_Tensor>::shape_type shape_type;
     typedef typename TensorRef<_Tensor>::size_type size_type;
-    typedef typename TensorRef<_Tensor>::iterator NDIter;
 
     const auto size = 1 + sizeof...(rest);
     std::array<Range1,size> ranges = { r0, static_cast<Range1>(rest)... };
@@ -276,7 +271,7 @@ slice_impl(_Tensor& T, const Range1& r0, const _args&... rest)
             }
         }
 
-    return make_ref<_Tensor>( NDIter(slice_shape,slice_stride,T.begin()+offset) );
+    return make_ref<_Tensor>( NDIterator<_Tensor>(slice_shape,slice_stride,T.begin()+offset) );
     }
 
 

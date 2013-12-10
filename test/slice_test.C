@@ -39,6 +39,17 @@ operator<<(ostream& s, const typename DTensor::shape_type& S)
     return s;
     }
 
+class A : public btas::Tensor<double,CblasColMajor> 
+    {
+    public:
+    A(const int a, const int b) : btas::Tensor<double,CblasColMajor>(a,b) { }
+
+    btas::Tensor<double,CblasColMajor> 
+    get_block(const size_t i, const size_t j, const size_t k, const size_t l) const
+        {
+        return btas::Tensor<double,CblasColMajor>(btas::slice(*this, {i, j}, {k, l}));
+        }
+    };
 int 
 main()
     {

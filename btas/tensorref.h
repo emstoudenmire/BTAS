@@ -22,7 +22,7 @@ make_ref(_Tensor& T);
 
 template <class _Tensor>
 TensorRef<_Tensor>
-make_ref(typename TensorRef<_Tensor>::iterator&& it);
+make_ref(NDIterator<_Tensor>&& it);
 
 //
 // class TensorRef
@@ -238,7 +238,7 @@ class TensorRef
 
     /// construct from NDIterator
     explicit
-    TensorRef(const iterator& iter)
+    TensorRef(const NDIterator<_Tensor>& iter)
         : 
         iter_(iter)
         { 
@@ -247,7 +247,7 @@ class TensorRef
         }
 
     /// move construct from NDIterator
-    TensorRef(iterator&& iter)
+    TensorRef(NDIterator<_Tensor>&& iter)
         : iter_(iter)
         { 
         _set_stride();
@@ -256,7 +256,7 @@ class TensorRef
 
     /// move assign from NDIterator
     TensorRef&
-    operator=(iterator&& iter)
+    operator=(NDIterator<_Tensor>&& iter)
         {
         iter_.swap(iter);
         _set_stride();
@@ -360,7 +360,7 @@ class TensorRef
     ///////////////////////
     // Data members
 
-    iterator iter_; ///< iterator over referenced data
+    NDIterator<_Tensor> iter_; ///< iterator over referenced data
     shape_type stride_; ///< stride
     bool contig_; ///< true if data referenced is contiguous in memory
 
@@ -369,7 +369,7 @@ class TensorRef
     public:
 
     friend TensorRef<_Tensor> make_ref <> (_Tensor&);
-    friend TensorRef<_Tensor> make_ref <> (iterator&&);
+    friend TensorRef<_Tensor> make_ref <> (NDIterator<_Tensor>&&);
 
     };
 
@@ -379,7 +379,7 @@ make_ref(_Tensor& T) { return TensorRef<_Tensor>(T); }
 
 template <class _Tensor>
 TensorRef<_Tensor>
-make_ref(typename TensorRef<_Tensor>::iterator&& it) { return TensorRef<_Tensor>(it); }
+make_ref(NDIterator<_Tensor>&& it) { return TensorRef<_Tensor>(it); }
 
 
 } // namespace btas

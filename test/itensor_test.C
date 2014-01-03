@@ -37,11 +37,11 @@ main(int argc, char* argv[])
     // tieIndices
     //
 
-    ITensor T2(i2,l2,i1);
-    T2.randomize();
-    PrintDat(T2);
-    T2.tieIndices(i1,i2,i1);
-    PrintDat(T2);
+    //ITensor T2(i2,l2,i1);
+    //T2.randomize();
+    //PrintDat(T2);
+    //T2.tieIndices(i1,i2,i1);
+    //PrintDat(T2);
 
     //
     // Addition

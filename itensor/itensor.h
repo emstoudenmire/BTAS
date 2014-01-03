@@ -22,7 +22,7 @@ class ITensor
     public:
 
     using storage = btas::Tensor<Real>;
-    using storage_ptr = boost::shared_ptr<storage>;
+    using storage_ptr = std::shared_ptr<storage>;
 
     //
     //Accessor Methods
@@ -175,7 +175,7 @@ class ITensor
     //                  If j.m() == 5 and k.m() == 7, J.m() == 5*7.
     //
     void 
-    groupIndices(const boost::array<Index,NMAX+1>& indices, int nind, 
+    groupIndices(const std::array<Index,NMAX+1>& indices, int nind, 
                       const Index& grouped, ITensor& res) const;
 
     //
@@ -185,7 +185,7 @@ class ITensor
     // Rijl = Aijil <-- here we have tied the 1st and 3rd index of A
     //
     void
-    tieIndices(const boost::array<Index,NMAX>& indices, int nind,
+    tieIndices(const std::array<Index,NMAX>& indices, int nind,
                const Index& tied);
 
     void
@@ -220,7 +220,7 @@ class ITensor
           const Index& i8 = Index::Null());
 
     ITensor&
-    trace(const boost::array<Index,NMAX>& indices, int nind = -1);
+    trace(const std::array<Index,NMAX>& indices, int nind = -1);
 
 
     //
@@ -239,9 +239,9 @@ class ITensor
     swap(ITensor& other);
 
     //TODO remove this test
-    ITensor
-    testMethod(const Array<Index,NMAX>& indices, int nind,
-               const Index& tied) const;
+    //ITensor
+    //testMethod(const std::array<Index,NMAX>& indices, int nind,
+    //           const Index& tied) const;
 
 
     //Other Methods -------------------------------------------------

@@ -21,12 +21,6 @@ using std::make_shared;
 
 namespace itensor {
 
-//typedef btas::NDIterator<typename ITensor::storage,typename ITensor::storage::iterator> 
-//nditer;
-
-//typedef btas::NDIterator<typename ITensor::storage,typename ITensor::storage::const_iterator> 
-//ndconst_iter;
-
 //
 // ITensor
 //
@@ -84,7 +78,6 @@ ITensor(const Index& i1, const Index& i2, const Index& i3,
     if(i3 == Index::Null())
         Error("i3 is null");
 #endif
-    //                        0   1   2   3   4   5   6    7
     std::array<Index,NMAX> ii = {{ i1, i2, i3, i4, i5, i6, i7, i8 }};
     std::vector<size_t> extents = { i1.m(), i2.m(), i3.m() };
     int r = 3;
@@ -175,12 +168,12 @@ operator()(const IndexVal& iv1,
     {
     solo(); 
     scaleTo(1);
-    std::array<int,3> ii;
+    std::array<size_t,3> ii;
     for(const auto iv : {iv1, iv2, iv3})
         {
         ii[findindex(is_,Index(iv))] = iv.i-1;
         }
-    return r_->at(ii[0],ii[1],ii[2]);
+    return r_->at(ii);
     }
 
 Real ITensor::
@@ -188,12 +181,12 @@ operator()(const IndexVal& iv1,
            const IndexVal& iv2, 
            const IndexVal& iv3) const
     {
-    std::array<int,3> ii;
+    std::array<size_t,3> ii;
     for(const auto iv : {iv1, iv2, iv3})
         {
         ii[findindex(is_,Index(iv))] = iv.i-1;
         }
-    return scale_.real0()*r_->at(ii[0],ii[1],ii[2]);
+    return scale_.real0()*r_->at(ii);
     }
 
 void ITensor::
@@ -612,13 +605,22 @@ operator<<(ostream & s, const ITensor& t)
         auto Tr = T.range();
 
         const auto rr = T.rank();
-        if(rr > 0)
+
+        if(rr == 0) return s;
+
+        for(const auto I : Tr)
             {
-            for(const auto i : Tr)
+            const Real val = T(I)*scalefac;
+            if(fabs(val) > Global::printScale())
                 {
-                const Real val = T(i)*scalefac;
-                if(fabs(val) > Global::printScale())
-                    s << "  " << i << format("  %.10f\n") % val;
+                s << "  ("; 
+                for(size_t i = 0, j = 1; j <= I.size(); ++i, ++j)
+                    {
+                    s << (1+I[i]);
+                    if(j < I.size()) s << ",";
+                    }
+                s << ") ";
+                s << format(fabs(val) > 1E-10 ? "%.12f\n" : "%.8E\n") % val;
                 }
             }
         }

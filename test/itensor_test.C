@@ -25,6 +25,10 @@ main(int argc, char* argv[])
 
     PrintDat(T);
 
+    //
+    // Element access
+    //
+
     Print(T(i1(1),l2(1)));
     Print(T(i1(1),l2(2)));
     Print(T(i1(1),l2(3)));
@@ -32,6 +36,12 @@ main(int argc, char* argv[])
 
     Print(T(i1(2),l2(5)));
     Print(T(l2(5),i1(2)));
+
+    ITensor T3(i1,i2,l2);
+    T3(i2(1),i1(1),l2(4)) = -9.92737;
+    T3(i2(2),i1(1),l2(4)) = -2.83781;
+    T3 *= 1.2;
+    PrintDat(T3);
 
     //
     // tieIndices
@@ -47,25 +57,25 @@ main(int argc, char* argv[])
     // Addition
     //
 
-    ITensor T3(i1,i2),
-            T4(i1,i2);
-    T3.randomize();
+    ITensor T4(i1,i2),
+            T5(i1,i2);
     T4.randomize();
-    T3 *= 0.2;
-    T4 *= -1.4;
+    T5.randomize();
+    T4 *= 0.2;
+    T5 *= -1.4;
 
-    auto T5 = T3;
-    T5 += T4;
+    auto T6 = T4;
+    T6 += T5;
 
     for(int j1 = 1; j1 <= i1.m(); ++j1)
     for(int j2 = 1; j2 <= i2.m(); ++j2)
         {
-        const auto sum = T3(i1(j1),i2(j2)) + T4(i1(j1),i2(j2));
-        if(fabs(sum-T5(i1(j1),i2(j2))) > 1E-12)
+        const auto sum = T4(i1(j1),i2(j2)) + T5(i1(j1),i2(j2));
+        if(fabs(sum-T6(i1(j1),i2(j2))) > 1E-12)
             {
-            cout << format("Error: (T5(%d,%d) == %.5f) != %.5f")
+            cout << format("Error: (T6(%d,%d) == %.5f) != %.5f")
                     % j1 % j2
-                    % T5(i1(j1),i2(j2))
+                    % T6(i1(j1),i2(j2))
                     % sum
                  << endl;
             }

@@ -6,82 +6,95 @@
 #include <type_traits>
 
 #include <btas/types.h>
-#include <btas/nditerator.h>
 #include <btas/util/resize.h>
+
+#include <btas/tensor.h>
+#include <btas/tensor_traits.h>
+#include <btas/index_traits.h>
 
 namespace btas {
 
-/// normal permutation
-template<class _Tensor, class = typename std::enable_if<is_tensor<_Tensor>::value>::type>
-void permute (const _Tensor& X, const typename _Tensor::shape_type& index, _Tensor& Y)
-{
-   typedef typename _Tensor::shape_type shape_type;
+  /// permute \c X using permutation \c p, write result to \c Y
+  template<class _TensorX, typename _Permutation, class _TensorY,
+           class = typename std::enable_if<is_boxtensor<_TensorX>::value &&
+                                           is_index<_Permutation>::value &&
+                                           is_boxtensor<_TensorY>::value
+                                          >::type
+          >
+  void permute(const _TensorX& X, const _Permutation& p, _TensorY& Y) {
+    Y = _TensorY(permute(X.range(), p));
+    auto itrX = std::begin(X);
+    auto itrY = std::begin(Y);
+    for (auto i : X.range()) {
+      *(itrY + Y.range().ordinal(i)) = *itrX;
+      ++itrX;
+    }
+  }
 
-   shape_type shapeY; resize(shapeY, index.size());
-   shape_type strX2Y; resize(strX2Y, index.size());
+  /// permute \c X using permutation \c p, write result to \c Y
+  template<class _TensorX, class _TensorY, typename _T,
+           class = typename std::enable_if<is_boxtensor<_TensorX>::value &&
+                                           is_boxtensor<_TensorY>::value
+                                          >::type
+          >
+  void permute(const _TensorX& X, std::initializer_list<_T> pi, _TensorY& Y) {
+      permute(X, btas::varray<_T>(pi) , Y);
+  }
 
-   for (size_type i = 0; i < index.size(); ++i)
-   {
-      shapeY[i] = X.shape (index[i]);
-      strX2Y[i] = X.stride(index[i]);
-   }
+  /// permute \c X annotated with \c aX into \c Y annotated with \c aY
+  /// \tparam _Annotation contaner type
+  template<class _TensorX, typename _AnnotationX, class _TensorY, typename _AnnotationY,
+           class = typename std::enable_if<is_boxtensor<_TensorX>::value &&
+                                           is_boxtensor<_TensorY>::value &&
+                                           is_container<_AnnotationX>::value &&
+                                           is_container<_AnnotationY>::value>::type>
+  void permute(const _TensorX& X, const _AnnotationX& aX,
+                     _TensorY& Y, const _AnnotationY& aY) {
 
-   Y.resize(shapeY); if (Y.empty()) return; // size of X = 0
-
-   // FIXME: when size of X = 0, NDIterator construction fails with INTEL compiler...
-   //        something should not be safe in NDIterator implementation
-   NDIterator<_Tensor, typename _Tensor::const_iterator> itrX(shapeY, strX2Y, X.begin());
-
-   for (auto itrY = Y.begin(); itrY != Y.end(); ++itrX, ++itrY)
-   {
-      *itrY = *itrX;
-   }
-}
-
-/// indexed permutation
-template<class _Tensor, class = typename std::enable_if<is_tensor<_Tensor>::value>::type>
-void permute (const _Tensor& X, const typename _Tensor::shape_type& indexX,
-                    _Tensor& Y, const typename _Tensor::shape_type& indexY)
-{
-   size_type Nrank = X.rank();
+   const auto Xrank = rank(X);
 
    // check rank
-   assert(Nrank == indexX.size() && Nrank == indexY.size());
+   assert(Xrank == rank(aX) && Xrank == rank(aY));
 
    // case: doesn't need to permute
-   if (std::equal(indexX.begin(), indexX.end(), indexY.begin()))
+   if (std::equal(std::begin(aX), std::end(aX), std::begin(aY)))
    {
       Y = X; return;
    }
 
-   // check index X
-   typename _Tensor::shape_type __sort_indexX(indexX);
-   std::sort(__sort_indexX.begin(), __sort_indexX.end());
-   assert(std::unique(__sort_indexX.begin(), __sort_indexX.end()) == __sort_indexX.end());
-
-   // check index Y
-   typename _Tensor::shape_type __sort_indexY(indexY);
-   std::sort(__sort_indexY.begin(), __sort_indexY.end());
-   assert(std::unique(__sort_indexY.begin(), __sort_indexY.end()) == __sort_indexY.end());
-
-   // check X & Y
-   assert(std::equal(__sort_indexX.begin(), __sort_indexX.end(), __sort_indexY.begin()));
-
-   // calculate permute index
-   typename _Tensor::shape_type __permute_index;
-   resize(__permute_index, Nrank);
-
-   auto first = indexX.begin();
-   auto last  = indexX.end();
-   for(size_type i = 0; i < Nrank; ++i)
    {
-      auto found = std::find(indexX.begin(), indexX.end(), indexY[i]);
+      // validate aX
+      auto aX_sorted = aX;
+      std::sort(std::begin(aX_sorted), std::end(aX_sorted));
+      assert(
+          std::unique(std::begin(aX_sorted), std::end(aX_sorted)) == std::end(aX_sorted));
+
+      // validate aY
+      auto aY_sorted = aY;
+      std::sort(std::begin(aY_sorted), std::end(aY_sorted));
+      assert(
+          std::unique(std::begin(aY_sorted), std::end(aY_sorted)) == std::end(aY_sorted));
+
+      // and aX against aY
+      assert(std::equal(std::begin(aX_sorted), std::end(aX_sorted), std::begin(aY_sorted)));
+    }
+
+   // calculate permutation
+   typedef btas::varray<size_t> _Permutation;
+   _Permutation prm(Xrank);
+
+   const auto first = std::begin(aX);
+   const auto last  = std::end(aX);
+   auto aY_iter = std::begin(aY);
+   for(size_t i = 0; i < Xrank; ++i, ++aY_iter)
+   {
+      auto found = std::find(std::begin(aX), std::end(aX), *aY_iter);
       assert(found != last);
-      __permute_index[i] = std::distance(first, found);
+      prm[i] = std::distance(first, found);
    }
 
    // call permute
-   permute(X, __permute_index, Y);
+   permute(X, prm, Y);
 }
 
 } // namespace btas

@@ -9,7 +9,6 @@ include ../options.mk
 ####################################
 
 SOURCES=option.cc 
-SOURCES+= error.cc 
 SOURCES+= index.cc 
 SOURCES+= itensor.cc 
 #SOURCES+= iqindex.cc 

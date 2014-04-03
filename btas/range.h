@@ -273,9 +273,9 @@ namespace btas {
         validate(lobound, upbound);
 
         lobound_ = array_adaptor<index_type>::construct(n);
-        std::copy(lobound.begin(), lobound.end(), lobound_.begin());
+        std::copy(std::begin(lobound), std::end(lobound), std::begin(lobound_));
         upbound_ = array_adaptor<index_type>::construct(n);
-        std::copy(upbound.begin(), upbound.end(), upbound_.begin());
+        std::copy(std::begin(upbound), std::end(upbound), std::begin(upbound_));
       }
 
       template <typename Index1, typename Index2>
@@ -286,8 +286,8 @@ namespace btas {
 
         typedef typename common_signed_type<typename Index1::value_type, typename Index2::value_type>::type ctype;
         for(auto i = 0; i != n; ++i) {
-          auto li = *(lobound.begin() + i);
-          auto ui = *(upbound.begin() + i);
+          auto li = *(std::begin(lobound) + i);
+          auto ui = *(std::begin(upbound) + i);
           assert(static_cast<ctype>(li) <= static_cast<ctype>(ui));
         }
       }
@@ -417,7 +417,7 @@ namespace btas {
       /// returns the Range1 corresponding to the dimension \c d
       /// \param d the dimension index
       Range1d<typename index_type::value_type> range(size_t d) const {
-        return Range1d<typename index_type::value_type>(*(lobound_.begin()+d), *(upbound_.begin()+d));
+        return Range1d<typename index_type::value_type>(*(std::begin(lobound_)+d), *(std::begin(upbound_)+d));
       }
 
       /// Rank accessor
@@ -473,7 +473,7 @@ namespace btas {
       size_type area() const {
         if (rank()) {
           const extent_type ex = extent();
-          return std::accumulate(ex.begin(), ex.end(), 1ul, std::multiplies<size_type>());
+          return std::accumulate(std::begin(ex), std::end(ex), 1ul, std::multiplies<size_type>());
         }
         else
           return 0;
@@ -514,7 +514,7 @@ namespace btas {
         }
 
         // if the current location is outside the range, make it equal to range end iterator
-        std::copy(upbound_.begin(), upbound_.end(), i.begin());
+        std::copy(std::begin(upbound_), std::end(upbound_), std::begin(i));
       }
 
 #if 0
@@ -758,6 +758,20 @@ namespace btas {
         ordinal_ = _Ordinal(lb, ub);
       }
 
+      /// to construct RangeNd from Range1d given N {Range1d, Range1d, ... Range1d}
+      template <typename T>
+      RangeNd(Range1d<T> range1, size_type n) :
+        base_type()
+      {
+        assert(range1.stride() == 1);
+
+        std::vector<long> lb(n, range1.lobound());
+        std::vector<long> ub(n, range1.upbound());
+
+        base_type::init(lb, ub);
+        ordinal_ = _Ordinal(lb, ub);
+      }
+
       /// Copy Constructor
 
       /// \param other The range to be copied
@@ -899,7 +913,7 @@ namespace btas {
         }
 
         // if outside the range, point to the upper bound ... Range::end() will evaluate to upbound also! Range will use this
-        std::copy(this->upbound_.begin(), this->upbound_.end(), i.first.begin());
+        std::copy(std::begin(this->upbound_), std::end(this->upbound_), std::begin(i.first));
         i.second = ordinal(i.first);
       }
 
@@ -987,8 +1001,9 @@ namespace btas {
               typename _Ordinal,
               typename AxisPermutation,
               class = typename std::enable_if<btas::is_index<AxisPermutation>::value>::type>
-    RangeNd<_Order, _Index> permute(const RangeNd<_Order, _Index, _Ordinal>& r,
-                                    const AxisPermutation& perm)
+    RangeNd<_Order, _Index> 
+    permute(const RangeNd<_Order, _Index, _Ordinal>& r,
+            const AxisPermutation& perm)
     {
       const auto rank = r.rank();
       auto lb = r.lobound();
@@ -999,10 +1014,10 @@ namespace btas {
       lobound = array_adaptor<index_type>::construct(rank);
       upbound = array_adaptor<index_type>::construct(rank);
 
-      std::for_each(perm.begin(), perm.end(), [&](const typename AxisPermutation::value_type& i){
-        const auto pi = *(perm.begin() + i);
-        *(lobound.begin()+i) = *(lb.begin() + pi);
-        *(upbound.begin()+i) = *(ub.begin() + pi);
+      std::for_each(std::begin(perm), std::end(perm), [&](const typename AxisPermutation::value_type& i){
+        const auto pi = *(std::begin(perm) + i);
+        *(std::begin(lobound)+i) = *(std::begin(lb) + pi);
+        *(std::begin(upbound)+i) = *(std::begin(ub) + pi);
       });
 
       return RangeNd<_Order, _Index, _Ordinal>(std::move(lobound), std::move(upbound), permute(r.ordinal(), perm) );
@@ -1017,13 +1032,199 @@ namespace btas {
               typename _Index,
               typename _Ordinal,
               typename T>
-    RangeNd<_Order, _Index, _Ordinal> permute(const RangeNd<_Order, _Index, _Ordinal>& r,
-                                              std::initializer_list<T> perm)
+    RangeNd<_Order, _Index, _Ordinal> 
+    permute(const RangeNd<_Order, _Index, _Ordinal>& r,
+            std::initializer_list<T> perm)
     {
       typename RangeNd<_Order, _Index, _Ordinal>::extent_type p = array_adaptor<decltype(p)>::construct(perm.size());
-      std::copy(perm.begin(), perm.end(), p.begin());
+      std::copy(std::begin(perm), std::end(perm), std::begin(p));
       return permute(r, p);
     }
+
+    /// Takes the diagonal part of a range
+
+    /// Given a RangeNd, returns a new RangeNd whose indices increase in lock step.
+    /// Requires \c lobound() to be uniform {n,n,n,...}.
+    /// Iterating over the returned range yields:
+    /// {n,n,n,...}
+    /// {n+1,n+1,n+1,...}
+    /// {n+2,n+2,n+2,...}
+    /// up to \c upbound()
+    template <CBLAS_ORDER _Order,
+              typename _Index,
+              typename _Ordinal>
+    RangeNd<_Order, _Index> 
+    diag(const RangeNd<_Order, _Index, _Ordinal>& r)
+      {
+      if(r.rank() == 0) return r;
+      using index_value = typename RangeNd<_Order,_Index>::index_type::value_type;
+      index_value stride = 1,
+                  prod_extents = 1,
+                  extent = r.upbound()[0];
+      const auto dr = _Order == CblasRowMajor ? Range1(r.rank()-1,0,-1) 
+                                              : Range1(0,r.rank()-1,1);
+      for(const auto i : dr)
+        {
+        assert(r.lobound()[0] == r.lobound()[i]);
+        prod_extents *= (r.upbound()[i]-r.lobound()[i]);
+        stride += prod_extents;
+        extent = std::min(extent,r.upbound()[i]);
+        }
+      return RangeNd<_Order,_Index>({r.lobound()[0]},{extent},{stride});
+      }
+
+    /// Group a set of adjacent indices of a Range
+
+    /// Combine/group/flatten a set of adjacent indices into a single index.
+    /// Groups the indices from [istart,iend) not including iend.
+    /// If the original indices have extents e1,e2,e3,... the grouped index
+    /// will have extent e1*e2*e3*...
+    template <CBLAS_ORDER _Order,
+              typename _Index,
+              typename _Ordinal>
+    RangeNd<_Order, _Index,_Ordinal> 
+    group(const RangeNd<_Order, _Index, _Ordinal>& r,
+          size_t istart,
+          size_t iend)
+      {
+      using index_type = typename RangeNd<_Order,_Index,_Ordinal>::index_type;
+      using index_value = typename index_type::value_type;
+
+      if(r.rank() == 0 || iend <= (istart+1)) return r;
+      const auto ngroup = iend-istart;
+      const auto newr = r.rank()-ngroup+1;
+      assert(ngroup >= 2);
+      assert(r.rank() >= ngroup);
+      assert(iend > 0);
+
+      index_type lobound(newr),
+                 upbound(newr);
+      for(size_t i = 0; i < istart; ++i)
+          {
+          lobound[i] = r.lobound()[i];
+          upbound[i] = r.upbound()[i];
+          }
+      lobound[istart] = 0;
+      upbound[istart] = 1;
+      for(size_t i = istart; i < iend; ++i)
+          {
+          upbound[istart] *= (r.upbound()[i]-r.lobound()[i]);
+          }
+      for(size_t i = iend, j = istart+1; i < r.rank(); ++i,++j)
+          {
+          lobound[j] = r.lobound()[i];
+          upbound[j] = r.upbound()[i];
+          }
+
+      return RangeNd<_Order,_Index,_Ordinal>(lobound,upbound);
+      }
+
+    template <CBLAS_ORDER _Order,
+              typename _Index,
+              typename _Ordinal>
+    RangeNd<_Order, _Index,_Ordinal> 
+    flatten(const RangeNd<_Order, _Index, _Ordinal>& r)
+      {
+      using index_value = typename RangeNd<_Order,_Index,_Ordinal>::index_type::value_type;
+      index_value lobound = 0,
+                  upbound = 1;
+      for(size_t i = 0; i < r.rank(); ++i)
+          {
+          upbound *= (r.upbound()[i]-r.lobound()[i]);
+          }
+      return RangeNd<_Order,_Index,_Ordinal>({lobound},{upbound});
+      }
+
+    ///
+    /// Tie (i.e. lock or fuse) N indices together, returning a range with (N-1) fewer indices.
+    /// The position of the tied index is the position of the first index in the group.
+    /// Example:
+    /// std::vector<std::size_t> inds = { 0, 2 };
+    /// tie(T,inds)(i,j) = T(i,j,i)
+    ///
+    template <CBLAS_ORDER _Order,
+              typename _Index,
+              typename _Ordinal,
+              typename ArrayType>
+    RangeNd<_Order, _Index,_Ordinal> 
+    tieIndex(const RangeNd<_Order, _Index, _Ordinal>& r,
+             const ArrayType& inds)
+      {
+      using index_type = typename RangeNd<_Order,_Index,_Ordinal>::index_type;
+      using index_value = typename index_type::value_type;
+
+      if(inds.size() < 2) return r;
+      assert(inds.size() <= r.rank());
+
+      auto newr = r.rank()-(inds.size()-1);
+      auto ti = inds[0];
+      auto tbegin = r.lobound()[ti];
+      auto tend = r.upbound()[ti];
+      for(const auto i : inds)
+          {
+          assert(i < r.rank());
+          ti = std::min(ti,i);
+          tbegin = std::max(tbegin,r.lobound()[i]);
+          tend = std::min(tend,r.upbound()[i]);
+          }
+      if(ti >= newr) ti = newr-1;
+
+      index_type lobound(newr),
+                 upbound(newr),
+                 stride(newr);
+
+      stride[ti] = 0;
+      lobound[ti] = tbegin;
+      upbound[ti] = tend;
+
+      const auto dr = (_Order == CblasRowMajor) ? Range1(r.rank()-1,-1,-1) 
+                                                : Range1(0,r.rank(),1);
+      const auto nr = (_Order == CblasRowMajor) ? Range1(newr-1,-1,-1) 
+                                                : Range1(0,newr,1);
+      index_value prod_extents = 1;
+      auto it = nr.begin();
+      for(const auto i : dr)
+          {
+          bool is_tied = false;
+          for(auto j : inds) if(i == j)
+              {
+              is_tied = true; 
+              break; 
+              }
+          if(is_tied)
+              {
+              stride[ti] += prod_extents;
+              }
+          else
+              {
+              if(*it == ti) ++it;
+              stride[*it] = prod_extents;
+              lobound[*it] = r.lobound()[i];
+              upbound[*it] = r.upbound()[i];
+              ++it;
+              }
+          prod_extents *= (r.upbound()[i]-r.lobound()[i]);
+          }
+
+      return RangeNd<_Order,_Index,_Ordinal>(lobound,upbound,stride);
+      }
+
+    ///
+    /// tieIndex wrapper taking a variadic list of integers 
+    ///
+    template <CBLAS_ORDER _Order,
+              typename _Index,
+              typename _Ordinal,
+              typename... _args>
+    RangeNd<_Order, _Index,_Ordinal> 
+    tieIndex(const RangeNd<_Order, _Index, _Ordinal>& r,
+             size_t i0,
+             const _args&... rest)
+        {
+        const auto size = 1 + sizeof...(rest);
+        std::array<size_t,size> inds = { i0, static_cast<size_t>(rest)...};
+        return tieIndex(r,inds);
+        }
 
 
     template <CBLAS_ORDER _Order,

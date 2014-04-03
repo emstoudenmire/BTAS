@@ -17,6 +17,14 @@ template<typename T> using vectorref = StorageRef<std::vector<T> >;
 int main()
 {
   //////////////////////////////////////////////////////////////////////////////
+  // varray tests
+  //////////////////////////////////////////////////////////////////////////////
+  cout << "sizeof(btas::varray<double>) = " << sizeof(btas::varray<double>) << endl;
+  cout << "sizeof(std::vector<double>) = " << sizeof(vector<double>) << endl;
+  cout << "sizeof(std::tuple<double*,double*,std::allocator<double>>) = " << sizeof(tuple<double*,double*,std::allocator<double>>) << endl;
+  cout << "sizeof(std::pair<double*,std::allocator<double>>) = " << sizeof(pair<double*,std::allocator<double>>) << endl;
+
+  //////////////////////////////////////////////////////////////////////////////
   // Range1 tests
   //////////////////////////////////////////////////////////////////////////////
   {
@@ -46,8 +54,8 @@ int main()
   // Range tests
   //////////////////////////////////////////////////////////////////////////////
 
-  std::array<long, 3> begin = {-1,-1,-1};
-  std::array<std::size_t, 3> size = {3,2,3};
+  const auto begin = std::array<long, 3>{{-1,-1,-1}};
+  const auto size = std::array<std::size_t, 3>{{3,2,3}};
   // default (empty) Range
   Range x0;
   cout << "x0 = " << x0 << " area=" << x0.area() << endl;
@@ -83,7 +91,7 @@ int main()
     }
   }
 
-  array<size_t, 3> p = {2,0,1};
+  const auto p = array<size_t, 3>{{2,0,1}};
   auto x2p = permute(x2, p);
   cout << "x2 = " << x2 << endl;
   cout << "x2.permute(" << p << ") = " << x2p << endl;

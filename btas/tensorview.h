@@ -67,18 +67,10 @@ namespace btas {
       ~TensorView () { }
 
       /// construct from \c range and \c storage
-      explicit
-      TensorView (const range_type& range, const nonconst_storage_type& storage) :
-      range_(range), storageref_(storage)
-      {
-      }
-
-      /// construct from \c range and \c storage
       template <typename S = _Storage>
       explicit
-      TensorView (const range_type& range, nonconst_storage_type& storage,
-                  typename std::enable_if<not std::is_const<S>::value>::type* = 0) :
-      range_(range), storageref_(storage)
+      TensorView (const range_type& range, S& storage)
+      : range_(range), storageref_(storage)
       {
       }
 
@@ -258,7 +250,7 @@ namespace btas {
         typedef typename common_signed_type<index0, typename index_type::value_type>::type ctype;
         auto indexv = {static_cast<ctype>(first), static_cast<ctype>(rest)...};
         index_type index = array_adaptor<index_type>::construct(indexv.size());
-        std::copy(indexv.begin(), indexv.end(), index.begin());
+        std::copy(std::begin(indexv), std::end(indexv), std::begin(index));
         return storageref_[ range_.ordinal(index) ];
       }
 
@@ -278,7 +270,7 @@ namespace btas {
         typedef typename common_signed_type<index0, typename index_type::value_type>::type ctype;
         auto indexv = {static_cast<ctype>(first), static_cast<ctype>(rest)...};
         index_type index = array_adaptor<index_type>::construct(indexv.size());
-        std::copy(indexv.begin(), indexv.end(), index.begin());
+        std::copy(std::begin(indexv), std::end(indexv), std::begin(index));
         return storageref_[ range_.ordinal(index) ];
       }
 
@@ -298,7 +290,7 @@ namespace btas {
         typedef typename common_signed_type<index0, typename index_type::value_type>::type ctype;
         auto indexv = {static_cast<ctype>(first), static_cast<ctype>(rest)...};
         index_type index = array_adaptor<index_type>::construct(indexv.size());
-        std::copy(indexv.begin(), indexv.end(), index.begin());
+        std::copy(std::begin(indexv), std::end(indexv), std::begin(index));
         assert( range_.includes(index) );
         return storageref_[ range_.ordinal(index) ];
       }
@@ -320,7 +312,7 @@ namespace btas {
         typedef typename common_signed_type<index0, typename index_type::value_type>::type ctype;
         auto indexv = {static_cast<ctype>(first), static_cast<ctype>(rest)...};
         index_type index = array_adaptor<index_type>::construct(indexv.size());
-        std::copy(indexv.begin(), indexv.end(), index.begin());
+        std::copy(std::begin(indexv), std::end(indexv), std::begin(index));
         assert( range_.includes(index) );
         return storageref_[ range_.ordinal(index) ];
       }

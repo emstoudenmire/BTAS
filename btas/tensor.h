@@ -177,9 +177,9 @@ namespace btas {
       /// It will accept Tensors and TensorViews
       template<class _Tensor, class = typename std::enable_if<is_boxtensor<_Tensor>::value>::type>
       Tensor (const _Tensor& x)
-      : range_ (x.range().lobound(), x.range().upbound()),
-      // TODO this can be optimized to bitewise copy if x::value_type and my value_type are equal, and storage is linear
-        storage_(x.storage())
+        :  
+        range_ (x.range().lobound(), x.range().upbound()),
+        storage_(x.cbegin(),x.cend())
       {
       }
 
@@ -203,7 +203,7 @@ namespace btas {
       {
           range_ = range_type(x.range().lobound(), x.range().upbound());
           array_adaptor<storage_type>::resize(storage_, range_.area());
-          std::copy(x.begin(), x.end(), storage_.begin());
+          std::copy(std::begin(x), std::end(x), std::begin(storage_));
           return *this;
       }
 
@@ -293,42 +293,42 @@ namespace btas {
       const_iterator
       begin() const
       {
-        return storage_.begin();
+        return cbegin();
       }
 
       /// \return const iterator end
       const_iterator
       end() const
       {
-        return storage_.end();
+        return cend();
       }
 
       /// \return const iterator begin, even if this is not itself const
       const_iterator
       cbegin() const
       {
-        return storage_.begin();
+        return std::begin(const_cast<const storage_type&>(storage_));
       }
 
       /// \return const iterator end, even if this is not itself const
       const_iterator
       cend() const
       {
-        return storage_.end();
+        return std::end(const_cast<const storage_type&>(storage_));
       }
 
       /// \return iterator begin
       iterator
       begin()
       {
-        return storage_.begin();
+        return std::begin(storage_);
       }
 
       /// \return iterator end
       iterator
       end()
       {
-        return storage_.end();
+        return std::end(storage_);
       }
 
       /// \return number of elements
@@ -373,7 +373,7 @@ namespace btas {
         typedef typename common_signed_type<index0, typename index_type::value_type>::type ctype;
         auto indexv = {static_cast<ctype>(first), static_cast<ctype>(rest)...};
         index_type index = array_adaptor<index_type>::construct(indexv.size());
-        std::copy(indexv.begin(), indexv.end(), index.begin());
+        std::copy(std::begin(indexv), std::end(indexv), std::begin(index));
         return storage_[ range_.ordinal(index) ];
       }
 
@@ -407,7 +407,7 @@ namespace btas {
         typedef typename common_signed_type<index0, typename index_type::value_type>::type ctype;
         auto indexv = {static_cast<ctype>(first), static_cast<ctype>(rest)...};
         index_type index = array_adaptor<index_type>::construct(indexv.size());
-        std::copy(indexv.begin(), indexv.end(), index.begin());
+        std::copy(std::begin(indexv), std::end(indexv), std::begin(index));
         return storage_[ range_.ordinal(index) ];
       }
 
@@ -447,7 +447,7 @@ namespace btas {
         typedef typename common_signed_type<index0, typename index_type::value_type>::type ctype;
         auto indexv = {static_cast<ctype>(first), static_cast<ctype>(rest)...};
         index_type index = array_adaptor<index_type>::construct(indexv.size());
-        std::copy(indexv.begin(), indexv.end(), index.begin());
+        std::copy(std::begin(indexv), std::end(indexv), std::begin(index));
         assert( range_.includes(index) );
         return storage_[ range_.ordinal(index) ];
       }
@@ -478,7 +478,7 @@ namespace btas {
         typedef typename common_signed_type<index0, typename index_type::value_type>::type ctype;
         auto indexv = {static_cast<ctype>(first), static_cast<ctype>(rest)...};
         index_type index = array_adaptor<index_type>::construct(indexv.size());
-        std::copy(indexv.begin(), indexv.end(), index.begin());
+        std::copy(std::begin(indexv), std::end(indexv), std::begin(index));
         assert( range_.includes(index) );
         return storage_[ range_.ordinal(index) ];
       }
@@ -548,7 +548,7 @@ namespace btas {
       operator+= (const Tensor& x)
       {
         assert( std::equal(range_.begin(), range_.end(), x.range_.begin()) );
-        std::transform(storage_.begin(), storage_.end(), x.storage_.begin(), storage_.begin(), std::plus<value_type>());
+        std::transform(std::begin(storage_), std::end(storage_), std::begin(x.storage_), std::begin(storage_), std::plus<value_type>());
         return *this;
       }
 
@@ -566,7 +566,7 @@ namespace btas {
       {
         assert(
             std::equal(range_.begin(), range_.end(), x.range_.begin()));
-        std::transform(storage_.begin(), storage_.end(), x.storage_.begin(), storage_.begin(), std::minus<value_type>());
+        std::transform(std::begin(storage_), std::end(storage_), std::begin(x.storage_), std::begin(storage_), std::minus<value_type>());
         return *this;
       }
 
@@ -598,7 +598,7 @@ namespace btas {
       void
       fill (const value_type& val)
       {
-        std::fill(storage_.begin(), storage_.end(), val);
+        std::fill(std::begin(storage_), std::end(storage_), val);
       }
 
       /// generate all elements by gen()
@@ -606,7 +606,7 @@ namespace btas {
       void
       generate (Generator gen)
       {
-          std::generate(storage_.begin(), storage_.end(), gen);
+          std::generate(std::begin(storage_), std::end(storage_), gen);
       }
 
     private:
@@ -616,33 +616,33 @@ namespace btas {
 
   }; // end of Tensor
 
-  template <typename _T, typename _Range, typename _Storage>
-  auto cbegin(const btas::Tensor<_T, _Range, _Storage>& x) -> decltype(x.cbegin()) {
+  template <class _Tensor, class = typename std::enable_if<btas::is_boxtensor<_Tensor>::value>::type>
+  auto cbegin(const _Tensor& x) -> decltype(x.cbegin()) {
     return x.cbegin();
   }
-  template <typename _T, typename _Range, typename _Storage>
-  auto cend(const btas::Tensor<_T, _Range, _Storage>& x) -> decltype(x.cbegin()) {
+  template <class _Tensor, class = typename std::enable_if<btas::is_boxtensor<_Tensor>::value>::type>
+  auto cend(const _Tensor& x) -> decltype(x.cbegin()) {
     return x.cend();
   }
 
   /// maps Tensor -> Range
-  template <typename _T, typename _Range, typename _Storage>
+  template <class _Tensor, class = typename std::enable_if<btas::is_boxtensor<_Tensor>::value>::type>
   auto
-  range (const btas::Tensor<_T, _Range, _Storage>& t) -> decltype(t.range()) {
+  range (const _Tensor& t) -> decltype(t.range()) {
     return t.range();
   }
 
   /// maps Tensor -> Range extent
-  template <typename _T, typename _Range, typename _Storage>
+  template <class _Tensor, class = typename std::enable_if<btas::is_boxtensor<_Tensor>::value>::type>
   auto
-  extent (const btas::Tensor<_T, _Range, _Storage>& t) -> decltype(t.range().extent()) {
+  extent (const _Tensor& t) -> decltype(t.range().extent()) {
     return t.range().extent();
   }
 
   /// maps Tensor -> Range rank
-  template <typename _T, typename _Range, typename _Storage>
+  template <class _Tensor, class = typename std::enable_if<btas::is_boxtensor<_Tensor>::value>::type>
   auto
-  rank (const btas::Tensor<_T, _Range, _Storage>& t) -> decltype(t.rank()) {
+  rank (const _Tensor& t) -> decltype(t.rank()) {
     return t.rank();
   }
 
@@ -652,8 +652,8 @@ namespace btas {
   /// \param os The output stream that will be used to print \c t
   /// \param t The Tensor to be printed
   /// \return A reference to the output stream
-  template <typename _T, typename _Range, typename _Storage>
-  std::ostream& operator<<(std::ostream& os, const btas::Tensor<_T, _Range, _Storage>& t) {
+  template <class _Tensor, class = typename std::enable_if<btas::is_boxtensor<_Tensor>::value>::type>
+  std::ostream& operator<<(std::ostream& os, const _Tensor& t) {
     os << "Tensor:\n  Range: " << t.range() << std::endl;
     return os;
   }
@@ -664,9 +664,8 @@ namespace boost {
 namespace serialization {
 
   /// boost serialization
-  template<class Archive, typename _T, class _Storage, class _Range>
-  void serialize(Archive& ar, btas::Tensor<_T, _Range, _Storage>& t,
-                 const unsigned int version) {
+  template<class Archive, class _Tensor, class = typename std::enable_if<btas::is_boxtensor<_Tensor>::value>::type>
+  void serialize(Archive& ar, _Tensor& t, const unsigned int version) {
     ar & t.range() & t.storage();
   }
 

@@ -213,17 +213,17 @@ conj(IndexVal res) { res.conj(); return res; }
 //Return a copy of I, increasing primelevel.
 template<class T>
 T
-primed(T I, int inc = 1) { I.prime(inc); return I; }
+prime(T I, int inc = 1) { I.prime(inc); return I; }
 
 //Return a copy of I, increasing primelevel if I.type() == type
 template<class T>
 T 
-primed(T I, IndexType type, int inc = 1) { I.prime(type,inc); return I; }
+prime(T I, IndexType type, int inc = 1) { I.prime(type,inc); return I; }
 
 //Return a copy of I with primelevel set to zero.
 template<class T>
 T
-deprimed(T I, IndexType type = All) { I.noprime(type); return I; }
+deprime(T I, IndexType type = All) { I.noprime(type); return I; }
 
 //Return a copy of I with prime level changed to plevnew if
 //old prime level was plevold. Otherwise has no effect.

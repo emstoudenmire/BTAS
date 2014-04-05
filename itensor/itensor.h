@@ -330,13 +330,13 @@ operator-(ITensor A, const ITensor& B) { A -= B; return A; }
 //(or optional amount inc)
 template <class Tensor, class IndexT>
 Tensor
-primed(Tensor A, const IndexT& I, int inc = 1)
+prime(Tensor A, const IndexT& I, int inc = 1)
     { A.prime(I,inc); return A; }
 
 //Return copy of ITensor with primeLevel of Index I set to zero
 template <class Tensor, class IndexT>
 Tensor
-deprimed(Tensor A, const IndexT& I)
+deprime(Tensor A, const IndexT& I)
     { A.noprime(I); return A; }
 
 std::ostream& 

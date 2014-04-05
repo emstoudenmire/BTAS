@@ -12,8 +12,8 @@
 #include <fstream>
 #include <complex>
 #include "assert.h"
+#include <unistd.h>
 
-#include "boost/array.hpp"
 #include "boost/format.hpp"
 
 #include "itensor/real.h"

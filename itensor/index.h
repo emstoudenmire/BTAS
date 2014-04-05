@@ -4,8 +4,8 @@
 //
 #ifndef __ITENSOR_INDEX_H
 #define __ITENSOR_INDEX_H
-#include "boost/shared_ptr.hpp"
 #include "itensor/global.h"
+#include <memory>
 
 #define Cout std::cout
 #define Endl std::endl
@@ -19,8 +19,6 @@ enum IndexType { Link, Site, All };
 struct IndexDat;
 class IndexVal;
 
-typedef boost::shared_ptr<IndexDat>
-IndexDatPtr;
 
 //
 // Index
@@ -166,7 +164,7 @@ class Index
     private:
 
     /////////////
-    IndexDatPtr p;
+    std::shared_ptr<IndexDat> p;
 
     int primelevel_; 
     /////////////

@@ -4,7 +4,6 @@
 //
 #ifndef __ITENSOR_INDEXSET_H
 #define __ITENSOR_INDEXSET_H
-#include "boost/make_shared.hpp"
 #include "itensor/index.h"
 
 #define Cout std::cout
@@ -44,14 +43,11 @@ class IndexSet
     // Type definitions
     //
 
-    typedef std::array<IndexT,NMAX>
-    Storage;
+    using Storage = std::array<IndexT,NMAX>;
 
-    typedef typename Storage::const_iterator 
-    const_iterator;
+    using const_iterator = typename Storage::const_iterator;
 
-    typedef typename boost::shared_ptr<IndexSet<IndexT> >
-    Ptr;
+    using Ptr = typename std::shared_ptr<IndexSet<IndexT>>;
 
     //
     // Accessor Methods
@@ -159,7 +155,7 @@ class IndexSet
 
     static const Ptr& Null()
         {
-        static Ptr Null_ = boost::make_shared<IndexSet<IndexT> >();
+        static Ptr Null_ = std::make_shared<IndexSet<IndexT> >();
         return Null_;
         }
 

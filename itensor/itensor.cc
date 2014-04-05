@@ -79,7 +79,7 @@ ITensor(const Index& i1, const Index& i2, const Index& i3,
         Error("i3 is null");
 #endif
     std::array<Index,NMAX> ii = {{ i1, i2, i3, i4, i5, i6, i7, i8 }};
-    std::vector<size_t> extents = { i1.m(), i2.m(), i3.m() };
+    std::vector<int> extents = { i1.m(), i2.m(), i3.m() };
     int r = 3;
 	for(; r < 8 && ii[r] != Index::Null(); ++r)
         {

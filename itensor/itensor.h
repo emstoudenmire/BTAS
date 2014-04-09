@@ -8,9 +8,7 @@
 #include "itensor/indexset.h"
 #include "btas/tensor.h"
 
-#define Cout std::cout
-#define Endl std::endl
-#define Format boost::format
+#include "itensor/itdat.h"
 
 namespace itensor {
 
@@ -21,8 +19,10 @@ class ITensor
     {
     public:
 
-    using storage = btas::Tensor<Real>;
-    using storage_ptr = std::shared_ptr<storage>;
+    using storage = ITDat;
+    using storage_ptr = std::shared_ptr<ITDat>;
+    using IndexT = Index;
+    using IndexValT = IndexVal;
 
     //
     //Accessor Methods
@@ -34,7 +34,7 @@ class ITensor
 
     //true if ITensor is default constructed
     bool 
-    empty() const { return !bool(r_); }
+    empty() const { return !bool(d_); }
 
     //Enables looping over Indices in a Foreach
     //e.g. Foreach(const Index& I, t.index() ) { ... }
@@ -139,160 +139,36 @@ class ITensor
     Real
     toReal() const;
 
-    // IndexVal element access
-    // Given iv1 = (I1,n1), iv2 = (I2,n2), ...
-    // returns component of ITensor such that
-    // I1 temporarily set to n1, I2 to n2, etc.
-    // Can be used to set components of ITensors
-    // as well, for example, T(I1(2),I2(1)) = 3;
-    Real& 
-    operator()(const IndexVal& iv1);
-
-    Real 
-    operator()(const IndexVal& iv1) const;
-
-    Real& 
-    operator()(const IndexVal& iv1, const IndexVal& iv2);
-
-    Real 
-    operator()(const IndexVal& iv1, const IndexVal& iv2) const;
-
-    Real& 
-    operator()(const IndexVal& iv1, const IndexVal& iv2, const IndexVal& iv3);
-
-    Real 
-    operator()(const IndexVal& iv1, const IndexVal& iv2, const IndexVal& iv3) const;
-
-    //
-    //Methods for Mapping to Other Objects
-    //
-
-    //
-    // groupIndices combines a set of indices (of possibly different sizes) 
-    // together, leaving only single grouped Index.
-    //
-    // RiJ = Ai(jk) <-- Here J represents the grouped pair of indices (jk)
-    //                  If j.m() == 5 and k.m() == 7, J.m() == 5*7.
-    //
-    void 
-    groupIndices(const std::array<Index,NMAX+1>& indices, int nind, 
-                      const Index& grouped, ITensor& res) const;
-
-    //
-    // tieIndices locks a set of indices (of the same size) together,
-    // leaving only a single tied Index.
-    //
-    // Rijl = Aijil <-- here we have tied the 1st and 3rd index of A
-    //
-    void
-    tieIndices(const std::array<Index,NMAX>& indices, int nind,
-               const Index& tied);
-
-    void
-    tieIndices(const Index& i1, const Index& i2,
-               const Index& tied);
-
-
-    void
-    tieIndices(const Index& i1, const Index& i2,
-               const Index& i3,
-               const Index& tied);
-
-
-    void
-    tieIndices(const Index& i1, const Index& i2,
-               const Index& i3, const Index& i4,
-               const Index& tied);
-
-
-    // The trace method sums over the given set of indices
-    // (which must all have the same dimension).
-    //
-    // Rik = Aijkml.trace(j,l,m) = \sum_t Aitktt
-    ITensor&
-    trace(const Index& i1, 
-          const Index& i2 = Index::Null(), 
-          const Index& i3 = Index::Null(),
-          const Index& i4 = Index::Null(),
-          const Index& i5 = Index::Null(),
-          const Index& i6 = Index::Null(),
-          const Index& i7 = Index::Null(),
-          const Index& i8 = Index::Null());
-
-    ITensor&
-    trace(const std::array<Index,NMAX>& indices, int nind = -1);
-
-
-    //
-    // expandIndex replaces a smaller index with a bigger one, padding out
-    // the elements of the resulting ITensor with zeros as necessary.
-    // Say we have a tensor Aij and j has range m. Now expand j with 
-    // a larger Index J. The result is RiJ, where
-    //        _
-    // RiJ = |  Ai(j=J-start+1) for J = start...start+m
-    //       |_ 0               otherwise
-    //        
-    void 
-    expandIndex(const Index& small, const Index& big, int start);
-
     void
     swap(ITensor& other);
 
-    //TODO remove this test
-    //ITensor
-    //testMethod(const std::array<Index,NMAX>& indices, int nind,
-    //           const Index& tied) const;
+    void
+    fill(Real r);
 
+    //Real 
+    //norm() const;
 
-    //Other Methods -------------------------------------------------
+    //LogNumber 
+    //normLogNum() const;
 
-    const Real*
-    data() const;
-
-    void 
-    randomize(const OptSet& opts = Global::opts());
-
-    Real 
-    norm() const;
-
-    LogNumber 
-    normLogNum() const;
-
-    Real 
-    normNoScale() const;
+    //Real 
+    //normNoScale() const;
 
     void 
     scaleTo(const LogNumber& newscale);
-
-    //
-    // Typedefs
-    //
-
-    typedef Index 
-    IndexT;
-
-    typedef IndexVal 
-    IndexValT;
 
     private:
 
     //////////////
 
-    //Pointer to ITDat containing tensor data
-    storage_ptr r_; //real part
+    storage_ptr d_;
 
     //Indices, maximum of 8
     IndexSet<Index> is_;
 
-    //scale_ absorbs scalar factors to avoid copying ITDat
-    LogNumber scale_; 
+    LogNumber scale_;
 
     //////////////
-
-    void 
-    allocate(int dim);
-    void 
-    allocate();
 
     //Disattach self from current ITDat and create own copy instead.
     //Necessary because ITensors logically represent distinct
@@ -344,8 +220,5 @@ operator<<(std::ostream & s, const ITensor& T);
 
 }; //namespace itensor
 
-#undef Cout
-#undef Endl
-#undef Format
 
 #endif

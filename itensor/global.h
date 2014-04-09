@@ -14,12 +14,39 @@
 #include "assert.h"
 #include <unistd.h>
 
-#include "boost/format.hpp"
+#include "tinyformat.h"
 
 #include "itensor/real.h"
 #include "itensor/option.h"
 
 namespace itensor {
+
+using tinyformat::printf;
+using tinyformat::format;
+
+template <typename... Args>
+void
+printn(const char* fmt_string, const Args&... args)
+    {
+    tinyformat::printf(fmt_string,args...);
+    std::cout << std::endl;
+    }
+void inline
+printn(const char* string)
+    {
+    std::cout << string << std::endl;
+    }
+
+enum Printdat { ShowData, HideData };
+
+#define PrintEither(X,Y) \
+    {\
+    if(Y) printn("\n%s = %f",#X,X);\
+    else  printn("\n%s = %s",#X,X);\
+    }
+#define PrintVar(X)  PrintEither(X,false)
+#define PrintData(X) PrintEither(X,true)
+
 
 enum Direction { Fromright, Fromleft, Both, None };
 
@@ -52,42 +79,12 @@ static const Complex Complex_i = Complex(0,1);
 #endif
 
 
-#ifdef DEBUG
-#define DO_IF_DEBUG(X) X
-#else
-#define DO_IF_DEBUG(X)
-#endif
-
-
-#ifdef DEBUG
-#define GET(container,j) (container.at(j))
-#else
-#define GET(container,j) (container[j])
-#endif	
-
-enum Printdat { ShowData, HideData };
-
-#define PrintEither(X,Y) \
-    {\
-    const bool savep = Global::printdat();\
-    Global::printdat() = Y; \
-    std::cout << "\n" << #X << " =\n" << X << std::endl; \
-    Global::printdat() = savep;\
-    }
-#define Print(X)    PrintEither(X,false)
-#define PrintDat(X) PrintEither(X,true)
-
 
 bool inline
 fileExists(const std::string& fname)
     {
     std::ifstream file(fname.c_str());
     return file.good();
-    }
-bool inline
-fileExists(const boost::format& fname)
-    {
-    return fileExists(fname.str());
     }
 
 
@@ -102,13 +99,6 @@ readFromFile(const std::string& fname, T& t)
     s.close(); 
     }
 
-template<class T> 
-void inline
-readFromFile(const boost::format& fname, T& t) 
-    { 
-    readFromFile(fname.str(),t);
-    }
-
 
 template<class T> 
 void inline
@@ -121,12 +111,6 @@ writeToFile(const std::string& fname, const T& t)
     s.close(); 
     }
 
-template<class T> 
-void inline
-writeToFile(const boost::format& fname, const T& t) 
-    { 
-    writeToFile(fname.str(),t); 
-    }
 
 //Given a prefix (e.g. pfix == "mydir")
 //and an optional location (e.g. locn == "/var/tmp/")

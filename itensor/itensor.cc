@@ -11,13 +11,11 @@
 
 using std::array;
 using std::ostream;
-using std::cout;
-using std::cerr;
-using std::endl;
 using std::vector;
-using boost::format;
 using std::shared_ptr;
 using std::make_shared;
+using std::cout;
+using std::endl;
 
 namespace itensor {
 
@@ -46,7 +44,7 @@ ITensor(Real val)
 ITensor::
 ITensor(const Index& i1) 
     :
-    r_(std::make_shared<storage>(i1.m())),
+    d_(std::make_shared<RealITDat>(i1.m())),
     is_(i1),
     scale_(1)
 	{ 
@@ -56,7 +54,7 @@ ITensor(const Index& i1)
 ITensor::
 ITensor(const Index& i1,const Index& i2) 
     :
-    r_(std::make_shared<storage>(i1.m(),i2.m())),
+    d_(std::make_shared<RealITDat>(i1.m(),i2.m())),
     is_(i1,i2),
     scale_(1)
 	{ 
@@ -86,7 +84,7 @@ ITensor(const Index& i1, const Index& i2, const Index& i3,
         extents.push_back(ii[r].m());
         }
     is_ = IndexSet<Index>(ii,r,0);
-    r_ = std::make_shared<storage>(storage::range_type(extents));
+    d_ = std::make_shared<RealITDat>(extents);
 	}
 
 Real ITensor::
@@ -99,7 +97,7 @@ toReal() const
 
     if(is_.rn() != 0)
         {
-        Print(*this);
+        PrintVar(*this);
         Error("ITensor not a scalar");
         }
 
@@ -127,323 +125,123 @@ toReal() const
 	}
 
 
-Real& ITensor::
-operator()(const IndexVal& iv1)
-	{
-    solo(); 
-    scaleTo(1);
-    return r_->operator()(iv1.i-1);
-	}
-
-Real ITensor::
-operator()(const IndexVal& iv1) const
-	{
-    return scale_.real()*(r_->operator()(iv1.i-1));
-	}
-
-Real& ITensor::
-operator()(const IndexVal& iv1, const IndexVal& iv2) 
-    {
-    solo(); 
-    scaleTo(1);
-    if(is_[0] == iv1)
-        return r_->at(iv1.i-1,iv2.i-1);
-    else
-        return r_->at(iv2.i-1,iv1.i-1);
-    }
-
-Real ITensor::
-operator()(const IndexVal& iv1, const IndexVal& iv2) const
-    {
-    if(is_[0] == iv1)
-        return scale_.real0()*r_->at(iv1.i-1,iv2.i-1);
-    else
-        return scale_.real0()*r_->at(iv2.i-1,iv1.i-1);
-    }
-
-Real& ITensor::
-operator()(const IndexVal& iv1, 
-           const IndexVal& iv2, 
-           const IndexVal& iv3)
-    {
-    solo(); 
-    scaleTo(1);
-    std::array<size_t,3> ii;
-    for(const auto iv : {iv1, iv2, iv3})
-        {
-        ii[findindex(is_,Index(iv))] = iv.i-1;
-        }
-    return r_->at(ii);
-    }
-
-Real ITensor::
-operator()(const IndexVal& iv1, 
-           const IndexVal& iv2, 
-           const IndexVal& iv3) const
-    {
-    std::array<size_t,3> ii;
-    for(const auto iv : {iv1, iv2, iv3})
-        {
-        ii[findindex(is_,Index(iv))] = iv.i-1;
-        }
-    return scale_.real0()*r_->at(ii);
-    }
-
-void ITensor::
-groupIndices(const std::array<Index,NMAX+1>& indices, int nind, 
-             const Index& grouped, ITensor& res) const
-    {
-    }
-
-void ITensor::
-tieIndices(const std::array<Index,NMAX>& indices, int nind,
-           const Index& tied)
-    {
-    //if(nind == 0) Error("No indices given");
-
-    //const int tm = tied.m();
-    //
-    //std::array<Index,NMAX+1> new_index;
-    ////TODO
-    ////Check for possible bug: behavior of btas::tieIndex
-    ////is to position new tied index at location of first matching
-    ////tied index, not necessarily position 1
-    //new_index[1] = tied;
-
-    //vector<size_t> totie;
-
-    //int nmatched = 0;
-    //int new_r = 1;
-    //for(size_t k = 0; k < r(); ++k)
-    //    {
-    //    const Index& K = is_.index(1+k);
-    //    bool is_tied = false;
-    //    for(int j = 0; j < nind; ++j)
-    //    if(K == indices[j]) 
-    //        { 
-    //        if(indices[j].m() != tm)
-    //            Error("Tied indices must have matching m's");
-    //        totie.push_back(k);
-    //        is_tied = true;
-    //        ++nmatched;
-    //        break;
-    //        }
-
-    //    if(!is_tied)
-    //        {
-    //        new_index[++new_r] = K;
-    //        }
-    //    }
-
-    ////Check that all indices were found
-    //if(nmatched != nind)
-    //    {
-    //    Print(*this);
-    //    cout << "indices = " << endl;
-    //    for(int j = 0; j < nind; ++j)
-    //        cout << indices[j] << endl;
-    //    Error("Couldn't find Index to tie");
-    //    }
-
-    //IndexSet<Index> new_is(new_index,new_r,1);
-    //is_.swap(new_is);
-
-    ////If tied indices have m==1, no work
-    ////to do; just replace indices
-    //if(tm == 1) return;
-
-    //// Call btas::tieIndex and create the new dat
-    //storage_ptr np = std::make_shared<storage>(btas::tieIndex(*r_,totie));
-    //r_.swap(np);
-    }
-
-//ITensor ITensor::
-//testMethod(const std::array<Index,NMAX>& indices, int nind,
-//           const Index& tied) const
-    //{
-    //if(nind == 0) Error("No indices given");
-
-    //const int tm = tied.m();
-    //
-    //std::array<Index,NMAX+1> new_index;
-    ////TODO
-    ////Check for possible bug: behavior of btas::tieIndex
-    ////is to position new tied index at location of first matching
-    ////tied index, not necessarily position 1
-    //new_index[1] = tied;
-
-    //vector<size_t> totie;
-
-    //int nmatched = 0;
-    //int new_r = 1;
-    //for(size_t k = 0; k < r(); ++k)
-    //    {
-    //    const Index& K = is_.index(1+k);
-    //    bool is_tied = false;
-    //    for(int j = 0; j < nind; ++j)
-    //    if(K == indices[j]) 
-    //        { 
-    //        if(indices[j].m() != tm)
-    //            Error("Tied indices must have matching m's");
-    //        totie.push_back(k);
-    //        is_tied = true;
-    //        ++nmatched;
-    //        break;
-    //        }
-
-    //    if(!is_tied)
-    //        {
-    //        new_index[++new_r] = K;
-    //        }
-    //    }
-
-    ////Check that all indices were found
-    //if(nmatched != nind)
-    //    {
-    //    Print(*this);
-    //    cout << "indices = " << endl;
-    //    for(int j = 0; j < nind; ++j)
-    //        cout << indices[j] << endl;
-    //    Error("Couldn't find Index to tie");
-    //    }
-
-    //IndexSet<Index> new_is(new_index,new_r,1);
-    //ITensor res;
-    //res.is_.swap(new_is);
-
-    ////If tied indices have m==1, no work
-    ////to do; just replace indices
-    //if(tm == 1) 
-    //    {
-    //    res.scale_ = this->scale_;
-    //    res.r_ = this->r_;
-    //    return res;
-    //    }
-
-    //// Call btas::tieIndex and create the new dat
-    //storage_ptr np = std::make_shared<storage>(btas::tieIndex(*r_,totie));
-    //res.r_.swap(np);
-
-    //return res;
-    //}
-
-void ITensor::
-tieIndices(const Index& i1, const Index& i2,
-           const Index& tied)
-    {
-    std::array<Index,NMAX> inds =
-        {{ i1, i2, 
-           Index::Null(), Index::Null(), 
-           Index::Null(), Index::Null(), 
-           Index::Null(), Index::Null() }};
-
-    tieIndices(inds,2,tied);
-    }
-
-void ITensor::
-tieIndices(const Index& i1, const Index& i2,
-           const Index& i3,
-           const Index& tied)
-    {
-    std::array<Index,NMAX> inds =
-        {{ i1, i2, i3,
-           Index::Null(), Index::Null(), 
-           Index::Null(), Index::Null(), Index::Null() }};
-
-    tieIndices(inds,3,tied);
-    }
-
-void ITensor::
-tieIndices(const Index& i1, const Index& i2,
-           const Index& i3, const Index& i4,
-           const Index& tied)
-    {
-    std::array<Index,NMAX> inds =
-        {{ i1, i2, i3, i4,
-           Index::Null(), Index::Null(), 
-           Index::Null(), Index::Null() }};
-
-    tieIndices(inds,4,tied);
-    }
-
-ITensor& ITensor::
-trace(const std::array<Index,NMAX>& indices, int nind)
-    {
-    return *this;
-    } //ITensor::trace
-
-
-ITensor& ITensor::
-trace(const Index& i1, const Index& i2,
-      const Index& i3, const Index& i4,
-      const Index& i5, const Index& i6,
-      const Index& i7, const Index& i8)
-    {
-    std::array<Index,NMAX> inds = {{ i1, i2, i3, i4,
-                                i5, i6, i7, i8 }};
-    return trace(inds);
-    }
-
-void ITensor::
-expandIndex(const Index& small, const Index& big, int start)
-    {
-    }
+//Real& ITensor::
+//operator()(const IndexVal& iv1)
+//	{
+//    solo(); 
+//    scaleTo(1);
+//    return d_->operator()(iv1.i-1);
+//	}
+//
+//Real ITensor::
+//operator()(const IndexVal& iv1) const
+//	{
+//    return scale_.real()*(d_->operator()(iv1.i-1));
+//	}
+//
+//Real& ITensor::
+//operator()(const IndexVal& iv1, const IndexVal& iv2) 
+//    {
+//    solo(); 
+//    scaleTo(1);
+//    if(is_[0] == iv1)
+//        return d_->at(iv1.i-1,iv2.i-1);
+//    else
+//        return d_->at(iv2.i-1,iv1.i-1);
+//    }
+//
+//Real ITensor::
+//operator()(const IndexVal& iv1, const IndexVal& iv2) const
+//    {
+//    if(is_[0] == iv1)
+//        return scale_.real0()*d_->at(iv1.i-1,iv2.i-1);
+//    else
+//        return scale_.real0()*d_->at(iv2.i-1,iv1.i-1);
+//    }
+//
+//Real& ITensor::
+//operator()(const IndexVal& iv1, 
+//           const IndexVal& iv2, 
+//           const IndexVal& iv3)
+//    {
+//    solo(); 
+//    scaleTo(1);
+//    std::array<size_t,3> ii;
+//    for(const auto iv : {iv1, iv2, iv3})
+//        {
+//        ii[findindex(is_,Index(iv))] = iv.i-1;
+//        }
+//    return d_->at(ii);
+//    }
+//
+//Real ITensor::
+//operator()(const IndexVal& iv1, 
+//           const IndexVal& iv2, 
+//           const IndexVal& iv3) const
+//    {
+//    std::array<size_t,3> ii;
+//    for(const auto iv : {iv1, iv2, iv3})
+//        {
+//        ii[findindex(is_,Index(iv))] = iv.i-1;
+//        }
+//    return scale_.real0()*d_->at(ii);
+//    }
 
 void ITensor::
 swap(ITensor& other)
     {
-    r_.swap(other.r_);
+    d_.swap(other.d_);
     is_.swap(other.is_);
     scale_.swap(other.scale_);
     }
 
-const Real* ITensor::
-data() const
-    {
-    if(!r_) Error("ITensor is empty");
-    return r_->data();
-    }
+//const Real* ITensor::
+//data() const
+//    {
+//    if(!d_) Error("ITensor is empty");
+//    return r_->data();
+//    }
 
-void ITensor::
-randomize(const OptSet& opts) 
-    { 
-    solo(); 
-    std::mt19937 rgen(std::time(NULL)+getpid());
-    std::uniform_real_distribution<double> dist(-1.0, 1.0);
-    r_->generate(bind(dist, rgen));
-    }
+//void ITensor::
+//randomize(const OptSet& opts) 
+//    { 
+//    solo(); 
+//    std::mt19937 rgen(std::time(NULL)+getpid());
+//    std::uniform_real_distribution<double> dist(-1.0, 1.0);
+//    r_->generate(bind(dist, rgen));
+//    }
 
-Real ITensor::
-normNoScale() const 
-    { 
-    return 0;
-    //if(!this->isComplex())
-    //    {
-    //    return Norm(r_->v);
-    //    }
-    //else
-    //    {
-    //    return sqrt(sqr(Norm(r_->v))+sqr(Norm(i_->v)));
-    //    }
-    }
+//Real ITensor::
+//normNoScale() const 
+//    { 
+//    return 0;
+//    //if(!this->isComplex())
+//    //    {
+//    //    return Norm(r_->v);
+//    //    }
+//    //else
+//    //    {
+//    //    return sqrt(sqr(Norm(r_->v))+sqr(Norm(i_->v)));
+//    //    }
+//    }
 
-Real ITensor::
-norm() const 
-    { 
-    if(scale_.isTooBigForReal())
-        {
-        throw TooBigForReal("Scale too large for real in ITensor::norm()");
-        }
-    //If scale_ is too small to be converted to Real,
-    //real0 method will return 0.0
-    return fabs(scale_.real0())*normNoScale();
-    }
-
-LogNumber ITensor::
-normLogNum() const 
-    { 
-    return LogNumber(log(normNoScale())+scale_.logNum(),+1);
-    }
+//Real ITensor::
+//norm() const 
+//    { 
+//    if(scale_.isTooBigForReal())
+//        {
+//        throw TooBigForReal("Scale too large for real in ITensor::norm()");
+//        }
+//    //If scale_ is too small to be converted to Real,
+//    //real0 method will return 0.0
+//    return fabs(scale_.real0())*normNoScale();
+//    }
+//
+//LogNumber ITensor::
+//normLogNum() const 
+//    { 
+//    return LogNumber(log(normNoScale())+scale_.logNum(),+1);
+//    }
 
 void ITensor::
 scaleTo(const LogNumber& newscale)
@@ -453,30 +251,17 @@ scaleTo(const LogNumber& newscale)
     if(scale_ == newscale) return;
     solo();
     scale_ /= newscale;
-    btas::scal(scale_.real0(),*r_);
+    d_->mult(scale_.real0());
     scale_ = newscale;
     }
 
 
 void ITensor::
-allocate(int dim) 
-    { 
-    //r_ = std::make_shared<ITDat>(dim); 
-    }
-
-void ITensor::
-allocate() 
-    { 
-    //r_ = std::make_shared<ITDat>(); 
-    }
-
-void ITensor::
 solo()
 	{
-    if(!r_.unique())
+    if(!d_.unique())
         { 
-        auto newr = std::make_shared<storage>(*r_);
-        r_.swap(newr);
+        d_ = std::move(d_->clone());
         }
     }
 
@@ -490,7 +275,7 @@ equalizeScales(ITensor& other)
     else //*this is equivalent to zero
         {
         solo();
-        r_->fill(0);
+        d_->fill(0);
         scale_ = other.scale_;
         }
     }
@@ -501,7 +286,7 @@ operator*=(Real fac)
     if(fac == 0)
         {
         solo();
-        r_->fill(0);
+        d_->fill(0);
         return *this;
         }
     scale_ *= fac;
@@ -527,13 +312,12 @@ checkSameIndOrder(const IndexSet<Index> is1,
     return true;
     }
 
+
 ITensor& ITensor::
 operator+=(const ITensor& other)
     {
-    if(!r_) return operator=(other);
-
+    if(!d_) return operator=(other);
     if(this == &other) return operator*=(2.);
-
     if(this->scale_.isZero()) return operator=(other);
 
     const
@@ -541,9 +325,9 @@ operator+=(const ITensor& other)
 
     if(is_ != other.is_)
         {
-        cerr << format("this ur = %.10f, other.ur = %.10f\n")%is_.uniqueReal()%other.is_.uniqueReal();
-        Print(*this);
-        Print(other);
+        printn("this ur = %.10f, other.ur = %.10f",is_.uniqueReal(),is_.uniqueReal());
+        PrintVar(*this);
+        PrintVar(other);
         Error("ITensor::operator+=: different Index structure");
         }
 
@@ -561,8 +345,7 @@ operator+=(const ITensor& other)
 
     if(same_ind_order) 
         { 
-        //axpy computes *r_ += *(other.r_) * scalefac
-        btas::axpy(scalefac,*(other.r_),*r_);
+        d_->plusEq(other.d_,scalefac);
         }
     else // not same_ind_order
         {
@@ -586,6 +369,15 @@ operator-=(const ITensor& other)
     return *this; 
     }
 
+void ITensor::
+fill(Real r)
+    {
+#ifdef DEBUG
+    if(this->empty()) Error("Cannot fill default-constructed ITensor.");
+#endif
+    d_->fill(r);
+    }
+
 
 ostream& 
 operator<<(ostream & s, const ITensor& t)
@@ -594,37 +386,19 @@ operator<<(ostream & s, const ITensor& t)
     s << t.indices() << "\n";
     s << "  {log(scale)[incl in elems]=" << t.scale().logNum();
 
-    if(Global::printdat())
+    const bool ff_set = (std::ios::floatfield & s.flags()) != 0;
+
+    if(ff_set || Global::printdat())
         {
-        s << "\n";
-        Real scalefac = 1.0;
-        if(t.scale().isFiniteReal()) scalefac = t.scale().real();
-        else s << "  (omitting too large scale factor)" << endl;
-
-        const auto& T = *(t.r_);
-        auto Tr = T.range();
-
-        const auto rr = T.rank();
-
-        if(rr == 0) return s;
-
-        for(const auto I : Tr)
+        if(!t.empty())
             {
-            const Real val = T(I)*scalefac;
-            if(fabs(val) > Global::printScale())
-                {
-                s << "  ("; 
-                for(size_t i = 0, j = 1; j <= I.size(); ++i, ++j)
-                    {
-                    s << (1+I[i]);
-                    if(j < I.size()) s << ",";
-                    }
-                s << ") ";
-                s << format(fabs(val) > 1E-10 ? "%.12f\n" : "%.8E\n") % val;
-                }
+            t.d_->print(s,t.scale());
+            }
+        else
+            {
+            s << " (empty / default constructed)}\n";
             }
         }
-
     return s;
     }
 

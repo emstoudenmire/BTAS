@@ -13,6 +13,7 @@
 #include <complex>
 #include "assert.h"
 #include <unistd.h>
+#include <random>
 
 #include "tinyformat.h"
 
@@ -221,6 +222,8 @@ class Global
     {
     public:
 
+    using Generator = std::mt19937;
+
     static bool& 
     printdat()
         {
@@ -312,6 +315,23 @@ class Global
     opts(const Opt::Name& name, const std::string& sval)
         {
         OptSet::GlobalOpts().add(name,sval);
+        }
+    static Generator&
+    rng()
+        {
+        static Generator rng_(std::time(NULL)+getpid());
+        return rng_;
+        }
+    static void
+    seedRNG(int seed)
+        {
+        rng() = Generator(seed);
+        }
+    static Real
+    random()
+        {
+        static std::uniform_real_distribution<Real> dist(0,1);
+        return dist(rng());
         }
     void static
     warnDeprecated(const std::string& message)

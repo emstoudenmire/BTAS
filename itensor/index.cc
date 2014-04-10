@@ -3,7 +3,6 @@
 //    (See accompanying LICENSE file.)
 //
 #include "index.h"
-#include <random>
 
 using std::istream;
 using std::ostream;

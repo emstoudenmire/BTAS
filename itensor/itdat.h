@@ -9,6 +9,7 @@
 
 namespace itensor {
 
+
 class RealITDat;
 
 class ITDat
@@ -28,54 +29,38 @@ class ITDat
     // Public interface
     //
 
-    ITDat&
-    plusEq(const CPtr& other, Real fac = 1);
-
-    ITDat&
-    mult(Real r);
-
-    NewPtr 
-    clone() const;
-
     void
-    fill(Real r);
+    plusEq(const CPtr& other, Ptr& newdat, Real fac = 1);
 
-    void
-    print(std::ostream& s, const LogNumber& x) const;
+    void virtual
+    mult(Real r) = 0;
+
+    NewPtr virtual
+    clone() const = 0;
+
+    void virtual
+    fill(Real r, Ptr& newdat) = 0;
+
+    void virtual
+    generate(std::function<Real()> rfunc, Ptr& newdat) = 0;
+
+    void virtual
+    print(std::ostream& s, const LogNumber& x) const = 0;
 
 
     //
-    // Methods to be overridden by implementations
+    // Other methods to be implemented by derived classes
     //
-
-    public:
 
     virtual
     void
-    plusEq_(const RealITDat* d, Real fac) = 0;
+    plusEqImpl(const RealITDat* d, Ptr& newdat, Real fac) = 0;
 
     //virtual
     //void
-    //plusEq_(ComplexITDat* d, Real fac) const = 0;
+    //plusEq_(ComplexITDat* d, Ptr& newdat, Real fac) const = 0;
 
     private:
-
-    virtual
-    NewPtr
-    clone_() const = 0;
-
-    virtual
-    void
-    fill_(Real r) = 0;
-
-    virtual
-    void
-    mult_(Real r) = 0;
-
-    virtual
-    void
-    print_(std::ostream& s, const LogNumber& x) const = 0;
-
 
     ITDat(const ITDat&); //disabled to prevent copying
     ITDat& operator=(const ITDat&); //disabled to prevent copying
@@ -87,7 +72,9 @@ class ITDat
 
     virtual
     void
-    addTo_(ITDat* d,Real fac) const = 0;
+    addTo(ITDat* d, Ptr& newdat, Real fac) const = 0;
+
+    friend class RealITDat;
 
     };
 
@@ -99,8 +86,9 @@ class Dispatch : public ITDat
     virtual
     ~Dispatch() { }
     private:
+    using Ptr = ITDat::Ptr;
     void 
-    addTo_(ITDat* d, Real fac) const final { d->plusEq_(static_cast<const Derived*>(this),fac); }
+    addTo(ITDat* d, Ptr& newdat,  Real fac) const final { d->plusEqImpl(static_cast<const Derived*>(this),newdat,fac); }
     };
 
 class RealITDat : public Dispatch<RealITDat>
@@ -140,19 +128,22 @@ class RealITDat : public Dispatch<RealITDat>
     private:
 
     void 
-    plusEq_(const RealITDat* r, Real fac) override; 
+    plusEqImpl(const RealITDat* r, Ptr& newdat, Real fac) override; 
 
     NewPtr
-    clone_() const override;
+    clone() const override;
 
     void
-    fill_(Real r) override;
+    fill(Real r, Ptr& newdat) override;
+
+    void
+    generate(std::function<Real()> rfunc, Ptr& newdat) override;
 
     void 
-    mult_(Real r) override; 
+    mult(Real r) override; 
 
     void 
-    print_(std::ostream& s, const LogNumber& x) const override; 
+    print(std::ostream& s, const LogNumber& x) const override; 
 
     ////////////
     // Data Members

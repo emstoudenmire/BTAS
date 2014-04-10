@@ -10,20 +10,8 @@ namespace itensor {
 // ITDat
 //
 
-ITDat& ITDat::
-plusEq(const CPtr& other, Real fac) { other->addTo_(this,fac); return *this; }
-
-ITDat& ITDat::
-mult(Real r) { this->mult_(r); return *this; }
-
-ITDat::NewPtr ITDat::
-clone() const { return clone_(); }
-
 void ITDat::
-fill(Real r) { fill_(r); }
-
-void ITDat::
-print(std::ostream& s, const LogNumber& x) const { print_(s,x); }
+plusEq(const CPtr& other, Ptr& newptr, Real fac) { other->addTo(this,newptr,fac); }
 
 
 //
@@ -37,14 +25,14 @@ RealITDat(const storage& t)
     { }
 
 void RealITDat::
-plusEq_(const RealITDat* d, Real fac)
+plusEqImpl(const RealITDat* d, Ptr& newdat, Real fac)
     { 
     //axpy computes t_ += d->t_ * fac
     btas::axpy(fac,d->t_,t_);
     }
 
 RealITDat::NewPtr RealITDat::
-clone_() const
+clone() const
     {
     //Should change this to make_unique<RealITDat>(t_);
     //once C++14 make_unique feature is available
@@ -52,19 +40,25 @@ clone_() const
     }
 
 void RealITDat::
-fill_(Real r)
+fill(Real r, Ptr& newdat)
     {
     t_.fill(r);
     }
 
 void RealITDat::
-mult_(Real r)
+generate(std::function<Real()> rfunc, Ptr& newdat)
+    {
+    t_.generate(rfunc);
+    }
+
+void RealITDat::
+mult(Real r)
     {
     btas::scal(r,t_);
     }
 
 void RealITDat::
-print_(std::ostream& s, const LogNumber& x) const
+print(std::ostream& s, const LogNumber& x) const
     {
     s << "}\n";
     Real scalefac = 1.0;

@@ -15,24 +15,12 @@ main(int argc, char* argv[])
     PrintVar(l2);
 
     ITensor T(i1,l2);
-    T.fill(3.14);
-    T *= 5;
-    //T.randomize();
+    T = randomize(T);
     PrintData(T);
 
     ITensor T1(i1,l2);
-    T1.fill(-3.14);
-    T1 *= 5;
-    //T1.randomize();
+    T1 = randomize(T1);
     PrintData(T1);
-
-    //T += T1; //this works ok
-    auto R = T - T1;
-    PrintData(R);
-
-
-    exit(0);
-
 
 
     //

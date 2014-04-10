@@ -5,7 +5,6 @@
 #include "itensor.h"
 
 #include <functional>
-#include <random>
 #include "btas/generic/scal_impl.h"
 #include "btas/generic/axpy_impl.h"
 
@@ -36,8 +35,6 @@ ITensor()
 
 ITensor::
 ITensor(Real val) 
-    :
-    scale_(1)
     { 
     }
 
@@ -45,8 +42,7 @@ ITensor::
 ITensor(const Index& i1) 
     :
     d_(std::make_shared<RealITDat>(i1.m())),
-    is_(i1),
-    scale_(1)
+    is_(i1)
 	{ 
     }
 
@@ -55,8 +51,7 @@ ITensor::
 ITensor(const Index& i1,const Index& i2) 
     :
     d_(std::make_shared<RealITDat>(i1.m(),i2.m())),
-    is_(i1,i2),
-    scale_(1)
+    is_(i1,i2)
 	{ 
     }
     
@@ -65,8 +60,6 @@ ITensor::
 ITensor(const Index& i1, const Index& i2, const Index& i3,
         const Index& i4, const Index& i5, const Index& i6,
         const Index& i7, const Index& i8)
-    :
-    scale_(1)
 	{
 #ifdef DEBUG
     if(i1 == Index::Null())
@@ -202,15 +195,6 @@ swap(ITensor& other)
 //    return r_->data();
 //    }
 
-//void ITensor::
-//randomize(const OptSet& opts) 
-//    { 
-//    solo(); 
-//    std::mt19937 rgen(std::time(NULL)+getpid());
-//    std::uniform_real_distribution<double> dist(-1.0, 1.0);
-//    r_->generate(bind(dist, rgen));
-//    }
-
 //Real ITensor::
 //normNoScale() const 
 //    { 
@@ -274,8 +258,7 @@ equalizeScales(ITensor& other)
         }
     else //*this is equivalent to zero
         {
-        solo();
-        d_->fill(0);
+        fill(0);
         scale_ = other.scale_;
         }
     }
@@ -285,8 +268,7 @@ operator*=(Real fac)
     {
     if(fac == 0)
         {
-        solo();
-        d_->fill(0);
+        fill(0);
         return *this;
         }
     scale_ *= fac;
@@ -345,7 +327,7 @@ operator+=(const ITensor& other)
 
     if(same_ind_order) 
         { 
-        d_->plusEq(other.d_,scalefac);
+        d_->plusEq(other.d_,d_,scalefac);
         }
     else // not same_ind_order
         {
@@ -375,7 +357,20 @@ fill(Real r)
 #ifdef DEBUG
     if(this->empty()) Error("Cannot fill default-constructed ITensor.");
 #endif
-    d_->fill(r);
+    solo();
+    scale_.reset();
+    d_->fill(r,d_);
+    }
+
+void ITensor::
+generate(std::function<Real()> rfunc)
+    {
+#ifdef DEBUG
+    if(this->empty()) Error("Cannot generate elements of default-constructed ITensor.");
+#endif
+    solo();
+    scale_.reset();
+    d_->generate(rfunc,d_);
     }
 
 
@@ -400,6 +395,14 @@ operator<<(ostream & s, const ITensor& t)
             }
         }
     return s;
+    }
+
+ITensor
+randomize(ITensor T, const OptSet& opts)
+    {
+    //std::uniform_real_distribution<Real> dist(-1.,1.);
+    T.generate(Global::random);
+    return T;
     }
 
 };

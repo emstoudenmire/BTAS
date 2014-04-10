@@ -128,11 +128,12 @@ class LogNumber
     bool friend inline
     isnan(const LogNumber& L) { return std::isnan(L.lognum_); }
 
-    //Default constructed to NAN 
-    //to catch initialization errors
+    //Default constructed to 1.0 
+    //because it is mainly used to absorb
+    //multiplicative factors
     LogNumber() 
         : 
-        lognum_(NAN), 
+        lognum_(0), 
         sign_(1) 
         { }
 
@@ -337,6 +338,14 @@ class LogNumber
         {
         lognum_ *= p;
         return *this;
+        }
+
+    // Reset this LogNumber to 1.0
+    void
+    reset()
+        {
+        lognum_ = 0;
+        sign_ = 1;
         }
 
     friend inline std::ostream& 

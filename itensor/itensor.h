@@ -145,6 +145,11 @@ class ITensor
     void
     fill(Real r);
 
+    void
+    generate(std::function<Real()> rfunc);
+
+    ///Keep as a class method because external method would have to
+    ///require doing scaleTo(1)
     //Real 
     //norm() const;
 
@@ -217,6 +222,9 @@ deprime(Tensor A, const IndexT& I)
 
 std::ostream& 
 operator<<(std::ostream & s, const ITensor& T);
+
+ITensor
+randomize(ITensor T, const OptSet& opts = Global::opts());
 
 }; //namespace itensor
 

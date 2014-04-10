@@ -17,8 +17,8 @@
 
 #include "tinyformat.h"
 
-#include "itensor/real.h"
-#include "itensor/option.h"
+#include "itensor/complex.h"
+#include "itensor/util/option.h"
 
 namespace itensor {
 
@@ -54,12 +54,6 @@ enum Direction { Fromright, Fromleft, Both, None };
 static const int NMAX = 8;
 static const Real MIN_CUT = 1E-20;
 static const int MAX_M = 5000;
-
-typedef std::complex<Real>
-Complex;
-
-static const Complex Complex_1 = Complex(1,0);
-static const Complex Complex_i = Complex(0,1);
 
 // The PAUSE macro is useful for debugging. 
 // Prints the current line number and pauses

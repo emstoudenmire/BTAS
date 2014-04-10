@@ -6,9 +6,9 @@
 #define __ITENSOR_ITDAT_H
 #include "itensor/global.h"
 #include "btas/tensor.h"
+#include "itensor/detail/mapwrap.h"
 
 namespace itensor {
-
 
 class RealITDat;
 
@@ -43,6 +43,9 @@ class ITDat
 
     void virtual
     generate(std::function<Real()> rfunc, Ptr& newdat) = 0;
+
+    void virtual
+    map(detail::MapBase*) = 0;
 
     void virtual
     print(std::ostream& s, const LogNumber& x) const = 0;
@@ -138,6 +141,9 @@ class RealITDat : public Dispatch<RealITDat>
 
     void
     generate(std::function<Real()> rfunc, Ptr& newdat) override;
+
+    void
+    map(detail::MapBase* m) override;
 
     void 
     mult(Real r) override; 

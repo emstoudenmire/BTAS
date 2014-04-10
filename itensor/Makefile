@@ -8,7 +8,7 @@ include ../options.mk
 
 ####################################
 
-SOURCES=option.cc 
+SOURCES=util/option.cc 
 SOURCES+= index.cc 
 SOURCES+= itdat.cc 
 SOURCES+= itensor.cc 
@@ -21,7 +21,7 @@ SOURCES+= itensor.cc
 #SOURCES+= mpo.cc 
 #SOURCES+= tevol.cc
 
-HEADERS=option.h global.h real.h index.h error.h \
+HEADERS=util/option.h global.h real.h complex.h index.h error.h \
         indexset.h itdat.h itensor.h 
         #qn.h iqindex.h iqtdat.h iqtensor.h \
         condenser.h combiner.h qcounter.h iqcombiner.h \
@@ -72,6 +72,7 @@ installg: mklibdir libitensor-g.a
 
 mkdebugdir:
 	mkdir -p .debug_objs
+	mkdir -p .debug_objs/util
 
 mklibdir:
 	mkdir -p $(ITENSOR_LIBDIR)
@@ -79,7 +80,7 @@ mklibdir:
 clean:	
 	rm -fr *.o .debug_objs libitensor.a libitensor-g.a
 
-DEPHEADERS=real.h option.h
+DEPHEADERS=real.h util/option.h
 option.o: $(DEPHEADERS)
 .debug_objs/option.o: $(DEPHEADERS)
 DEPHEADERS+= global.h index.h

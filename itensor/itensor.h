@@ -148,6 +148,11 @@ class ITensor
     void
     generate(std::function<Real()> rfunc);
 
+    template <typename Func>
+    void
+    map(const Func& f);
+
+
     ///Keep as a class method because external method would have to
     ///require doing scaleTo(1)
     //Real 
@@ -188,6 +193,18 @@ class ITensor
     operator<<(std::ostream & s, const ITensor& T);
 
     }; // class ITensor
+
+template <typename Func>
+void ITensor::
+map(const Func& f)
+    {
+    //MapWrap<F> creates a new type that holds a functor of
+    //type F but which is also a virtual/polymorphic subclass
+    //of MapBase so that subclasses of ITDat can call f through
+    //a uniform function signature
+    detail::MapWrap<Func> mw(f);
+    d_->map(&mw);
+    }
 
 ITensor inline
 operator*(ITensor A, const ITensor& B) { A *= B; return A; }

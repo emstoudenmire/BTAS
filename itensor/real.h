@@ -12,21 +12,16 @@
 
 namespace itensor {
 
-typedef double
-Real;
+using Real = double;
 
 
 #ifndef NAN
 #define NAN (std::numeric_limits<Real>::quiet_NaN())
 #endif
 
-Real ran1();
-
 static const Real Pi = M_PI;
 static const Real Sqrt2 = sqrt(2);
 static const Real ISqrt2 = 1.0/sqrt(2);
-//static const Real Sqrt3 = sqrt(3);
-//static const Real ISqrt3 = 1.0/sqrt(3);
 
 template <typename T>
 T sqr(T x) { return x*x; }

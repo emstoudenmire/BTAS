@@ -58,6 +58,15 @@ mult(Real r)
     }
 
 void RealITDat::
+map(detail::MapBase* m)
+    {
+    for(auto& r : t_)
+        {
+        r = m->rmap(r);
+        }
+    }
+
+void RealITDat::
 print(std::ostream& s, const LogNumber& x) const
     {
     s << "}\n";

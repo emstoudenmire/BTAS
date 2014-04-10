@@ -3,6 +3,13 @@
 using namespace std;
 using namespace itensor;
 
+struct Square
+    {
+    template<class T>
+    T
+    operator()(T x) const { return x*x; }
+    };
+
 int 
 main(int argc, char* argv[])
     {
@@ -17,6 +24,12 @@ main(int argc, char* argv[])
     ITensor T(i1,l2);
     T = randomize(T);
     PrintData(T);
+    T.map(Square());
+    //In C++14, can say:
+    //T.map([](auto x) { return x*x; });
+    PrintData(T);
+    exit(0);
+
 
     ITensor T1(i1,l2);
     T1 = randomize(T1);

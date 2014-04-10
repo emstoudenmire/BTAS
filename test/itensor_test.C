@@ -28,12 +28,16 @@ main(int argc, char* argv[])
     //In C++14, can say:
     //T.map([](auto x) { return x*x; });
     PrintData(T);
-    exit(0);
 
 
     ITensor T1(i1,l2);
     T1 = randomize(T1);
     PrintData(T1);
+
+    T *= prime(T1,l2);
+
+    PrintData(T);
+    exit(0);
 
 
     //

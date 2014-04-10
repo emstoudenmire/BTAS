@@ -1,6 +1,7 @@
 #include "itensor/itdat.h"
 #include "btas/generic/scal_impl.h"
 #include "btas/generic/axpy_impl.h"
+#include "btas/generic/contract.h"
 
 using std::make_shared;
 
@@ -9,6 +10,16 @@ namespace itensor {
 //
 // ITDat
 //
+
+void ITDat::
+contractEq(Ptr& newdat,
+           const CPtr& other, 
+           const btas::varray<size_t>& Tind,
+           const btas::varray<size_t>& Oind,
+           const btas::varray<size_t>& Rind)
+    {
+    other->contractWith(this,newdat,Tind,Oind,Rind);
+    }
 
 void ITDat::
 plusEq(const CPtr& other, Ptr& newptr, Real fac) { other->addTo(this,newptr,fac); }
@@ -23,6 +34,18 @@ RealITDat(const storage& t)
     :
     t_(t)
     { }
+
+void RealITDat::
+contractEqImpl(Ptr& newdat,
+               const RealITDat* other,
+               const btas::varray<size_t>& Tind,
+               const btas::varray<size_t>& Oind,
+               const btas::varray<size_t>& Rind)
+    {
+    storage res;
+    btas::contract(1.,t_,Tind,other->t_,Oind,0.,res,Rind);
+    t_.swap(res);
+    }
 
 void RealITDat::
 plusEqImpl(const RealITDat* d, Ptr& newdat, Real fac)

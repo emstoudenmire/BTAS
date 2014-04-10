@@ -94,6 +94,8 @@ toReal() const
         Error("ITensor not a scalar");
         }
 
+    Error("Not yet implemented");
+
 	//try {
 	//    return r_->v(1)*scale_.real(); 
 	//    }
@@ -116,6 +118,13 @@ toReal() const
 	//    }
 	return NAN; //shouldn't reach this line
 	}
+
+Complex ITensor::
+toComplex() const
+    {
+    Error("Not implemented");
+    return Complex_1;
+    }
 
 
 //Real& ITensor::
@@ -243,10 +252,28 @@ scaleTo(const LogNumber& newscale)
 void ITensor::
 solo()
 	{
-    if(!d_.unique())
-        { 
-        d_ = std::move(d_->clone());
-        }
+    if(!d_.unique()) d_ = std::move(d_->clone());
+    }
+
+void ITensor::
+scaleOutNorm()
+    {
+    //Real f = normNoScale();
+    ////If norm already 1 return so
+    ////we don't have to call solo()
+    //if(fabs(f-1) < 1E-12) return;
+
+    //if(f != 0)
+    //    {
+    //    solo();
+    //    d_->mult(1./f);
+    //    scale_ *= f;
+    //    }
+    //else //norm == zero
+    //    {
+    //    scale_ = LogNumber(1.);
+    //    d_->fill(0.,d_);
+    //    }
     }
 
 void ITensor::
@@ -279,6 +306,155 @@ operator*=(Real fac)
 ITensor& ITensor::
 operator*=(const ITensor& other)
     {
+    if(this->empty() || other.empty())
+        Error("Empty ITensor in product");
+
+    if(this == &other)
+        {
+        ITensor cp_oth(other);
+        return operator*=(cp_oth);
+        }
+
+    //These hold  regular new indices and the m==1 indices that appear in the result
+    IndexSet<Index> new_index;
+
+    static array<const Index*,100> new_index1_;
+    size_t nr1_ = 0;
+
+    //
+    //Handle m==1 Indices
+    //
+    for(int k = is_.rn(); k < this->r(); ++k)
+        {
+        const Index& K = is_[k];
+        if(!hasindex(other.is_,K))
+            new_index1_[++nr1_] = &K;
+        }
+
+    for(int j = other.is_.rn(); j < other.r(); ++j)
+        {
+        const Index& J = other.is_[j];
+        if(!hasindex(this->is_,J))
+            new_index1_[++nr1_] = &J;
+        }
+
+    //
+    //Special cases when one of the tensors
+    //has only m==1 indices (effectively a scalar)
+    //
+    //if(other.is_.rn() == 0)
+    //    {
+    //    scale_ *= other.scale_;
+    //    scale_ *= other.r_->v(1);
+    //    for(int j = 0; j < is_.rn(); ++j)
+    //        new_index.addindex(is_[j]);
+    //    //Keep current m!=1 indices, overwrite m==1 indices
+    //    for(int j = 1; j <= nr1_; ++j) 
+    //        new_index.addindex( *(new_index1_[j]) );
+    //    is_.swap(new_index);
+    //    return *this;
+    //    }
+    //else if(is_.rn() == 0)
+    //    {
+    //    scale_ *= other.scale_;
+    //    scale_ *= r_->v(1);
+    //    r_ = other.r_;
+    //    for(int j = 1; j <= other.is_.rn(); ++j) 
+    //        new_index.addindex( other.is_.index(j) );
+    //    for(int j = 1; j <= nr1_; ++j) 
+    //        new_index.addindex( *(new_index1_[j]) );
+    //    is_.swap(new_index);
+    //    return *this;
+    //    }
+
+
+    //TODO: replace Lind, Rind with static-allocated arrays
+    btas::varray<size_t> Lind(size_t(is_.rn()),1),
+                         Rind(size_t(other.is_.rn()),1);
+
+    size_t ncont = 0; //number of m!=1 indices that match
+    for(int j = 0; j < is_.rn(); ++j)
+	for(int k = 0; k < other.is_.rn(); ++k)
+        {
+	    if(is_[j] == other.is_[k])
+            {
+            ++ncont;
+            Lind[j] = 0;
+            Rind[k] = 0;
+            }
+        }
+
+    size_t uu = 0;
+    for(auto& x : Lind)
+        {
+        if(x == 1)
+            x = ++uu;
+        }
+    for(auto& x : Rind)
+        {
+        if(x == 1)
+            x = ++uu;
+        }
+
+    const size_t nuniq = is_.rn()+other.is_.rn()-2*ncont;
+    //TODO: replace Pind with static-allocated array
+    auto Pind = btas::varray<size_t>(nuniq);
+    for(size_t i = 0; i < nuniq; ++i)
+        {
+        Pind[i] = 1+i;
+        }
+
+    //cout << "Lind = {";
+    //for(auto x : Lind)
+    //    {
+    //    cout << x << ",";
+    //    }
+    //cout << "}" << endl;
+    //cout << "Rind = {";
+    //for(auto x : Rind)
+    //    {
+    //    cout << x << ",";
+    //    }
+    //cout << "}" << endl;
+    //cout << "Pind = {";
+    //for(auto x : Pind)
+    //    {
+    //    cout << x << ",";
+    //    }
+    //cout << "}" << endl;
+    //exit(0);
+
+    d_->contractEq(d_,other.d_,Lind,Rind,Pind);
+
+    //
+    //TODO: improve following lines so that new_index
+    //is not repeatedly calling push_back/new
+    //(either append/construct all at once for single call to new, 
+    //resize new_index ahead of time, or use stack-allocated data (std::array) inside new_index)
+    //
+    //Put in m!=1 indices
+    for(int j = 0; j < this->is_.rn(); ++j)
+        {
+        if(0 != Lind[j]) 
+            new_index.addindex( is_[j] );
+        }
+    for(int j = 0; j < other.is_.rn(); ++j)
+        {
+        if(0 != Rind[j]) 
+            new_index.addindex( other.is_[j] );
+        }
+    //Put in m==1 indices
+    for(int j = 1; j <= nr1_; ++j) 
+        {
+        new_index.addindex( *(new_index1_.at(j)) );
+        }
+
+    is_.swap(new_index);
+
+    scale_ *= other.scale_;
+
+    scaleOutNorm();
+
     return *this;
     }
 

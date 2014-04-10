@@ -29,6 +29,14 @@ class ITDat
     // Public interface
     //
 
+    void virtual
+    contractEq(Ptr& newdat,
+               const CPtr& other, 
+               const btas::varray<size_t>& Tind,
+               const btas::varray<size_t>& Oind,
+               const btas::varray<size_t>& Rind
+              );
+
     void
     plusEq(const CPtr& other, Ptr& newdat, Real fac = 1);
 
@@ -55,13 +63,18 @@ class ITDat
     // Other methods to be implemented by derived classes
     //
 
-    virtual
-    void
+    void virtual
     plusEqImpl(const RealITDat* d, Ptr& newdat, Real fac) = 0;
 
-    //virtual
-    //void
-    //plusEq_(ComplexITDat* d, Ptr& newdat, Real fac) const = 0;
+    //void virtual
+    //plusEqImpl(const ComplexITDat* d, Ptr& newdat, Real fac) const = 0;
+
+    void virtual
+    contractEqImpl(Ptr& newdat,
+                   const RealITDat* other,
+                   const btas::varray<size_t>& Tind,
+                   const btas::varray<size_t>& Oind,
+                   const btas::varray<size_t>& Rind) = 0;
 
     private:
 
@@ -73,9 +86,16 @@ class ITDat
     // Will be overloaded by class Dispatch<Derived>.
     // 
 
-    virtual
-    void
+    void virtual
     addTo(ITDat* d, Ptr& newdat, Real fac) const = 0;
+
+    void virtual
+    contractWith(ITDat* d, 
+                 Ptr& newdat,
+                 const btas::varray<size_t>& Tind,
+                 const btas::varray<size_t>& Oind,
+                 const btas::varray<size_t>& Rind
+                ) const = 0;
 
     friend class RealITDat;
 
@@ -91,7 +111,21 @@ class Dispatch : public ITDat
     private:
     using Ptr = ITDat::Ptr;
     void 
-    addTo(ITDat* d, Ptr& newdat,  Real fac) const final { d->plusEqImpl(static_cast<const Derived*>(this),newdat,fac); }
+    addTo(ITDat* d, Ptr& newdat,  Real fac) const final 
+        { 
+        d->plusEqImpl(static_cast<const Derived*>(this),newdat,fac); 
+        }
+
+    void
+    contractWith(ITDat* d, 
+                 Ptr& newdat,
+                 const btas::varray<size_t>& Tind,
+                 const btas::varray<size_t>& Oind,
+                 const btas::varray<size_t>& Rind
+                ) const final
+        {
+        d->contractEqImpl(newdat,static_cast<const Derived*>(this),Tind,Oind,Rind);
+        }
     };
 
 class RealITDat : public Dispatch<RealITDat>
@@ -131,6 +165,13 @@ class RealITDat : public Dispatch<RealITDat>
     private:
 
     void 
+    contractEqImpl(Ptr& newdat,
+                   const RealITDat* other,
+                   const btas::varray<size_t>& Tind,
+                   const btas::varray<size_t>& Oind,
+                   const btas::varray<size_t>& Rind) override;
+
+    void 
     plusEqImpl(const RealITDat* r, Ptr& newdat, Real fac) override; 
 
     NewPtr
@@ -152,7 +193,6 @@ class RealITDat : public Dispatch<RealITDat>
     print(std::ostream& s, const LogNumber& x) const override; 
 
     ////////////
-    // Data Members
 
     storage t_;
 

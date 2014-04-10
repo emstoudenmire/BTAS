@@ -134,10 +134,16 @@ class ITensor
     //Element Access Methods
     //
 
-    //Get scalar value of rank 0 ITensor
-    //Throws ITError if r() != 0
+    //Get scalar value of rank 0 ITensor.
+    //Throws ITError if r() != 0.
+    //Throws if imaginary part is non-zero.
     Real
     toReal() const;
+
+    //Get scalar value of complex rank 0 ITensor.
+    //Throws ITError if r() != 0
+    Complex
+    toComplex() const;
 
     void
     swap(ITensor& other);
@@ -172,10 +178,7 @@ class ITensor
     //////////////
 
     storage_ptr d_;
-
-    //Indices, maximum of 8
     IndexSet<Index> is_;
-
     LogNumber scale_;
 
     //////////////
@@ -185,6 +188,9 @@ class ITensor
     //objects even though they may share data
     void 
     solo();
+
+    void
+    scaleOutNorm();
 
     void
     equalizeScales(ITensor& other);

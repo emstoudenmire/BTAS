@@ -19,24 +19,13 @@ using std::endl;
 namespace itensor {
 
 //
-// ITensor
-//
-
-//
 // ITensor Constructors
 //
 
 ITensor::
 ITensor()  
-    : 
-    scale_(1)
     { }
 
-
-ITensor::
-ITensor(Real val) 
-    { 
-    }
 
 ITensor::
 ITensor(const Index& i1) 
@@ -80,51 +69,15 @@ ITensor(const Index& i1, const Index& i2, const Index& i3,
     d_ = std::make_shared<RealITDat>(extents);
 	}
 
-Real ITensor::
-toReal() const 
-	{ 
-#ifdef DEBUG
-    if(this->empty())
-        Error("ITensor is empty");
-#endif
-
-    if(is_.rn() != 0)
-        {
-        PrintVar(*this);
-        Error("ITensor not a scalar");
-        }
-
-    Error("Not yet implemented");
-
-	//try {
-	//    return r_->v(1)*scale_.real(); 
-	//    }
-	//catch(const TooBigForReal& e)
-	//    {
-	//    cout << "too big for real() in toReal" << endl;
-	//    cerr << "too big for real() in toReal" << endl;
-	//    cout << "r_->v(1) is " << r_->v(1) << endl;
-	//    cout << "scale is " << scale() << endl;
-	//    cout << "rethrowing" << endl;
-	//    throw e;
-	//    }
-	//catch(TooSmallForReal)
-	//    {
-	//    //cout << "warning: too small for real() in toReal" << endl;
-	//    //cerr << "warning: too small for real() in toReal" << endl;
-	//    //cout << "r_->v(1) is " << r_->v(1) << endl;
-	//    //cout << "scale is " << scale() << endl;
-	//    return 0.;
-	//    }
-	return NAN; //shouldn't reach this line
-	}
-
-Complex ITensor::
-toComplex() const
-    {
-    Error("Not implemented");
-    return Complex_1;
+ITensor::
+ITensor(Real val) 
+    { 
+    //TODO fix this constructor
+    //ScalarITData class?
+    fill(val);
     }
+
+
 
 
 //Real& ITensor::
@@ -189,13 +142,6 @@ toComplex() const
 //    return scale_.real0()*d_->at(ii);
 //    }
 
-void ITensor::
-swap(ITensor& other)
-    {
-    d_.swap(other.d_);
-    is_.swap(other.is_);
-    scale_.swap(other.scale_);
-    }
 
 //const Real* ITensor::
 //data() const
@@ -204,103 +150,7 @@ swap(ITensor& other)
 //    return r_->data();
 //    }
 
-//Real ITensor::
-//normNoScale() const 
-//    { 
-//    return 0;
-//    //if(!this->isComplex())
-//    //    {
-//    //    return Norm(r_->v);
-//    //    }
-//    //else
-//    //    {
-//    //    return sqrt(sqr(Norm(r_->v))+sqr(Norm(i_->v)));
-//    //    }
-//    }
 
-//Real ITensor::
-//norm() const 
-//    { 
-//    if(scale_.isTooBigForReal())
-//        {
-//        throw TooBigForReal("Scale too large for real in ITensor::norm()");
-//        }
-//    //If scale_ is too small to be converted to Real,
-//    //real0 method will return 0.0
-//    return fabs(scale_.real0())*normNoScale();
-//    }
-//
-//LogNumber ITensor::
-//normLogNum() const 
-//    { 
-//    return LogNumber(log(normNoScale())+scale_.logNum(),+1);
-//    }
-
-void ITensor::
-scaleTo(const LogNumber& newscale)
-    {
-    if(newscale.sign() == 0) 
-        Error("Trying to scale an ITensor to a 0 scale");
-    if(scale_ == newscale) return;
-    solo();
-    scale_ /= newscale;
-    d_->mult(scale_.real0());
-    scale_ = newscale;
-    }
-
-
-void ITensor::
-solo()
-	{
-    if(!d_.unique()) d_ = std::move(d_->clone());
-    }
-
-void ITensor::
-scaleOutNorm()
-    {
-    //Real f = normNoScale();
-    ////If norm already 1 return so
-    ////we don't have to call solo()
-    //if(fabs(f-1) < 1E-12) return;
-
-    //if(f != 0)
-    //    {
-    //    solo();
-    //    d_->mult(1./f);
-    //    scale_ *= f;
-    //    }
-    //else //norm == zero
-    //    {
-    //    scale_ = LogNumber(1.);
-    //    d_->fill(0.,d_);
-    //    }
-    }
-
-void ITensor::
-equalizeScales(ITensor& other)
-    {
-    if(scale_.sign() != 0)
-        {
-        other.scaleTo(scale_);
-        }
-    else //*this is equivalent to zero
-        {
-        fill(0);
-        scale_ = other.scale_;
-        }
-    }
-
-ITensor& ITensor::
-operator*=(Real fac)
-    {
-    if(fac == 0)
-        {
-        fill(0);
-        return *this;
-        }
-    scale_ *= fac;
-    return *this;
-    }
 
 
 ITensor& ITensor::
@@ -458,6 +308,90 @@ operator*=(const ITensor& other)
     return *this;
     }
 
+ITensor& ITensor::
+operator*=(Real fac)
+    {
+    if(fac == 0)
+        {
+        fill(0);
+        return *this;
+        }
+    scale_ *= fac;
+    return *this;
+    }
+
+ITensor& ITensor::
+operator/=(Real fac) 
+    { 
+    scale_ /= fac; 
+    return *this; 
+    }
+
+//ITensor& ITensor::
+//operator*=(Complex z)
+//    {
+//    }
+
+//ITensor& ITensor::
+//operator/=(Complex z)
+//    {
+//    }
+
+ITensor ITensor::
+operator-() const 
+    { 
+    ITensor T(*this); 
+    T.scale_ *= -1; 
+    return T; 
+    }
+
+ITensor& ITensor::
+noprime(IndexType type) 
+    { 
+    is_.noprime(type); 
+    return *this; 
+    }
+
+//Set primeLevel of Index I to zero
+ITensor& ITensor::
+noprime(const Index& I) 
+    { 
+    is_.noprime(I); 
+    return *this; 
+    }
+
+//Increase primeLevel of Indices by 1 (or optional amount inc)
+ITensor& ITensor::
+prime(int inc) 
+    { 
+    prime(All,inc); 
+    return *this;
+    }
+
+//Increase primeLevel of Indices by 1 (or optional amount inc)
+ITensor& ITensor::
+prime(IndexType type, int inc) 
+    { 
+    is_.prime(type,inc); 
+    return *this; 
+    }
+
+//Increase primeLevel of Index I by 1 (or optional amount inc)
+ITensor& ITensor::
+prime(const Index& I, int inc) 
+    { 
+    is_.prime(I,inc); 
+    return *this; 
+    }
+
+//Change all Indices having primeLevel plevold to have primeLevel plevnew
+ITensor& ITensor::
+mapprime(int plevold, int plevnew, IndexType type)
+    { 
+    is_.mapprime(plevold,plevnew,type); 
+    return *this; 
+    }
+
 bool static
 checkSameIndOrder(const IndexSet<Index> is1,
                   const IndexSet<Index> is2)
@@ -519,6 +453,7 @@ operator-=(const ITensor& other)
     if(this == &other) 
         { 
         scale_ = 0; 
+        fill(0);
         return *this; 
         }
     scale_.negate();
@@ -527,7 +462,7 @@ operator-=(const ITensor& other)
     return *this; 
     }
 
-void ITensor::
+ITensor& ITensor::
 fill(Real r)
     {
 #ifdef DEBUG
@@ -536,9 +471,10 @@ fill(Real r)
     solo();
     scale_.reset();
     d_->fill(r,d_);
+    return *this;
     }
 
-void ITensor::
+ITensor& ITensor::
 generate(std::function<Real()> rfunc)
     {
 #ifdef DEBUG
@@ -547,6 +483,102 @@ generate(std::function<Real()> rfunc)
     solo();
     scale_.reset();
     d_->generate(rfunc,d_);
+    return *this;
+    }
+
+//Real ITensor::
+//norm() const 
+//    { 
+//    if(scale_.isTooBigForReal())
+//        {
+//        throw TooBigForReal("Scale too large for real in ITensor::norm()");
+//        }
+//    //If scale_ is too small to be converted to Real,
+//    //real0 method will return 0.0
+//    return fabs(scale_.real0())*normNoScale();
+//    }
+
+//Real ITensor::
+//normNoScale() const 
+//    { 
+//    return 0;
+//    //if(!this->isComplex())
+//    //    {
+//    //    return Norm(r_->v);
+//    //    }
+//    //else
+//    //    {
+//    //    return sqrt(sqr(Norm(r_->v))+sqr(Norm(i_->v)));
+//    //    }
+//    }
+
+//
+//LogNumber ITensor::
+//normLogNum() const 
+//    { 
+//    return LogNumber(log(normNoScale())+scale_.logNum(),+1);
+//    }
+
+void ITensor::
+swap(ITensor& other)
+    {
+    d_.swap(other.d_);
+    is_.swap(other.is_);
+    scale_.swap(other.scale_);
+    }
+
+void ITensor::
+scaleTo(const LogNumber& newscale)
+    {
+    if(newscale.sign() == 0) 
+        Error("Trying to scale an ITensor to a 0 scale");
+    if(scale_ == newscale) return;
+    solo();
+    scale_ /= newscale;
+    d_->mult(scale_.real0());
+    scale_ = newscale;
+    }
+
+
+void ITensor::
+solo()
+	{
+    if(!d_.unique()) d_ = std::move(d_->clone());
+    }
+
+void ITensor::
+scaleOutNorm()
+    {
+    //Real f = normNoScale();
+    ////If norm already 1 return so
+    ////we don't have to call solo()
+    //if(fabs(f-1) < 1E-12) return;
+
+    //if(f != 0)
+    //    {
+    //    solo();
+    //    d_->mult(1./f);
+    //    scale_ *= f;
+    //    }
+    //else //norm == zero
+    //    {
+    //    scale_ = LogNumber(1.);
+    //    d_->fill(0.,d_);
+    //    }
+    }
+
+void ITensor::
+equalizeScales(ITensor& other)
+    {
+    if(scale_.sign() != 0)
+        {
+        other.scaleTo(scale_);
+        }
+    else //*this is equivalent to zero
+        {
+        fill(0);
+        scale_ = other.scale_;
+        }
     }
 
 
@@ -576,6 +608,66 @@ randomize(ITensor T, const OptSet& opts)
     //std::uniform_real_distribution<Real> dist(-1.,1.);
     T.generate(Global::random);
     return T;
+    }
+
+Real
+toReal(const ITensor& T)
+	{ 
+#ifdef DEBUG
+    if(T.empty()) Error("ITensor is empty / default constructed");
+#endif
+
+    if(T.indices().rn() != 0)
+        {
+        PrintVar(T.indices());
+        Error("ITensor not a scalar");
+        }
+
+    Error("Not implemented");
+
+	//try {
+	//    return r_->v(1)*scale_.real(); 
+	//    }
+	//catch(const TooBigForReal& e)
+	//    {
+	//    cout << "too big for real() in toReal" << endl;
+	//    cerr << "too big for real() in toReal" << endl;
+	//    cout << "r_->v(1) is " << r_->v(1) << endl;
+	//    cout << "scale is " << scale() << endl;
+	//    cout << "rethrowing" << endl;
+	//    throw e;
+	//    }
+	//catch(TooSmallForReal)
+	//    {
+	//    //cout << "warning: too small for real() in toReal" << endl;
+	//    //cerr << "warning: too small for real() in toReal" << endl;
+	//    //cout << "r_->v(1) is " << r_->v(1) << endl;
+	//    //cout << "scale is " << scale() << endl;
+	//    return 0.;
+	//    }
+	return NAN; //shouldn't reach this line
+	}
+
+Complex
+toComplex(const ITensor& T)
+    {
+#ifdef DEBUG
+    if(T.empty()) Error("ITensor is empty / default constructed");
+#endif
+    if(T.indices().rn() != 0)
+        {
+        PrintVar(T.indices());
+        Error("ITensor not a scalar");
+        }
+
+    Error("Not implemented");
+    return Complex_1;
+    }
+
+Real
+norm(const ITensor& T)
+    {
+    return NAN;
     }
 
 };

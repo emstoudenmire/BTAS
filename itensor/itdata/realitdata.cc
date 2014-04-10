@@ -1,43 +1,25 @@
-#include "itensor/itdat.h"
+#include "itensor/itdata/realitdata.h"
+
 #include "btas/generic/scal_impl.h"
 #include "btas/generic/axpy_impl.h"
 #include "btas/generic/contract.h"
 
-using std::make_shared;
-
 namespace itensor {
 
-//
-// ITDat
-//
-
-void ITDat::
-contractEq(Ptr& newdat,
-           const CPtr& other, 
-           const btas::varray<size_t>& Tind,
-           const btas::varray<size_t>& Oind,
-           const btas::varray<size_t>& Rind)
-    {
-    other->contractWith(this,newdat,Tind,Oind,Rind);
-    }
-
-void ITDat::
-plusEq(const CPtr& other, Ptr& newptr, Real fac) { other->addTo(this,newptr,fac); }
-
 
 //
-// RealITDat
+// RealITData
 //
 
-RealITDat::
-RealITDat(const storage& t)
+RealITData::
+RealITData(const storage& t)
     :
     t_(t)
     { }
 
-void RealITDat::
+void RealITData::
 contractEqImpl(Ptr& newdat,
-               const RealITDat* other,
+               const RealITData* other,
                const btas::varray<size_t>& Tind,
                const btas::varray<size_t>& Oind,
                const btas::varray<size_t>& Rind)
@@ -47,40 +29,40 @@ contractEqImpl(Ptr& newdat,
     t_.swap(res);
     }
 
-void RealITDat::
-plusEqImpl(const RealITDat* d, Ptr& newdat, Real fac)
+void RealITData::
+plusEqImpl(const RealITData* d, Ptr& newdat, Real fac)
     { 
     //axpy computes t_ += d->t_ * fac
     btas::axpy(fac,d->t_,t_);
     }
 
-RealITDat::NewPtr RealITDat::
+RealITData::NewPtr RealITData::
 clone() const
     {
-    //Should change this to make_unique<RealITDat>(t_);
+    //Should change this to make_unique<RealITData>(t_);
     //once C++14 make_unique feature is available
-    return RealITDat::NewPtr(new RealITDat(t_));
+    return RealITData::NewPtr(new RealITData(t_));
     }
 
-void RealITDat::
+void RealITData::
 fill(Real r, Ptr& newdat)
     {
     t_.fill(r);
     }
 
-void RealITDat::
+void RealITData::
 generate(std::function<Real()> rfunc, Ptr& newdat)
     {
     t_.generate(rfunc);
     }
 
-void RealITDat::
+void RealITData::
 mult(Real r)
     {
     btas::scal(r,t_);
     }
 
-void RealITDat::
+void RealITData::
 map(detail::MapBase* m)
     {
     for(auto& r : t_)
@@ -89,7 +71,7 @@ map(detail::MapBase* m)
         }
     }
 
-void RealITDat::
+void RealITData::
 print(std::ostream& s, const LogNumber& x) const
     {
     s << "}\n";

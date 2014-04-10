@@ -8,7 +8,7 @@
 #include "itensor/indexset.h"
 #include "btas/tensor.h"
 
-#include "itensor/itdat.h"
+#include "itensor/itdata/itdata.h"
 
 namespace itensor {
 
@@ -19,8 +19,8 @@ class ITensor
     {
     public:
 
-    using storage = ITDat;
-    using storage_ptr = std::shared_ptr<ITDat>;
+    using storage = ITData;
+    using storage_ptr = std::shared_ptr<ITData>;
     using IndexT = Index;
     using IndexValT = IndexVal;
 
@@ -70,7 +70,6 @@ class ITensor
     bool 
     empty() const { return !bool(d_); }
 
-
     //
     // Operators
     //
@@ -105,7 +104,6 @@ class ITensor
 
     ITensor& 
     operator-=(const ITensor& other);
-
 
     //
     // Index Prime Level Methods
@@ -162,7 +160,7 @@ class ITensor
 
     //////////////
 
-    //Disattach self from current ITDat and create own copy instead.
+    //Disattach self from current ITData and create own copy instead.
     //Necessary because ITensors logically represent distinct
     //tensors even though they may share data (copy-on-write idiom)
     void 
@@ -190,7 +188,7 @@ class ITensor
     const LogNumber&
     scale() const { return scale_; }
 
-    const ITDat&
+    const ITData&
     data() const { return *d_; }
 
     void 
@@ -204,7 +202,7 @@ map(const Func& f)
     {
     //MapWrap<F> creates a new type that holds a functor of
     //type F but which is also a virtual/polymorphic subclass
-    //of MapBase so that subclasses of ITDat can call f through
+    //of MapBase so that subclasses of ITData can call f through
     //a uniform function signature
     detail::MapWrap<Func> mw(f);
     d_->map(&mw);

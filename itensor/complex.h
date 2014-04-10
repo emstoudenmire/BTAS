@@ -6,6 +6,7 @@
 #define __ITENSOR_COMPLEX_H
 
 #include "itensor/real.h"
+#include <complex>
 
 namespace itensor {
 

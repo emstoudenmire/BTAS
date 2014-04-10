@@ -10,7 +10,7 @@ include ../options.mk
 
 SOURCES=util/option.cc 
 SOURCES+= index.cc 
-SOURCES+= itdat.cc 
+SOURCES+= itdata/realitdata.cc 
 SOURCES+= itensor.cc 
 #SOURCES+= iqindex.cc 
 #SOURCES+= iqtensor.cc 
@@ -22,7 +22,7 @@ SOURCES+= itensor.cc
 #SOURCES+= tevol.cc
 
 HEADERS=util/option.h global.h real.h complex.h index.h error.h \
-        indexset.h itdat.h itensor.h 
+        indexset.h itdata/itdata.h itdata/realitdata.h itensor.h 
         #qn.h iqindex.h iqtdat.h iqtensor.h \
         condenser.h combiner.h qcounter.h iqcombiner.h \
         spectrum.h svdalgs.h mps.h mpo.h core.h observer.h DMRGObserver.h \
@@ -73,6 +73,7 @@ installg: mklibdir libitensor-g.a
 mkdebugdir:
 	mkdir -p .debug_objs
 	mkdir -p .debug_objs/util
+	mkdir -p .debug_objs/itdata
 
 mklibdir:
 	mkdir -p $(ITENSOR_LIBDIR)
@@ -81,18 +82,18 @@ clean:
 	rm -fr *.o .debug_objs libitensor.a libitensor-g.a
 
 DEPHEADERS=real.h util/option.h
-option.o: $(DEPHEADERS)
-.debug_objs/option.o: $(DEPHEADERS)
+util/option.o: $(DEPHEADERS)
+.debug_objs/util/option.o: $(DEPHEADERS)
 DEPHEADERS+= global.h index.h
 index.o: $(DEPHEADERS)
 .debug_objs/index.o: $(DEPHEADERS)
 DEPHEADERS+= indexset.h 
 indexset.o: $(DEPHEADERS)
 .debug_objs/indexset.o: $(DEPHEADERS)
-DEPHEADERS+= itdat.h
-itdat.o: $(DEPHEADERS)
-.debug_objs/itdat.o: $(DEPHEADERS)
-DEPHEADERS+= itdat.h itensor.h 
+DEPHEADERS+= itdata/itdata.h
+itdata/itdat.o: $(DEPHEADERS)
+.debug_objs/itdata/itdat.o: $(DEPHEADERS)
+DEPHEADERS+= itensor.h 
 itensor.o: $(DEPHEADERS)
 .debug_objs/itensor.o: $(DEPHEADERS)
 

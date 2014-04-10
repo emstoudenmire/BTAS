@@ -3,10 +3,7 @@
 //    (See accompanying LICENSE file.)
 //
 #include "itensor.h"
-
-#include <functional>
-#include "btas/generic/scal_impl.h"
-#include "btas/generic/axpy_impl.h"
+#include "itensor/itdata/realitdata.h"
 
 using std::array;
 using std::ostream;
@@ -30,7 +27,7 @@ ITensor()
 ITensor::
 ITensor(const Index& i1) 
     :
-    d_(std::make_shared<RealITDat>(i1.m())),
+    d_(std::make_shared<RealITData>(i1.m())),
     is_(i1)
 	{ 
     }
@@ -39,7 +36,7 @@ ITensor(const Index& i1)
 ITensor::
 ITensor(const Index& i1,const Index& i2) 
     :
-    d_(std::make_shared<RealITDat>(i1.m(),i2.m())),
+    d_(std::make_shared<RealITData>(i1.m(),i2.m())),
     is_(i1,i2)
 	{ 
     }
@@ -66,7 +63,7 @@ ITensor(const Index& i1, const Index& i2, const Index& i3,
         extents.push_back(ii[r].m());
         }
     is_ = IndexSet<Index>(ii,r,0);
-    d_ = std::make_shared<RealITDat>(extents);
+    d_ = std::make_shared<RealITData>(extents);
 	}
 
 ITensor::

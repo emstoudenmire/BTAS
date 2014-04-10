@@ -557,18 +557,15 @@ operator<<(ostream & s, const ITensor& t)
     s << t.indices() << "\n";
     s << "  {log(scale)[incl in elems]=" << t.scale().logNum();
 
+    //Checking whether std::ios::floatfield is set enables 
+    //printing the contents of an ITensor when using the printf
+    //format string %f (or another float-related format string)
     const bool ff_set = (std::ios::floatfield & s.flags()) != 0;
 
     if(ff_set || Global::printdat())
         {
-        if(!t.empty())
-            {
-            t.d_->print(s,t.scale());
-            }
-        else
-            {
-            s << " (empty / default constructed)}\n";
-            }
+        if(!t.empty()) t.data().print(s,t.scale());
+        else           s << " (empty / default constructed)}\n";
         }
     return s;
     }

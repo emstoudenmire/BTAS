@@ -45,6 +45,9 @@ class ITensor
     const LogNumber&
     scale() const { return scale_; }
 
+    const ITDat&
+    data() const { return *d_; }
+
     //
     //Constructors
     //
@@ -195,8 +198,6 @@ class ITensor
     void
     equalizeScales(ITensor& other);
 
-    friend std::ostream& 
-    operator<<(std::ostream & s, const ITensor& T);
 
     }; // class ITensor
 

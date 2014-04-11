@@ -40,11 +40,14 @@ class ITData
     void
     plusEq(const CPtr& other, Ptr& newdat, Real fac = 1);
 
+    NewPtr virtual
+    clone() const = 0;
+
     void virtual
     mult(Real r) = 0;
 
-    NewPtr virtual
-    clone() const = 0;
+    Real virtual
+    norm() const = 0;
 
     void virtual
     fill(Real r, Ptr& newdat) = 0;

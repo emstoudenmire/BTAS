@@ -71,6 +71,17 @@ map(detail::MapBase* m)
         }
     }
 
+Real RealITData::
+norm() const
+    {
+    Real nrm = 0.;
+    for(auto r : t_)
+        {
+        nrm += r*r;
+        }
+    return std::sqrt(nrm);
+    }
+
 void RealITData::
 print(std::ostream& s, const LogNumber& x) const
     {
@@ -97,7 +108,11 @@ print(std::ostream& s, const LogNumber& x) const
                 if(j < I.size()) s << ",";
                 }
             s << ") ";
-            s << format(fabs(val) > 1E-10 ? "%.12f\n" : "%.8E\n",val);
+
+            if(fabs(val) > 1E-10)
+                s << val << "\n";
+            else
+                s << format("%.8E\n",val);
             }
         }
     }

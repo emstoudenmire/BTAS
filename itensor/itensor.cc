@@ -483,39 +483,6 @@ generate(std::function<Real()> rfunc)
     return *this;
     }
 
-//Real ITensor::
-//norm() const 
-//    { 
-//    if(scale_.isTooBigForReal())
-//        {
-//        throw TooBigForReal("Scale too large for real in ITensor::norm()");
-//        }
-//    //If scale_ is too small to be converted to Real,
-//    //real0 method will return 0.0
-//    return fabs(scale_.real0())*normNoScale();
-//    }
-
-//Real ITensor::
-//normNoScale() const 
-//    { 
-//    return 0;
-//    //if(!this->isComplex())
-//    //    {
-//    //    return Norm(r_->v);
-//    //    }
-//    //else
-//    //    {
-//    //    return sqrt(sqr(Norm(r_->v))+sqr(Norm(i_->v)));
-//    //    }
-//    }
-
-//
-//LogNumber ITensor::
-//normLogNum() const 
-//    { 
-//    return LogNumber(log(normNoScale())+scale_.logNum(),+1);
-//    }
-
 void ITensor::
 swap(ITensor& other)
     {
@@ -664,7 +631,13 @@ toComplex(const ITensor& T)
 Real
 norm(const ITensor& T)
     {
-    return NAN;
+    return fabs(T.scale().real0()) * T.data().norm();
     }
+
+//LogNumber
+//normLogNum(const ITensor& T)
+//    { 
+//    return LogNumber(log(T.data().norm())+T.scale().logNum(),+1);
+//    }
 
 };

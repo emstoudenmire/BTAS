@@ -370,14 +370,6 @@ class LogNumber
 
     };
 
-LogNumber inline
-sqrt(LogNumber L)
-    {
-    if(L.sign() < 0) 
-        Error("Negative LogNumber in sqrt");
-    return L.pow(0.5);
-    }
-
 }; //namespace itensor
 
 #endif

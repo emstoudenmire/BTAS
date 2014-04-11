@@ -3,7 +3,6 @@
 //    (See accompanying LICENSE file.)
 //
 #include "itensor.h"
-#include "itensor/itdata/realitdata.h"
 
 using std::array;
 using std::ostream;
@@ -42,36 +41,13 @@ ITensor(const Index& i1,const Index& i2)
     }
     
 
-ITensor::
-ITensor(const Index& i1, const Index& i2, const Index& i3,
-        const Index& i4, const Index& i5, const Index& i6,
-        const Index& i7, const Index& i8)
-	{
-#ifdef DEBUG
-    if(i1 == Index::Null())
-        Error("i1 is null");
-    if(i2 == Index::Null())
-        Error("i2 is null");
-    if(i3 == Index::Null())
-        Error("i3 is null");
-#endif
-    std::array<Index,NMAX> ii = {{ i1, i2, i3, i4, i5, i6, i7, i8 }};
-    std::vector<int> extents = { i1.m(), i2.m(), i3.m() };
-    int r = 3;
-	for(; r < 8 && ii[r] != Index::Null(); ++r)
-        {
-        extents.push_back(ii[r].m());
-        }
-    is_ = IndexSet<Index>(ii,r,0);
-    d_ = std::make_shared<RealITData>(extents);
-	}
 
 ITensor::
 ITensor(Real val) 
     { 
-    //TODO fix this constructor
+    //TODO implement this constructor
     //ScalarITData class?
-    fill(val);
+    //fill(val);
     }
 
 
@@ -494,9 +470,8 @@ swap(ITensor& other)
 void ITensor::
 scaleTo(const LogNumber& newscale)
     {
-    if(newscale.sign() == 0) 
-        Error("Trying to scale an ITensor to a 0 scale");
     if(scale_ == newscale) return;
+    if(newscale.sign() == 0) Error("Trying to scale an ITensor to a 0 scale");
     solo();
     scale_ /= newscale;
     d_->mult(scale_.real0());

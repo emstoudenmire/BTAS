@@ -1,7 +1,11 @@
 #include "itensor/itensor.h"
+#include "btas/btas.h"
+#include "btas/tensor.h"
 
 using namespace std;
 using namespace itensor;
+
+using DTensor = btas::Tensor<double>;
 
 struct Square
     {
@@ -9,6 +13,16 @@ struct Square
     T
     operator()(T x) const { return x*x; }
     };
+
+template <typename _Tensor>
+void print(const _Tensor& X)
+{
+for(auto i : X.range()) 
+    {
+    cout << i << " " << X(i) << "\n";
+    }
+cout << endl;
+}
 
 int 
 main(int argc, char* argv[])
@@ -37,6 +51,35 @@ main(int argc, char* argv[])
     T *= prime(T1,l2);
 
     PrintData(T);
+
+    Index jj("jj",3);
+    auto rT3 = randomize(ITensor(jj));
+    printn("rT3=%.10f",rT3);
+    printn("norm(rT3)=%.10f",norm(rT3));
+
+
+    DTensor A(2,2,2),
+            B(2,2,2),
+            C;
+
+    A.fill(1);
+    B.fill(1);
+    cout << "A = \n"; print(A);
+    cout << "B = \n"; print(B);
+
+    cout << "dot = " << dot(A,B) << endl;
+
+    //array<size_t,2> aa = {0,0},
+    //                bb = {0,0};
+    //array<size_t,0> cc;
+    //contract(1,A,aa,B,bb,0,C,cc);
+    enum {I,J,K,L};
+    contract(1.,A,{I,J},B,{K,L},0.,C,{I,J,K,L});
+
+    printn("C.rank() = %d",C.rank());
+    cout << "*C.data() = " << *(C.data()) << endl;
+    cout << "C = \n"; print(C);
+
     exit(0);
 
 

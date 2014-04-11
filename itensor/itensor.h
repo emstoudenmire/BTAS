@@ -9,6 +9,7 @@
 #include "btas/tensor.h"
 
 #include "itensor/itdata/itdata.h"
+#include "itensor/itdata/realitdata.h"
 
 namespace itensor {
 
@@ -36,20 +37,14 @@ class ITensor
     ITensor(const Index& i1);
 
     //Construct rank 2 ITensor, all entries set to zero
-    //TODO: change to variadic template
     ITensor(const Index& i1,
             const Index& i2);
 
     //Construct ITensor up to rank 8, entries set to zero
-    //TODO: change to variadic template
-    ITensor(const Index& i1, 
-            const Index& i2, 
-            const Index& i3,
-            const Index& i4 = Index::Null(),
-            const Index& i5 = Index::Null(),
-            const Index& i6 = Index::Null(),
-            const Index& i7 = Index::Null(),
-            const Index& i8 = Index::Null());
+    template <typename... Indices>
+    ITensor(const Index& i0, 
+            const Index& i1, 
+            const Indices&... rest);
 
     //Construct rank 0 ITensor (scalar), value set to val
     explicit
@@ -196,6 +191,20 @@ class ITensor
 
     }; // class ITensor
 
+template <typename... Indices>
+ITensor::
+ITensor(const Index& i0, 
+        const Index& i1,
+        const Indices&... rest)
+	{
+    const auto size = 2 + sizeof...(rest);
+    std::array<Index,size> inds = { i0, i1, static_cast<Index>(rest)...};
+    std::array<int,size> extents;
+    for(size_t j = 0; j < size; ++j) extents[j] = inds[j].m();
+    is_ = IndexSet<Index>(inds,size);
+    d_ = std::make_shared<RealITData>(extents);
+	}
+
 template <typename Func>
 ITensor& ITensor::
 map(const Func& f)
@@ -204,6 +213,8 @@ map(const Func& f)
     //type F but which is also a virtual/polymorphic subclass
     //of MapBase so that subclasses of ITData can call f through
     //a uniform function signature
+    solo();
+    scaleTo(1);
     detail::MapWrap<Func> mw(f);
     d_->map(&mw);
     return *this;

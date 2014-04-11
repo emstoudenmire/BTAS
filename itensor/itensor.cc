@@ -192,8 +192,8 @@ operator*=(const ITensor& other)
 
 
     //TODO: replace Lind, Rind with static-allocated arrays
-    btas::varray<size_t> Lind(size_t(is_.rn()),1),
-                         Rind(size_t(other.is_.rn()),1);
+    btas::varray<size_t> Lind(size_t(is_.rn()),0),
+                         Rind(size_t(other.is_.rn()),0);
 
     size_t ncont = 0; //number of m!=1 indices that match
     for(int j = 0; j < is_.rn(); ++j)
@@ -202,29 +202,30 @@ operator*=(const ITensor& other)
 	    if(is_[j] == other.is_[k])
             {
             ++ncont;
-            Lind[j] = 0;
-            Rind[k] = 0;
+            Lind[j] = ncont;
+            Rind[k] = ncont;
             }
         }
+    printn("ncont = %d",ncont);
 
-    size_t uu = 0;
+    size_t uu = ncont;
     for(auto& x : Lind)
         {
-        if(x == 1)
+        if(x == 0)
             x = ++uu;
         }
     for(auto& x : Rind)
         {
-        if(x == 1)
+        if(x == 0)
             x = ++uu;
         }
 
     const size_t nuniq = is_.rn()+other.is_.rn()-2*ncont;
     //TODO: replace Pind with static-allocated array
     auto Pind = btas::varray<size_t>(nuniq);
-    for(size_t i = 0; i < nuniq; ++i)
+    for(size_t i = 0, u = 1+ncont; i < nuniq; ++i,++u)
         {
-        Pind[i] = 1+i;
+        Pind[i] = u;
         }
 
     //cout << "Lind = {";

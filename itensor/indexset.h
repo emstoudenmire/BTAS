@@ -132,13 +132,6 @@ class IndexSetT
     void
     write(std::ostream& s) const;
 
-    //using Ptr = typename std::shared_ptr<IndexSetT<IndexT>>;
-    //static const Ptr& Null()
-    //    {
-    //    static Ptr Null_ = std::make_shared<IndexSetT<IndexT>>();
-    //    return Null_;
-    //    }
-
     private:
 
     //////////
@@ -169,8 +162,7 @@ IndexSetT(const IndexT& i1)
     rn_((i1.m() == 1 ? 0 : 1))
     { 
 #ifdef DEBUG
-    if(i1 == IndexT::Null())
-        Error("i1 is null");
+    if(i1.isNull()) Error("i1 is null");
 #endif
     }
 
@@ -181,10 +173,8 @@ IndexSetT(const IndexT& i1, const IndexT& i2)
     index_(2)
     { 
 #ifdef DEBUG
-    if(i1 == IndexT::Null())
-        Error("i1 is null");
-    if(i2 == IndexT::Null())
-        Error("i2 is null");
+    if(i1.isNull()) Error("i1 is null");
+    if(i2.isNull()) Error("i2 is null");
 #endif
 	if(i1.m()==1) 
 	    {
@@ -512,7 +502,7 @@ findDir(const IndexSetT<IndexT>& iset, Arrow dir)
     for(const auto& J : iset)
         if(J.dir() == dir) return J;
     Error("Couldn't find index with specified dir");
-    return IndexT::Null();
+    return IndexT();
     }
 
 //
@@ -541,7 +531,7 @@ findtype(const IndexSetT<IndexT>& iset, IndexType t)
     for(const auto& J : iset)
         if(J.type() == t) return J;
     Error("findtype failed."); 
-    return IndexT::Null();
+    return IndexT();
 	}
 
 

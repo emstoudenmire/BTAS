@@ -16,8 +16,6 @@ using std::make_shared;
 
 namespace itensor {
 
-
-
 ostream& 
 operator<<(ostream& s, const IndexType& it)
     { 
@@ -32,7 +30,7 @@ IndexTypeToInt(IndexType it)
     {
     if(it == Link) return 1;
     if(it == Site) return 2;
-    if(it == All) return 3;
+    if(it == All)  return 3;
     Error("No integer value defined for IndexType.");
     return -1;
     }
@@ -59,9 +57,8 @@ putprimes(string s, int plev)
 string 
 nameindex(IndexType it, int plev)
     { 
-    static const std::array<string,3>
-    indextypename = {{ "Link","Site", "All" }};
-    return putprimes(indextypename.at(int(it)),plev);
+    static const std::array<string,3> itname = {{ "Link", "Site", "All" }};
+    return putprimes(itname.at(int(it)),plev);
     }
 
 string 
@@ -80,45 +77,22 @@ nameint(const string& f, int n)
 struct IndexDat
     {
     //////////////
-    // Public Data Members
-
     const Index::IDType id;
     const int m;
     const IndexType type;
     const string sname;
-
-    //
     //////////////
 
-    IndexDat(const string& ss, int mm, IndexType it, Index::IDType id);
-
-    static const shared_ptr<IndexDat>&
-    Null();
-
-    private:
-
-    //These methods are not implemented
-    //to disallow copying
-    IndexDat(const IndexDat&);
-    void operator=(const IndexDat&);
+    IndexDat(const string& sn, int m_, IndexType t_, Index::IDType id_)
+        : 
+        id(id_),
+        m(m_), 
+        type(t_), 
+        sname(sn)
+        { }
 
     }; //class IndexDat
 
-IndexDat::
-IndexDat(const string& ss, int m_, IndexType it, Index::IDType id_)
-    : 
-    id(id_),
-    m(m_), 
-    type(it), 
-    sname(ss)
-    { }
-
-const shared_ptr<IndexDat>& IndexDat::
-Null()
-    {
-    static shared_ptr<IndexDat> Null_ = make_shared<IndexDat>("Null",1,Site,0);
-    return Null_;
-    }
 
 //
 // class Index
@@ -136,10 +110,8 @@ generateID()
 Index::
 Index() 
     : 
-    p(IndexDat::Null()), 
     primelevel_(0) 
-    { 
-    }
+    { }
 
 Index::
 Index(const string& name, int mm, IndexType it, int plev) 
@@ -149,7 +121,6 @@ Index(const string& name, int mm, IndexType it, int plev)
     { 
     if(it == All) Error("Constructing Index with type All disallowed");
     }
-
 
 int Index::
 m() const { return p->m; }
@@ -167,7 +138,7 @@ Index::IDType Index::
 id() const { return p->id; }
 
 bool Index::
-isNull() const { return (p == IndexDat::Null()); }
+isNull() const { return !p; }
 
 int Index::
 primeLevel() const { return primelevel_; }
@@ -177,8 +148,7 @@ primeLevel(int plev)
     { 
     primelevel_ = plev; 
 #ifdef DEBUG
-    if(primelevel_ < 0)
-        Error("Negative primeLevel");
+    if(primelevel_ < 0) Error("primeLevel must be non-negative");
 #endif
     return *this;
     }
@@ -214,10 +184,7 @@ mapprime(int plevold, int plevnew, IndexType type)
             {
             primelevel_ = plevnew;
 #ifdef DEBUG
-            if(primelevel_ < 0)
-                {
-                Error("Negative primeLevel");
-                }
+            if(primelevel_ < 0) Error("Negative primeLevel");
 #endif
             }
         }
@@ -229,10 +196,7 @@ prime(int inc)
     { 
     primelevel_ += inc; 
 #ifdef DEBUG
-    if(primelevel_ < 0)
-        {
-        Error("Negative primeLevel");
-        }
+    if(primelevel_ < 0) Error("Negative primeLevel");
 #endif
     return *this;
     }
@@ -244,10 +208,7 @@ prime(IndexType type, int inc)
         {
         primelevel_ += inc;
 #ifdef DEBUG
-        if(primelevel_ < 0)
-            {
-            Error("Increment led to negative primeLevel");
-            }
+        if(primelevel_ < 0) Error("Increment led to negative primeLevel");
 #endif
         }
     return *this;
@@ -278,10 +239,7 @@ read(istream& s)
     {
     s.read((char*) &primelevel_,sizeof(primelevel_));
 #ifdef DEBUG
-    if(primelevel_ < 0)
-        {
-        Error("Negative primeLevel");
-        }
+    if(primelevel_ < 0) Error("Negative primeLevel");
 #endif
 
     int t; 
@@ -303,13 +261,6 @@ read(istream& s)
 
     p = make_shared<IndexDat>(ss,mm,IntToIndexType(t),id);
     return *this;
-    }
-
-const Index& Index::
-Null()
-    {
-    static const Index Null_;
-    return Null_;
     }
 
 ostream& 
@@ -346,10 +297,7 @@ IndexVal(const Index& index, int i_)
     i(i_)
     { 
 #ifdef DEBUG
-    if(index == Index::Null())
-        {
-        Error("IndexVal initialized with null Index");
-        }
+    if(index.isNull()) Error("IndexVal initialized with null Index");
     if(i_ < 1 || i_ > index.m())
         {
         cout << "i = " << i_ << endl;
@@ -371,13 +319,6 @@ operator!=(const IndexVal& other) const
     return !operator==(other);
     }
 
-
-const IndexVal& IndexVal::
-Null()
-    {
-    static const IndexVal Null_;
-    return Null_;
-    }
 
 string
 showm(const Index& I) { return nameint("m=",I.m()); }

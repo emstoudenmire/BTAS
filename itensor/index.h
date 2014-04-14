@@ -45,32 +45,33 @@ class Index
     Index(const std::string& name, 
           int m = 1, 
           IndexType it = Link, 
-          int primelev = 0);
+          int primelevel = 0);
 
     //
     // Accessor Methods
     //
 
-    // Returns the bond dimension
+    // Return the bond dimension
     int 
     m() const;
 
-    // Returns the prime level
+    // Return the prime level
     int 
     primeLevel() const;
-    // Sets the prime level to a specified value.
+
+    // Set the prime level to a specified value.
     Index& 
     primeLevel(int plev);
 
-    // Returns the IndexType
+    // Return the IndexType
     IndexType 
     type() const;
 
-    // Returns the name of this Index
+    // Return the name of this Index
     std::string 
     name() const;
 
-    // Returns the name of this Index with primes removed
+    // Return the name of this Index with primes removed
     const std::string&
     rawname() const;
 
@@ -84,6 +85,7 @@ class Index
     // Returns the Arrow direction of this Index
     Arrow 
     dir() const { return Out; }
+
     void 
     dir(Arrow ndir) const {  }
 
@@ -151,14 +153,6 @@ class Index
     Index& 
     read(std::istream& s);
 
-    //
-    // Static Index instances
-    //
-
-    //Static default-constructed placeholder Index
-    static const 
-    Index& Null();
-
     private:
 
     /////////////
@@ -191,8 +185,6 @@ class IndexVal : public Index
     bool
     operator!=(const IndexVal& other) const;
 
-    static const IndexVal& 
-    Null();
     };
 
 Index inline

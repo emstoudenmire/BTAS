@@ -354,9 +354,9 @@ checkSameIndOrder(const IndexSet& is1,
                   const IndexSet& is2)
     {
     for(int j = 0; j < is1.rn(); ++j)
-    if(is1[j] != is2[j])
-        { 
-        return false;
+        {
+        if(is1[j] != is2[j])
+            return false;
         }
     return true;
     }
@@ -369,16 +369,16 @@ operator+=(const ITensor& other)
     if(this == &other) return operator*=(2.);
     if(this->scale_.isZero()) return operator=(other);
 
-    const
-    bool same_ind_order = checkSameIndOrder(is_,other.is_);
-
     if(is_ != other.is_)
         {
-        printn("this ur = %.10f, other.ur = %.10f",is_.uniqueReal(),is_.uniqueReal());
         PrintVar(*this);
         PrintVar(other);
         Error("ITensor::operator+=: different Index structure");
         }
+
+    const
+    bool same_ind_order = checkSameIndOrder(is_,other.is_);
+
 
     Real scalefac = 1;
     if(scale_.magnitudeLessThan(other.scale_)) 
@@ -509,7 +509,7 @@ ostream&
 operator<<(ostream & s, const ITensor& t)
     {
     s << "ITensor r = " << t.r() << ": ";
-    s << t.indices() << "\n";
+    s << t.inds() << "\n";
     s << "  {log(scale)[incl in elems]=" << t.scale().logNum();
 
     //Checking whether std::ios::floatfield is set enables 
@@ -540,9 +540,9 @@ toReal(const ITensor& T)
     if(T.empty()) Error("ITensor is empty / default constructed");
 #endif
 
-    if(T.indices().rn() != 0)
+    if(T.inds().rn() != 0)
         {
-        PrintVar(T.indices());
+        PrintVar(T.inds());
         Error("ITensor not a scalar");
         }
 
@@ -577,9 +577,9 @@ toComplex(const ITensor& T)
 #ifdef DEBUG
     if(T.empty()) Error("ITensor is empty / default constructed");
 #endif
-    if(T.indices().rn() != 0)
+    if(T.inds().rn() != 0)
         {
-        PrintVar(T.indices());
+        PrintVar(T.inds());
         Error("ITensor not a scalar");
         }
 

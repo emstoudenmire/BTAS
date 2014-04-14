@@ -17,9 +17,6 @@ using std::make_shared;
 namespace itensor {
 
 
-using Generator = std::mt19937;
-
-using IDType = Generator::result_type;
 
 ostream& 
 operator<<(ostream& s, const IndexType& it)
@@ -64,11 +61,7 @@ nameindex(IndexType it, int plev)
     { 
     static const std::array<string,3>
     indextypename = {{ "Link","Site", "All" }};
-#ifdef DEBUG
     return putprimes(indextypename.at(int(it)),plev);
-#else
-    return putprimes(indextypename[int(it)],plev); 
-#endif
     }
 
 string 
@@ -89,7 +82,7 @@ struct IndexDat
     //////////////
     // Public Data Members
 
-    const IDType id;
+    const Index::IDType id;
     const int m;
     const IndexType type;
     const string sname;
@@ -97,7 +90,7 @@ struct IndexDat
     //
     //////////////
 
-    IndexDat(const string& ss, int mm, IndexType it, IDType id);
+    IndexDat(const string& ss, int mm, IndexType it, Index::IDType id);
 
     static const shared_ptr<IndexDat>&
     Null();
@@ -112,7 +105,7 @@ struct IndexDat
     }; //class IndexDat
 
 IndexDat::
-IndexDat(const string& ss, int m_, IndexType it, IDType id_)
+IndexDat(const string& ss, int m_, IndexType it, Index::IDType id_)
     : 
     id(id_),
     m(m_), 
@@ -132,15 +125,11 @@ Null()
 //
 
 
-IDType static
+Index::IDType static
 generateID()
     {
-    static Generator rng(std::time(NULL) + getpid());
+    static Index::RNG rng(std::time(NULL) + getpid());
     return rng();
-
-    //static IDType nextid = 0;
-    //++nextid;
-    //return nextid;
     }
 
 
@@ -150,7 +139,6 @@ Index()
     p(IndexDat::Null()), 
     primelevel_(0) 
     { 
-    //setUniqueReal();
     }
 
 Index::
@@ -160,7 +148,6 @@ Index(const string& name, int mm, IndexType it, int plev)
     primelevel_(plev) 
     { 
     if(it == All) Error("Constructing Index with type All disallowed");
-    //setUniqueReal();
     }
 
 
@@ -175,6 +162,9 @@ name() const  { return putprimes(rawname(),primelevel_); }
 
 const string& Index::
 rawname() const { return p->sname; }
+
+Index::IDType Index::
+id() const { return p->id; }
 
 bool Index::
 isNull() const { return (p == IndexDat::Null()); }
@@ -193,40 +183,6 @@ primeLevel(int plev)
     return *this;
     }
 
-const int _Nshifts = 11;
-using shift_table_t = std::array<Real,_Nshifts>;
-
-Real static
-calcPrimeShift(int p) { return 1.+sin(p)/10.; }
-
-shift_table_t static
-makeShifts()
-    {
-    shift_table_t res;
-    for(int p = 0; p < _Nshifts; ++p)
-        {
-        res[p] = calcPrimeShift(p);
-        }
-    return res;
-    }
-
-//Lookup table for primelevel
-//shifts to uniqueReals
-Real static
-primeShift(int p)
-    {
-    static shift_table_t shift = makeShifts();
-    if(p < _Nshifts)
-        return shift[p];
-    else
-        return calcPrimeShift(p);
-    }
-
-Real Index::
-uniqueReal() const
-    {
-    return (1.+cos(p->id))*primeShift(primelevel_);
-    }
 
 bool Index::
 operator==(const Index& other) const 
@@ -243,7 +199,7 @@ noprimeEquals(const Index& other) const
 bool Index::
 operator<(const Index& other) const 
     { 
-    return (uniqueReal() < other.uniqueReal()); 
+    return (p->id < other.p->id) || (primelevel_ < other.primelevel_);
     }
 
 IndexVal Index::
@@ -360,9 +316,21 @@ ostream&
 operator<<(ostream& s, const Index& t)
     {
     if(t.name() != "" && t.name() != " ") s << t.name();
-    const auto iur = size_t(abs(10000*noprime(t).uniqueReal()));
-    return s << "(" << nameindex(t.type(),t.primeLevel()) 
-             << "," << iur << "):" << t.m();
+    s << "(" << nameindex(t.type(),t.primeLevel()) << ",";
+
+    //Print last ndigits digits of id
+    //(in reverse order but doesn't matter since it's only
+    // an aid for determining which indices match)
+    const auto ndigits = 4;
+    auto id = t.id();
+    for(size_t n = 1; n <= ndigits; ++n)
+        {
+        s << id%10;
+        id /= 10;
+        }
+    s << "):" << t.m();
+
+    return s;
     }
 
 IndexVal::

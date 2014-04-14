@@ -29,6 +29,10 @@ class IndexVal;
 class Index
     {
     public:
+
+    using RNG = std::mt19937;
+    using IDType = RNG::result_type;
+
     //
     // Constructors
     //
@@ -58,11 +62,6 @@ class Index
     Index& 
     primeLevel(int plev);
 
-    // Returns a unique Real number identifying this Index.
-    // Useful for efficiently checking that sets of indices match.
-    Real 
-    uniqueReal() const;
-
     // Returns the IndexType
     IndexType 
     type() const;
@@ -74,6 +73,9 @@ class Index
     // Returns the name of this Index with primes removed
     const std::string&
     rawname() const;
+
+    IDType
+    id() const;
 
     // Returns true if Index default initialized
     bool 

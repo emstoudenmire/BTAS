@@ -60,7 +60,7 @@ class IndexSetT
     rn() const { return rn_; }
 
     IPair
-    nInds() const { return IPair(index_.begin(),index_.begin()+rn_); }
+    mnInds() const { return IPair(index_.begin(),index_.begin()+rn_); }
 
     IPair
     m1Inds() const { return IPair(index_.begin()+rn_,index_.end()); }
@@ -84,20 +84,6 @@ class IndexSetT
     end() const { return index_.end(); }
 
     operator const storage&() const { return index_; }
-
-    Real
-    uniqueReal() const { return ur_; }
-
-    bool
-    operator==(const IndexSetT& other) const
-        { return fabs(ur_ - other.ur_) <= UniqueRealAccuracy; }
-
-    bool
-    operator!=(const IndexSetT& other) const
-        { return fabs(ur_ - other.ur_) > UniqueRealAccuracy; }
-
-    bool
-    operator<(const IndexSetT& other) const { return ur_ < other.ur_; }
 
     //
     // Primelevel Methods
@@ -124,6 +110,12 @@ class IndexSetT
     //
     // Other Methods
     //
+
+    bool
+    operator==(const IndexSetT& other) const;
+
+    bool
+    operator!=(const IndexSetT& other) const { return !operator==(other); }
 
     void
     swap(IndexSetT& other);
@@ -153,12 +145,8 @@ class IndexSetT
 
     storage index_;
     int rn_;
-    Real ur_;
 
     /////////
-
-    void
-    setUniqueReal();
 
     template <class Iterable>
     void
@@ -170,8 +158,7 @@ template<class IndexT>
 IndexSetT<IndexT>::
 IndexSetT()
     :
-    rn_(0),
-    ur_(0)
+    rn_(0)
     { }
 
 template<class IndexT>
@@ -179,8 +166,7 @@ IndexSetT<IndexT>::
 IndexSetT(const IndexT& i1)
     :
     index_(1,i1),
-    rn_((i1.m() == 1 ? 0 : 1)),
-    ur_(i1.uniqueReal())
+    rn_((i1.m() == 1 ? 0 : 1))
     { 
 #ifdef DEBUG
     if(i1 == IndexT::Null())
@@ -192,8 +178,7 @@ template<class IndexT>
 IndexSetT<IndexT>::
 IndexSetT(const IndexT& i1, const IndexT& i2)
     :
-    index_(2),
-    ur_(i1.uniqueReal() + i2.uniqueReal())
+    index_(2)
     { 
 #ifdef DEBUG
     if(i1 == IndexT::Null())
@@ -225,7 +210,6 @@ IndexSetT(const IndexT& i0,
     const auto size = 2 + sizeof...(rest);
     std::array<IndexT,size> inds = { i0, i1, static_cast<IndexT>(rest)...};
     sortIndices(inds,size,0);
-    setUniqueReal();
     }
 
 template <class IndexT>
@@ -234,7 +218,6 @@ IndexSetT<IndexT>::
 IndexSetT(const Iterable& ii, int size)
     { 
     sortIndices(ii,(size < 0 ? ii.size() : size));
-    setUniqueReal();
     }
 
 template <class IndexT>
@@ -244,7 +227,6 @@ IndexSetT(storage&& v, int rn)
     index_(v),
     rn_(rn)
     {
-    setUniqueReal();
 #ifdef DEBUG
     int count_n = 0;
     for(const auto& i : index_)
@@ -263,16 +245,6 @@ IndexSetT(storage&& v, int rn)
         }
 #endif
     }
-
-//template <class IndexT>
-//template <class Container1, class Container2> 
-//IndexSetT<IndexT>::
-//IndexSetT(const Container1& mg1_inds, size_t size1,
-//         const Container2& meq1_inds, size_t size2)
-//    :
-//    index_(size1+size2)
-//    {
-//    }
 
 template <class IndexT>
 const IndexT& IndexSetT<IndexT>::
@@ -321,27 +293,22 @@ template <class IndexT>
 void IndexSetT<IndexT>::
 noprime(IndexType type)
     {
-    ur_ = 0;
-    for(size_t j = 0; j < index_.size(); ++j)
+    for(auto& J : index_)
         {
 #ifdef DEBUG
         //Check if calling noprime is ok
         //Error if it causes duplicate indices
-        if(type == All || index_[j].type() == type)
+        if(type == All || J.type() == type)
             {
-            for(size_t k = 0; k < index_.size(); ++k)
+            for(const auto& K : index_)
                 {
-                if(type != All && index_[k].type() != type) continue;
-                if(k != j && index_[j].noprimeEquals(index_[k]))
-                    {
-                    //PrintVar(*this);
+                if(type != All && K.type() != type) continue;
+                if(K != J && J.noprimeEquals(K))
                     throw ITError("Calling noprime would lead to duplicate indices");
-                    }
                 }
             }
 #endif
-        index_[j].noprime(type);
-        ur_ += index_[j].uniqueReal();
+        J.noprime(type);
         }
 	}
 
@@ -366,7 +333,6 @@ noprime(const IndexT& I)
                 }
 #endif
             index_[j].noprime();
-            setUniqueReal();
             return;
             }
         }
@@ -379,11 +345,9 @@ template <class IndexT>
 void IndexSetT<IndexT>::
 prime(IndexType type, int inc)
 	{
-    ur_ = 0;
     for(auto& J : index_)
         {
         J.prime(type,inc);
-        ur_ += J.uniqueReal();
         }
 	}
 
@@ -401,7 +365,6 @@ prime(const IndexT& I, int inc)
         if(index_[j] == I)
         {
         index_[j].prime(inc);
-        setUniqueReal();
         return;
         }
     PrintVar(*this);
@@ -413,13 +376,35 @@ template <class IndexT>
 void IndexSetT<IndexT>::
 mapprime(int plevold, int plevnew, IndexType type)
 	{
-    ur_ = 0;
     for(auto& J : index_)
         {
         J.mapprime(plevold,plevnew,type);
-        ur_ += J.uniqueReal();
         }
 	}
+
+template <class IndexT>
+bool IndexSetT<IndexT>::
+operator==(const IndexSetT& other) const
+    {
+    if(r() != other.r()) return false;
+
+    //Have same rank, enough to check one is
+    //subset of the other:
+    for(const auto& L : index_)
+        {
+        bool found = false;
+        for(const auto& R : other.index_)
+            {
+            if(L == R) 
+                {
+                found = true;
+                break;
+                }
+            }
+        if(!found) return false;
+        }
+    return true;
+    }
 
 
 //
@@ -428,20 +413,10 @@ mapprime(int plevold, int plevnew, IndexType type)
 
 template <class IndexT>
 void IndexSetT<IndexT>::
-setUniqueReal()
-	{
-    ur_ = 0;
-    for(const auto& J : index_)
-        ur_ += J.uniqueReal();
-	}
-
-template <class IndexT>
-void IndexSetT<IndexT>::
 swap(IndexSetT& other)
     {
     index_.swap(other.index_);
     std::swap(rn_,other.rn_);
-    std::swap(ur_,other.ur_);
     }
 
 template <class IndexT>
@@ -450,7 +425,6 @@ clear()
     {
     index_.clear();
     rn_ = 0;
-    ur_ = 0;
     }
 
 template <class IndexT>
@@ -468,12 +442,10 @@ read(std::istream& s)
     size_t size = 0;
     s.read((char*) &size,sizeof(size));
     s.read((char*) &rn_,sizeof(rn_));
-    ur_ = 0;
     index_.resize(size);
     for(size_t j = 0; j < size; ++j) 
         {
         index_[j].read(s);
-        ur_ += index_[j].uniqueReal();
         }
     }
 
@@ -523,10 +495,10 @@ template<class IndexT>
 Arrow
 dir(const IndexSetT<IndexT>& is, const IndexT& I)
     {
-    for(int j = 0; j < is.r(); ++j)
+    for(const auto& J : is)
         {
-        if(is[j] == I) 
-            return is[j].dir();
+        if(J == I) 
+            return J.dir();
         }
     Error("dir: Index not found");
     return In;
@@ -537,8 +509,8 @@ template <class IndexT>
 const IndexT&
 findDir(const IndexSetT<IndexT>& iset, Arrow dir)
     {
-    for(int j = 0; j < iset.r(); ++j)
-        if(iset[j].dir() == dir) return iset[j];
+    for(const auto& J : iset)
+        if(J.dir() == dir) return J;
     Error("Couldn't find index with specified dir");
     return IndexT::Null();
     }
@@ -566,8 +538,8 @@ template <class IndexT>
 const IndexT&
 findtype(const IndexSetT<IndexT>& iset, IndexType t)
 	{
-    for(int j = 0; j < iset.r(); ++j)
-        if(iset[j].type() == t) return iset[j];
+    for(const auto& J : iset)
+        if(J.type() == t) return J;
     Error("findtype failed."); 
     return IndexT::Null();
 	}
@@ -589,8 +561,8 @@ template <class IndexT>
 bool
 hasType(const IndexSetT<IndexT>& iset, IndexType t)
 	{
-    for(int j = 0; j < iset.r(); ++j)
-        if(iset[j].type() == t) return true;
+    for(const auto& J : iset)
+        if(J.type() == t) return true;
     return false;
 	}
 
@@ -600,7 +572,7 @@ minM(const IndexSetT<IndexT>& iset)
     {
     if(iset.rn() < iset.r()) return 1;
 
-    int mm = iset[0].m();
+    int mm = iset.front().m();
     for(int j = 1; j < iset.rn(); ++j)
         mm = min(mm,iset[j].m());
 
@@ -613,7 +585,7 @@ maxM(const IndexSetT<IndexT>& iset)
     {
     if(iset.rn() == 0) return 1;
 
-    int mm = iset[0].m();
+    int mm = iset.front().m();
     for(int j = 1; j < iset.rn(); ++j)
         mm = max(mm,iset[j].m());
 

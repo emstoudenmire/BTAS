@@ -62,7 +62,7 @@ class ITensor
     r() const { return is_.r(); }
 
     const IndexSet&
-    indices() const { return is_; }
+    inds() const { return is_; }
 
     //true if ITensor is default constructed
     bool 

@@ -135,7 +135,7 @@ Null()
 //
 
 
-IDType 
+IDType static
 generateID()
     {
     static Generator rng(std::time(NULL) + getpid());
@@ -196,22 +196,52 @@ primeLevel(int plev)
     return *this;
     }
 
+const int _Nshifts = 11;
+using shift_table_t = std::array<Real,_Nshifts>;
+
+Real static
+calcPrimeShift(int p) { return 1.+sin(p)/10.; }
+
+shift_table_t static
+makeShifts()
+    {
+    shift_table_t res;
+    for(int p = 0; p < _Nshifts; ++p)
+        {
+        res[p] = calcPrimeShift(p);
+        }
+    return res;
+    }
+
+//Lookup table for primelevel
+//shifts to uniqueReals
+Real static
+primeShift(int p)
+    {
+    static shift_table_t shift = makeShifts();
+    if(p < _Nshifts)
+        return shift[p];
+    else
+        return calcPrimeShift(p);
+    }
+
 Real Index::
 uniqueReal() const
     {
-    return p->id*(1.0+(primelevel_/10.));
+    return (1.+cos(p->id))*primeShift(primelevel_);
     }
 
 bool Index::
 operator==(const Index& other) const 
     { 
-    return fabs(uniqueReal() - other.uniqueReal()) < UniqueRealAccuracy; 
+    //return fabs(uniqueReal() - other.uniqueReal()) < UniqueRealAccuracy; 
+    return ((p->id == other.p->id) && (primelevel_ == other.primelevel_));
     }
 
 bool Index::
 noprimeEquals(const Index& other) const
     { 
-    return fabs(p->id - other.p->id) < UniqueRealAccuracy;
+    return p->id == other.p->id;
     }
 
 bool Index::
@@ -334,7 +364,7 @@ ostream&
 operator<<(ostream& s, const Index& t)
     {
     if(t.name() != "" && t.name() != " ") s << t.name();
-    const int iur = (int) abs(10000*deprime(t).uniqueReal());
+    const auto iur = size_t(abs(10000*noprime(t).uniqueReal()));
     return s << "(" << nameindex(t.type(),t.primeLevel()) 
              << "," << iur << "):" << t.m();
     }

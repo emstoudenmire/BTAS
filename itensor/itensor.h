@@ -6,7 +6,6 @@
 #define __ITENSOR_ITENSOR_H
 #include "itensor/real.h"
 #include "itensor/indexset.h"
-#include "btas/tensor.h"
 
 #include "itensor/itdata/itdata.h"
 #include "itensor/itdata/realitdata.h"
@@ -50,6 +49,10 @@ class ITensor
     explicit
     ITensor(Real val);
 
+    //TODO: add move constructor and move operator=
+    //ITensor(ITensor&& t);
+    //ITensor& operator=(ITensor&& t);
+
     //
     // Accessor Methods
     //
@@ -58,7 +61,7 @@ class ITensor
     int 
     r() const { return is_.r(); }
 
-    const IndexSet<Index>&
+    const IndexSet&
     indices() const { return is_; }
 
     //true if ITensor is default constructed
@@ -150,7 +153,7 @@ class ITensor
     //////////////
 
     storage_ptr d_;
-    IndexSet<Index> is_;
+    IndexSet is_;
     LogNumber scale_;
 
     //////////////
@@ -201,7 +204,7 @@ ITensor(const Index& i0,
     std::array<Index,size> inds = { i0, i1, static_cast<Index>(rest)...};
     std::array<int,size> extents;
     for(size_t j = 0; j < size; ++j) extents[j] = inds[j].m();
-    is_ = IndexSet<Index>(inds,size);
+    is_ = IndexSet(inds,size);
     d_ = std::make_shared<RealITData>(extents);
 	}
 

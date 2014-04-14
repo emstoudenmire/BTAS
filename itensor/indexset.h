@@ -5,45 +5,49 @@
 #ifndef __ITENSOR_INDEXSET_H
 #define __ITENSOR_INDEXSET_H
 #include "itensor/index.h"
+#include "itensor/detail/iterpair.h"
 
 namespace itensor {
 
+template <class IndexT>
+class IndexSetT;
+
+class IQIndex;
+
+using IndexSet = IndexSetT<Index>;
+using IQIndexSet = IndexSetT<IQIndex>;
+
 //
-// IndexSet
+// IndexSetT
 //
 
 template <class IndexT>
-class IndexSet
+class IndexSetT
     {
     public:
 
-    IndexSet();
+    using storage = std::vector<IndexT>;
+    using const_iterator = typename storage::const_iterator;
+    using IPair = detail::IterPair<const_iterator>;
+
+    IndexSetT();
 
     explicit
-    IndexSet(const IndexT& i1);
+    IndexSetT(const IndexT& i1);
 
-    IndexSet(const IndexT& i1, const IndexT& i2);
+    IndexSetT(const IndexT& i0, const IndexT& i1);
 
-    IndexSet(IndexT i1, IndexT i2, IndexT i3,
-             IndexT i4 = IndexT::Null(), 
-             IndexT i5 = IndexT::Null(), 
-             IndexT i6 = IndexT::Null(),
-             IndexT i7 = IndexT::Null(), 
-             IndexT i8 = IndexT::Null());
+    template<typename... Args>
+    IndexSetT(const IndexT& i0, const IndexT& i1, const Args&... rest);
 
     template <class Iterable> 
     explicit
-    IndexSet(const Iterable& ii, int size = -1, int offset = 0);
+    IndexSetT(const Iterable& ii, int size = -1);
 
-    //
-    // Type definitions
-    //
-
-    using Storage = std::vector<IndexT>;
-
-    using const_iterator = typename Storage::const_iterator;
-
-    using Ptr = typename std::shared_ptr<IndexSet<IndexT>>;
+    //Move-construct IndexSetT directly from storage container.
+    //Assumes container already sorted with rn m>1 indices at
+    //the front, all m==1 indices at the back.
+    IndexSetT(storage&& v, int rn);
 
     //
     // Accessor Methods
@@ -55,11 +59,14 @@ class IndexSet
     int
     rn() const { return rn_; }
 
-    const IndexT&
-    index(int j) const { return index_[j-1]; }
+    IPair
+    nInds() const { return IPair(index_.begin(),index_.begin()+rn_); }
+
+    IPair
+    m1Inds() const { return IPair(index_.begin()+rn_,index_.end()); }
 
     const IndexT&
-    operator[](int j) const { return index_[j]; }
+    operator[](int j) const;
 
     int
     dim() const;
@@ -76,21 +83,21 @@ class IndexSet
     const_iterator
     end() const { return index_.end(); }
 
-    operator const Storage&() const { return index_; }
+    operator const storage&() const { return index_; }
 
     Real
     uniqueReal() const { return ur_; }
 
     bool
-    operator==(const IndexSet& other) const
+    operator==(const IndexSetT& other) const
         { return fabs(ur_ - other.ur_) <= UniqueRealAccuracy; }
 
     bool
-    operator!=(const IndexSet& other) const
+    operator!=(const IndexSetT& other) const
         { return fabs(ur_ - other.ur_) > UniqueRealAccuracy; }
 
     bool
-    operator<(const IndexSet& other) const { return ur_ < other.ur_; }
+    operator<(const IndexSetT& other) const { return ur_ < other.ur_; }
 
     //
     // Primelevel Methods
@@ -115,27 +122,11 @@ class IndexSet
     mapprime(int plevold, int plevnew, IndexType type = All);
 
     //
-    // Operators
-    //
-
-    //Contraction - just like tensor contraction but only the indices,
-    //no data involved. Result is disjoint union of this and other
-    //(this U other - this N other, where N is intersection).
-    IndexSet
-    operator*(const IndexSet& other) const;
-
-    //
     // Other Methods
     //
 
-    void 
-    addindex(const IndexT& I);
-
     void
-    replaceIndex(const IndexT& oind, const IndexT& nind);
-
-    void
-    swap(IndexSet& other);
+    swap(IndexSetT& other);
 
     void
     clear();
@@ -149,26 +140,21 @@ class IndexSet
     void
     write(std::ostream& s) const;
 
-    static const Ptr& Null()
-        {
-        static Ptr Null_ = std::make_shared<IndexSet<IndexT>>();
-        return Null_;
-        }
+    //using Ptr = typename std::shared_ptr<IndexSetT<IndexT>>;
+    //static const Ptr& Null()
+    //    {
+    //    static Ptr Null_ = std::make_shared<IndexSetT<IndexT>>();
+    //    return Null_;
+    //    }
 
     private:
 
     //////////
-    //
-    // Data Members
-    //
 
-    Storage index_;
-
+    storage index_;
     int rn_;
-
     Real ur_;
 
-    //
     /////////
 
     void
@@ -176,21 +162,21 @@ class IndexSet
 
     template <class Iterable>
     void
-    sortIndices(const Iterable& I, int ninds, int offset = 0);
+    sortIndices(const Iterable& I, int size);
 
     };
 
 template<class IndexT>
-IndexSet<IndexT>::
-IndexSet()
+IndexSetT<IndexT>::
+IndexSetT()
     :
     rn_(0),
     ur_(0)
     { }
 
 template<class IndexT>
-IndexSet<IndexT>::
-IndexSet(const IndexT& i1)
+IndexSetT<IndexT>::
+IndexSetT(const IndexT& i1)
     :
     index_(1,i1),
     rn_((i1.m() == 1 ? 0 : 1)),
@@ -203,8 +189,8 @@ IndexSet(const IndexT& i1)
     }
 
 template<class IndexT>
-IndexSet<IndexT>::
-IndexSet(const IndexT& i1, const IndexT& i2)
+IndexSetT<IndexT>::
+IndexSetT(const IndexT& i1, const IndexT& i2)
     :
     index_(2),
     ur_(i1.uniqueReal() + i2.uniqueReal())
@@ -230,39 +216,77 @@ IndexSet(const IndexT& i1, const IndexT& i2)
     }
 
 template<class IndexT>
-IndexSet<IndexT>::
-IndexSet(IndexT i1, IndexT i2, IndexT i3,
-         IndexT i4, IndexT i5, IndexT i6,
-         IndexT i7, IndexT i8)
+template<typename... Args>
+IndexSetT<IndexT>::
+IndexSetT(const IndexT& i0,
+         const IndexT& i1,
+         const Args&... rest)
     { 
-    const size_t NMAX = 8;
-#ifdef DEBUG
-    if(i1 == IndexT::Null())
-        Error("i1 is null");
-    if(i2 == IndexT::Null())
-        Error("i2 is null");
-    if(i3 == IndexT::Null())
-        Error("i3 is null");
-#endif
-    std::array<IndexT,NMAX> ii = {{ i1, i2, i3, i4, i5, i6, i7, i8 }};
-    int r_ = 3;
-	while(r_ < NMAX && ii[r_] != IndexT::Null()) ++r_;
-    sortIndices(ii,r_,0);
+    const auto size = 2 + sizeof...(rest);
+    std::array<IndexT,size> inds = { i0, i1, static_cast<IndexT>(rest)...};
+    sortIndices(inds,size,0);
     setUniqueReal();
     }
 
 template <class IndexT>
 template <class Iterable>
-IndexSet<IndexT>::
-IndexSet(const Iterable& ii, int size, int offset)
+IndexSetT<IndexT>::
+IndexSetT(const Iterable& ii, int size)
     { 
-    sortIndices(ii,(size < 0 ? ii.size() : size),offset);
+    sortIndices(ii,(size < 0 ? ii.size() : size));
     setUniqueReal();
     }
 
+template <class IndexT>
+IndexSetT<IndexT>::
+IndexSetT(storage&& v, int rn)
+    :
+    index_(v),
+    rn_(rn)
+    {
+    setUniqueReal();
+#ifdef DEBUG
+    int count_n = 0;
+    for(const auto& i : index_)
+        {
+        if(i.m()==1) break;
+        ++count_n;
+        }
+    if(rn_ != count_n) 
+        {
+        printn("rn_ = %d, count_n = %d",rn_,count_n);
+        Error("Wrong rn passed to IndexSet constructor.");
+        }
+    for(int j = count_n; j < int(index_.size()); ++j)
+        {
+        if(index_[j].m()!=1) Error("Unsorted indices passed to IndexSet constructor");
+        }
+#endif
+    }
+
+//template <class IndexT>
+//template <class Container1, class Container2> 
+//IndexSetT<IndexT>::
+//IndexSetT(const Container1& mg1_inds, size_t size1,
+//         const Container2& meq1_inds, size_t size2)
+//    :
+//    index_(size1+size2)
+//    {
+//    }
 
 template <class IndexT>
-int IndexSet<IndexT>::
+const IndexT& IndexSetT<IndexT>::
+operator[](int j) const 
+    { 
+#ifdef DEBUG
+    return index_.at(j); 
+#else
+    return index_[j]; 
+#endif
+    }
+
+template <class IndexT>
+int IndexSetT<IndexT>::
 dim() const
     {   
     int d = 1;
@@ -272,29 +296,29 @@ dim() const
     }
 
 template <class IndexT>
-IndexT IndexSet<IndexT>::
+IndexT IndexSetT<IndexT>::
 front() const
     {
 #ifdef DEBUG
     if(index_.empty())
-        Error("Empty IndexSet");
+        Error("Empty IndexSetT");
 #endif
     return index_.front();
     }
 
 template <class IndexT>
-IndexT IndexSet<IndexT>::
+IndexT IndexSetT<IndexT>::
 back() const
     {
 #ifdef DEBUG
     if(index_.empty())
-        Error("Empty IndexSet");
+        Error("Empty IndexSetT");
 #endif
     return index_.back();
     }
 
 template <class IndexT>
-void IndexSet<IndexT>::
+void IndexSetT<IndexT>::
 noprime(IndexType type)
     {
     ur_ = 0;
@@ -322,7 +346,7 @@ noprime(IndexType type)
 	}
 
 template <class IndexT>
-void IndexSet<IndexT>::
+void IndexSetT<IndexT>::
 noprime(const IndexT& I)
     {
     size_t j = (I.m() == 1 ? rn_ : 0);
@@ -348,11 +372,11 @@ noprime(const IndexT& I)
         }
     PrintVar(*this);
     PrintVar(I);
-    Error("IndexSet::prime: index not found.");
+    Error("IndexSetT::prime: index not found.");
     }
 
 template <class IndexT>
-void IndexSet<IndexT>::
+void IndexSetT<IndexT>::
 prime(IndexType type, int inc)
 	{
     ur_ = 0;
@@ -364,7 +388,7 @@ prime(IndexType type, int inc)
 	}
 
 template <class IndexT>
-void IndexSet<IndexT>::
+void IndexSetT<IndexT>::
 prime(const IndexT& I, int inc)
     {
 #ifdef DEBUG
@@ -382,11 +406,11 @@ prime(const IndexT& I, int inc)
         }
     PrintVar(*this);
     PrintVar(I);
-    Error("IndexSet::prime: index not found.");
+    Error("IndexSetT::prime: index not found.");
     }
 
 template <class IndexT>
-void IndexSet<IndexT>::
+void IndexSetT<IndexT>::
 mapprime(int plevold, int plevnew, IndexType type)
 	{
     ur_ = 0;
@@ -397,155 +421,13 @@ mapprime(int plevold, int plevnew, IndexType type)
         }
 	}
 
-template <class IndexT>
-IndexSet<IndexT> inline IndexSet<IndexT>::
-operator*(const IndexSet& other) const
-    {
-    IndexSet<IndexT> res;
-
-    //Loop over m!=1 indices of this
-    for(int i = 0; i < rn_; ++i)
-        {
-        const IndexT& I = index_[i];
-        //Loop over m!=1 indices of other
-        bool found = false;
-        for(int j = 0; j < other.rn_; ++j)
-            {
-            if(I == other.index_[j])
-                {
-                found = true;
-                break;
-                }
-            }
-        if(!found) 
-            res.addindex(I);
-        }
-
-    //Loop over m!=1 indices of other
-    for(int j = 0; j < other.rn_; ++j)
-        {
-        const IndexT& J = other.index_[j];
-        //Loop over m!=1 indices of other
-        bool found = false;
-        for(int i = 0; i < rn_; ++i)
-            {
-            if(J == index_[i])
-                {
-                found = true;
-                break;
-                }
-            }
-        if(!found) 
-            res.addindex(J);
-        }
-
-    //Loop over m==1 indices of this
-    for(size_t i = rn_; i < index_.size(); ++i)
-        {
-        const IndexT& I = index_[i];
-        //Loop over m==1 indices of other
-        bool found = false;
-        for(size_t j = other.rn_; j < other.size(); ++j)
-            {
-            if(I == other.index_[j])
-                {
-                found = true;
-                break;
-                }
-            }
-        if(!found) 
-            res.addindex(I);
-        }
-
-    //Loop over m!=1 indices of other
-    for(size_t j = other.rn_; j < other.size(); ++j)
-        {
-        const IndexT& J = other.index_[j];
-        //Loop over m!=1 indices of other
-        bool found = false;
-        for(size_t i = rn_; i < index_.size(); ++i)
-            {
-            if(J == index_[i])
-                {
-                found = true;
-                break;
-                }
-            }
-        if(!found) 
-            res.addindex(J);
-        }
-
-    return res;
-    }
-
 
 //
-// Methods for Manipulating IndexSets
+// Methods for Manipulating IndexSetTs
 //
 
 template <class IndexT>
-void IndexSet<IndexT>::
-addindex(const IndexT& I)
-    {
-#ifdef DEBUG
-    if(I == IndexT::Null())
-        Error("Index is null");
-    for(size_t j = (I.m()==1 ? rn_ : 0); j < index_.size(); ++j)
-        {
-        if(index_[j] == I)
-            {
-            PrintVar(*this);
-            PrintVar(I);
-            Error("Adding Index twice");
-            }
-        }
-#endif
-    if(I.m() == 1)
-        {
-        index_.push_back(I);
-        }
-    else
-        {
-        index_.push_back(IndexT::Null());
-        if(int(index_.size()) != rn_)
-            {
-            //Move all m==1's over by 1
-            for(int k = int(index_.size())-1; k > rn_; --k)
-                index_[k] = index_[k-1];
-            }
-        index_.at(rn_) = I;
-        ++rn_;
-        }
-    ur_ += I.uniqueReal();
-    }
-
-template <class IndexT>
-void IndexSet<IndexT>::
-replaceIndex(const IndexT& oind, const IndexT& nind)
-    {
-    if(nind.m() != oind.m())
-        {
-        PrintVar(nind);
-        PrintVar(oind);
-        Error("replaceIndex: new index must have same dimension as old.");
-        }
-    bool found = false;
-    ur_ = 0;
-    for(auto& J : index_)
-        {
-        if(J == oind)
-            {
-            J = nind;
-            found = true;
-            }
-        ur_ += J.uniqueReal();
-        }
-    if(!found)
-        Error("replaceIndex: index not found");
-    }
-
-template <class IndexT>
-void IndexSet<IndexT>::
+void IndexSetT<IndexT>::
 setUniqueReal()
 	{
     ur_ = 0;
@@ -554,22 +436,16 @@ setUniqueReal()
 	}
 
 template <class IndexT>
-void IndexSet<IndexT>::
-swap(IndexSet& other)
+void IndexSetT<IndexT>::
+swap(IndexSetT& other)
     {
     index_.swap(other.index_);
-
-    auto tmp = rn_;
-    rn_ = other.rn_;
-    other.rn_ = tmp;
-
-    auto rtmp = ur_;
-    ur_ = other.ur_;
-    other.ur_ = rtmp;
+    std::swap(rn_,other.rn_);
+    std::swap(ur_,other.ur_);
     }
 
 template <class IndexT>
-void IndexSet<IndexT>::
+void IndexSetT<IndexT>::
 clear()
     {
     index_.clear();
@@ -578,7 +454,7 @@ clear()
     }
 
 template <class IndexT>
-void IndexSet<IndexT>::
+void IndexSetT<IndexT>::
 conj()
     {
     for(auto& J : index_)
@@ -586,7 +462,7 @@ conj()
     }
 
 template <class IndexT>
-void IndexSet<IndexT>::
+void IndexSetT<IndexT>::
 read(std::istream& s)
     {
     size_t size = 0;
@@ -602,7 +478,7 @@ read(std::istream& s)
     }
 
 template <class IndexT>
-void IndexSet<IndexT>::
+void IndexSetT<IndexT>::
 write(std::ostream& s) const
     {
     size_t size = index_.size();
@@ -614,44 +490,38 @@ write(std::ostream& s) const
 
 template <class IndexT>
 template <class Iterable>
-void IndexSet<IndexT>::
-sortIndices(const Iterable& I, int ninds, int offset)
+void IndexSetT<IndexT>::
+sortIndices(const Iterable& I, int size)
     {
-    rn_ = 0;
-    index_.resize(ninds);
+    index_.resize(size);
 
-    for(int n = offset; n < ninds+offset; ++n)
+    rn_ = 0;
+    auto j = size-1;
+
+    for(const auto& i : I)
         {
-        const IndexT& i = I[n];
-#ifdef DEBUG
-        if(i == IndexT::Null()) Error("Null Index in sortIndices");
-#endif
-        if(i.m()!=1) 
+        if(i.m() > 1) 
             {
-            index_.at(rn_) = i; 
+            index_[rn_] = i; 
             ++rn_;
             }
-        }
-
-    for(int n = offset, j = 0; n < ninds+offset; ++n, ++j)
-        {
-        const IndexT& i = I[n];
-        if(i.m()==1) 
-            { 
-            index_.at(rn_+j) = i;
+        else
+            {
+            index_[j] = i;
+            --j;
             }
         }
     }
 
 //
 //
-// IndexSet helper methods
+// IndexSetT helper methods
 //
 //
 
 template<class IndexT>
 Arrow
-dir(const IndexSet<IndexT>& is, const IndexT& I)
+dir(const IndexSetT<IndexT>& is, const IndexT& I)
     {
     for(int j = 0; j < is.r(); ++j)
         {
@@ -665,7 +535,7 @@ dir(const IndexSet<IndexT>& is, const IndexT& I)
 
 template <class IndexT>
 const IndexT&
-finddir(const IndexSet<IndexT>& iset, Arrow dir)
+findDir(const IndexSetT<IndexT>& iset, Arrow dir)
     {
     for(int j = 0; j < iset.r(); ++j)
         if(iset[j].dir() == dir) return iset[j];
@@ -674,13 +544,13 @@ finddir(const IndexSet<IndexT>& iset, Arrow dir)
     }
 
 //
-// Given IndexSet<IndexT> iset and IndexT I,
+// Given IndexSetT<IndexT> iset and IndexT I,
 // return int j such that iset[j] == I.
 // If not found, throws an ITError.
 //
 template <class IndexT>
 int
-findindex(const IndexSet<IndexT>& iset, const IndexT& I)
+findIndex(const IndexSetT<IndexT>& iset, const IndexT& I)
     {
     int j = (I.m()==1 ? iset.rn() : 0);
     for(; j < iset.r(); ++j)
@@ -694,7 +564,7 @@ findindex(const IndexSet<IndexT>& iset, const IndexT& I)
 
 template <class IndexT>
 const IndexT&
-findtype(const IndexSet<IndexT>& iset, IndexType t)
+findtype(const IndexSetT<IndexT>& iset, IndexType t)
 	{
     for(int j = 0; j < iset.r(); ++j)
         if(iset[j].type() == t) return iset[j];
@@ -705,7 +575,7 @@ findtype(const IndexSet<IndexT>& iset, IndexType t)
 
 template <class IndexT>
 bool
-hasindex(const IndexSet<IndexT>& iset, const IndexT& I)
+hasIndex(const IndexSetT<IndexT>& iset, const IndexT& I)
 	{
     int j = (I.m()==1 ? iset.rn() : 0);
     for(; j < iset.r(); ++j)
@@ -717,7 +587,7 @@ hasindex(const IndexSet<IndexT>& iset, const IndexT& I)
 
 template <class IndexT>
 bool
-hastype(const IndexSet<IndexT>& iset, IndexType t)
+hasType(const IndexSetT<IndexT>& iset, IndexType t)
 	{
     for(int j = 0; j < iset.r(); ++j)
         if(iset[j].type() == t) return true;
@@ -726,7 +596,7 @@ hastype(const IndexSet<IndexT>& iset, IndexType t)
 
 template <class IndexT>
 int
-minM(const IndexSet<IndexT>& iset)
+minM(const IndexSetT<IndexT>& iset)
     {
     if(iset.rn() < iset.r()) return 1;
 
@@ -739,7 +609,7 @@ minM(const IndexSet<IndexT>& iset)
 
 template <class IndexT>
 int
-maxM(const IndexSet<IndexT>& iset)
+maxM(const IndexSetT<IndexT>& iset)
     {
     if(iset.rn() == 0) return 1;
 
@@ -752,20 +622,19 @@ maxM(const IndexSet<IndexT>& iset)
 
 template <class IndexT>
 std::ostream&
-operator<<(std::ostream& s, const IndexSet<IndexT>& is)
+operator<<(std::ostream& s, const IndexSetT<IndexT>& is)
     {
-    for(int i = 1; i <= is.r(); ++i) 
-        s << is.index(i) << "\n"; 
+    for(const auto& i : is) s << i << "\n"; 
     return s;
     }
 
 template <> inline
 std::ostream&
-operator<<(std::ostream& s, const IndexSet<Index>& is)
+operator<<(std::ostream& s, const IndexSetT<Index>& is)
     {
-    int i = 1; 
-    for(; i < is.r(); ++i) { s << is.index(i) << ", "; } 
-    if(is.r() != 0) { s << is.index(i); } //print last one
+    int i = 0; 
+    for(; i < is.r()-1; ++i) { s << is[i] << ", "; } 
+    if(is.r() != 0) { s << is[i]; } //print last one
     return s;
     }
 

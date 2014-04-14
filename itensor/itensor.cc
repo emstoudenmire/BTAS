@@ -133,96 +133,100 @@ operator*=(const ITensor& other)
         Error("Empty ITensor in product");
 
     if(this == &other)
-        {
-        ITensor cp_oth(other);
-        return operator*=(cp_oth);
-        }
+        return operator=( ITensor(sqr(norm(*this))) );
 
-    //These hold  regular new indices and the m==1 indices that appear in the result
-    IndexSet<Index> new_index;
-
-    static array<const Index*,100> new_index1_;
-    size_t nr1_ = 0;
-
-    //
-    //Handle m==1 Indices
-    //
-    for(int k = is_.rn(); k < this->r(); ++k)
-        {
-        const Index& K = is_[k];
-        if(!hasindex(other.is_,K))
-            new_index1_[++nr1_] = &K;
-        }
-
-    for(int j = other.is_.rn(); j < other.r(); ++j)
-        {
-        const Index& J = other.is_[j];
-        if(!hasindex(this->is_,J))
-            new_index1_[++nr1_] = &J;
-        }
-
-    //
-    //Special cases when one of the tensors
-    //has only m==1 indices (effectively a scalar)
-    //
-    //if(other.is_.rn() == 0)
-    //    {
-    //    scale_ *= other.scale_;
-    //    scale_ *= other.r_->v(1);
-    //    for(int j = 0; j < is_.rn(); ++j)
-    //        new_index.addindex(is_[j]);
-    //    //Keep current m!=1 indices, overwrite m==1 indices
-    //    for(int j = 1; j <= nr1_; ++j) 
-    //        new_index.addindex( *(new_index1_[j]) );
-    //    is_.swap(new_index);
-    //    return *this;
-    //    }
-    //else if(is_.rn() == 0)
-    //    {
-    //    scale_ *= other.scale_;
-    //    scale_ *= r_->v(1);
-    //    r_ = other.r_;
-    //    for(int j = 1; j <= other.is_.rn(); ++j) 
-    //        new_index.addindex( other.is_.index(j) );
-    //    for(int j = 1; j <= nr1_; ++j) 
-    //        new_index.addindex( *(new_index1_[j]) );
-    //    is_.swap(new_index);
-    //    return *this;
-    //    }
-
+    btas::varray<bool> contL(size_t(is_.r()),false),
+                       contR(size_t(other.is_.r()),false);
 
     //TODO: replace Lind, Rind with static-allocated arrays
+    //TODO: redefine btas::contract to take pair of iterators
+    //      to annotations instead of containers
+    //      reimplement current version as just as wrapper
+
+    //Set Lind, Rind to zero. Special value 0 marks
+    //uncontracted indices. Later will assign unique numbers
+    //to these entries in Lind and Rind
     btas::varray<size_t> Lind(size_t(is_.rn()),0),
                          Rind(size_t(other.is_.rn()),0);
 
-    size_t ncont = 0; //number of m!=1 indices that match
-    for(int j = 0; j < is_.rn(); ++j)
-	for(int k = 0; k < other.is_.rn(); ++k)
+    //Count number of contracted indices,
+    //set corresponding entries of Lind, Rind
+    //to 1,2,...,ncont
+    int ncont = 0;
+    for(int i = 0; i < is_.rn(); ++i)
+    for(int j = 0; j < other.is_.rn(); ++j)
         {
-	    if(is_[j] == other.is_[k])
+        if(is_[i] == other.is_[j])
             {
+            contL[i] = true;
+            contR[j] = true;
+
             ++ncont;
-            Lind[j] = ncont;
-            Rind[k] = ncont;
+            Lind[i] = ncont;
+            Rind[j] = ncont;
+
+            break;
             }
         }
-    printn("ncont = %d",ncont);
 
+    //Finish making contL, contR for m==1 indices
+    int ncont_all = ncont;
+    for(int i = is_.rn(); i < is_.r(); ++i)
+    for(int j = other.is_.rn(); j < other.is_.r(); ++j)
+        {
+        if(is_[i] == other.is_[j])
+            {
+            ++ncont_all;
+            contL[i] = true;
+            contR[j] = true;
+            break;
+            }
+        }
+
+    //nuniq is total number of unique, uncontracted indices
+    //(nuniq all includes m==1 indices)
+    const int nuniq = is_.rn()+other.is_.rn()-2*ncont;
+    const int nuniq_all = is_.r()+other.is_.r()-2*ncont_all;
+
+    //container in which we will accumulate the new indices
+    IndexSet::storage newind(nuniq_all);
+
+    //Go through and assign uncontracted entries of Lind,Rind
+    //the integers ncont+1,ncont+2,...
+    //Simultaneously fill newind (keeping count "ni")
+    size_t ni = 0;
     size_t uu = ncont;
-    for(auto& x : Lind)
+    for(int j = 0; j < is_.rn(); ++j)
         {
-        if(x == 0)
-            x = ++uu;
+        if(!contL[j]) 
+            {
+            Lind[j] = ++uu;
+            newind.at(ni++) = is_[j];
+            }
         }
-    for(auto& x : Rind)
+    for(int j = 0; j < other.is_.rn(); ++j)
         {
-        if(x == 0)
-            x = ++uu;
+        if(!contR[j]) 
+            {
+            Rind[j] = ++uu;
+            newind.at(ni++) = other.is_[j];
+            }
         }
 
-    const size_t nuniq = is_.rn()+other.is_.rn()-2*ncont;
+    //Finish filling up newind with m==1 indices
+    for(int j = is_.rn(); j < is_.r(); ++j)
+        {
+        if(!contL[j]) 
+            newind.at(ni++) = is_[j];
+        }
+    for(int j = other.is_.rn(); j < other.is_.r(); ++j)
+        {
+        if(!contR[j]) 
+            newind.at(ni++) = other.is_[j];
+        }
+
     //TODO: replace Pind with static-allocated array
-    auto Pind = btas::varray<size_t>(nuniq);
+    btas::varray<size_t> Pind(nuniq);
     for(size_t i = 0, u = 1+ncont; i < nuniq; ++i,++u)
         {
         Pind[i] = u;
@@ -250,28 +254,7 @@ operator*=(const ITensor& other)
 
     d_->contractEq(d_,other.d_,Lind,Rind,Pind);
 
-    //
-    //TODO: improve following lines so that new_index
-    //is not repeatedly calling push_back/new
-    //(either append/construct all at once for single call to new, 
-    //resize new_index ahead of time, or use stack-allocated data (std::array) inside new_index)
-    //
-    //Put in m!=1 indices
-    for(int j = 0; j < this->is_.rn(); ++j)
-        {
-        if(0 != Lind[j]) 
-            new_index.addindex( is_[j] );
-        }
-    for(int j = 0; j < other.is_.rn(); ++j)
-        {
-        if(0 != Rind[j]) 
-            new_index.addindex( other.is_[j] );
-        }
-    //Put in m==1 indices
-    for(int j = 1; j <= nr1_; ++j) 
-        {
-        new_index.addindex( *(new_index1_.at(j)) );
-        }
+    IndexSet new_index(std::move(newind),nuniq);
 
     is_.swap(new_index);
 
@@ -367,8 +350,8 @@ mapprime(int plevold, int plevnew, IndexType type)
     }
 
 bool static
-checkSameIndOrder(const IndexSet<Index> is1,
-                  const IndexSet<Index> is2)
+checkSameIndOrder(const IndexSet& is1,
+                  const IndexSet& is2)
     {
     for(int j = 0; j < is1.rn(); ++j)
     if(is1[j] != is2[j])

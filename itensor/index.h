@@ -184,16 +184,10 @@ class IndexVal : public Index
     IndexVal(const Index& index, int i_);
 
     bool
-    operator==(const IndexVal& other) const
-        {
-        return (Index::operator==(other) && i == other.i);
-        }
+    operator==(const IndexVal& other) const;
 
     bool
-    operator!=(const IndexVal& other) const
-        {
-        return !operator==(other);
-        }
+    operator!=(const IndexVal& other) const;
 
     static const IndexVal& 
     Null();

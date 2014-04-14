@@ -21,9 +21,6 @@ using Generator = std::mt19937;
 
 using IDType = Generator::result_type;
 
-//static const Real K1 = 1./sqrt(7.);
-//static const Real K2 = 1./sqrt(11.);
-
 ostream& 
 operator<<(ostream& s, const IndexType& it)
     { 
@@ -234,7 +231,6 @@ uniqueReal() const
 bool Index::
 operator==(const Index& other) const 
     { 
-    //return fabs(uniqueReal() - other.uniqueReal()) < UniqueRealAccuracy; 
     return ((p->id == other.p->id) && (primelevel_ == other.primelevel_));
     }
 
@@ -393,6 +389,18 @@ IndexVal(const Index& index, int i_)
         Error("i out of range");
         }
 #endif
+    }
+
+bool IndexVal::
+operator==(const IndexVal& other) const
+    {
+    return (Index::operator==(other) && i == other.i);
+    }
+
+bool IndexVal::
+operator!=(const IndexVal& other) const
+    {
+    return !operator==(other);
     }
 
 

@@ -161,7 +161,6 @@ class Index
 
     /////////////
     std::shared_ptr<IndexDat> p;
-
     int primelevel_; 
     /////////////
 
@@ -219,13 +218,13 @@ prime(T I, IndexType type, int inc = 1) { I.prime(type,inc); return I; }
 //Return a copy of I with primelevel set to zero.
 template<class T>
 T
-deprime(T I, IndexType type = All) { I.noprime(type); return I; }
+noprime(T I, IndexType type = All) { I.noprime(type); return I; }
 
 //Return a copy of I with prime level changed to plevnew if
 //old prime level was plevold. Otherwise has no effect.
 template<class T>
 T
-mapPrime(T I, int plevold, int plevnew, IndexType type = All)
+mapprime(T I, int plevold, int plevnew, IndexType type = All)
     { I.mapprime(plevold,plevnew,type); return I; }
 
 

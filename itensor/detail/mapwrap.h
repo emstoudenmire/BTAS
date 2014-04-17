@@ -23,9 +23,9 @@ struct MapBase
 template <typename Func>
 struct MapWrap : public MapBase
     {
-    const Func& f;
+    Func& f;
 
-    MapWrap(const Func& f_) : f(f_) { }
+    MapWrap(Func&& f_) : f(f_) { }
     virtual ~MapWrap() { }
 
     Real

@@ -143,7 +143,7 @@ class ITensor
 
     template <typename Func>
     ITensor&
-    map(const Func& f);
+    map(Func&& f);
 
     void
     swap(ITensor& other);
@@ -210,7 +210,7 @@ ITensor(const Index& i0,
 
 template <typename Func>
 ITensor& ITensor::
-map(const Func& f)
+map(Func&& f)
     {
     //MapWrap<F> creates a new type that holds a functor of
     //type F but which is also a virtual/polymorphic subclass
@@ -218,7 +218,7 @@ map(const Func& f)
     //a uniform function signature
     solo();
     scaleTo(1);
-    detail::MapWrap<Func> mw(f);
+    detail::MapWrap<decltype(f)> mw(std::forward<Func>(f));
     d_->map(&mw);
     return *this;
     }

@@ -466,7 +466,7 @@ scaleTo(const LogNumber& newscale)
 void ITensor::
 solo()
 	{
-    if(!d_.unique()) d_ = std::move(d_->clone());
+    if(!d_.unique()) d_ = d_->clone();
     }
 
 void ITensor::

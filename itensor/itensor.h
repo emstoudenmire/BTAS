@@ -49,10 +49,6 @@ class ITensor
     explicit
     ITensor(Real val);
 
-    //TODO: add move constructor and move operator=
-    //ITensor(ITensor&& t);
-    //ITensor& operator=(ITensor&& t);
-
     //
     // Accessor Methods
     //
@@ -335,10 +331,23 @@ tieIndex(const ITensor& T,
 
     IndexSet newinds(std::move(new_index),new_rn);
 
-    ITData::NewPtr nd = T.data().clone();
+    auto nd = T.data().clone();
     nd->applyRange(tieIndex(T.data().range(),I));
 
     return ITensor(std::move(newinds),std::move(nd),T.scale());
+    }
+
+template <typename... Indices>
+ITensor
+tieIndex(const ITensor& T,
+         const Index& t0,
+         const Index& t1,
+         const Indices&... rest)
+         
+    {
+    const auto size = 2 + sizeof...(rest);
+    std::array<Index,size> inds{ t0, t1, static_cast<Index>(rest)...};
+    return tieIndex(T,inds);
     }
 
 //Get scalar value of rank 0 ITensor.

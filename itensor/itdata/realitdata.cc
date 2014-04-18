@@ -127,7 +127,7 @@ applyRange(const Range& r)
     {
     //TODO: directly assign t_ after btas Tensor = TensorView assignment bug fixed
     storage temp = btas::TensorViewOf<storage>(r,t_.storage());
-    t_ = temp;
+    t_ = std::move(temp);
     }
 
 }; //namespace itensor

@@ -21,6 +21,11 @@ using IQIndexSet = IndexSetT<IQIndex>;
 // IndexSetT
 //
 
+template <typename IndexT>
+class NewIndexSetT;
+using NewIndexSet = NewIndexSetT<Index>;
+using NewIQIndexSet = NewIndexSetT<IQIndex>;
+
 template <class IndexT>
 class IndexSetT
     {
@@ -47,7 +52,8 @@ class IndexSetT
     //Move-construct IndexSetT directly from storage container.
     //Assumes container already sorted with rn m>1 indices at
     //the front, all m==1 indices at the back.
-    IndexSetT(storage&& v, int rn);
+    template <class _NewIndexSet>
+    IndexSetT(_NewIndexSet&& v);
 
     //
     // Accessor Methods
@@ -147,6 +153,35 @@ class IndexSetT
 
     };
 
+template <typename IndexT>
+class NewIndexSetT
+    {
+    public:
+    using storage = typename IndexSetT<IndexT>::storage;
+
+    NewIndexSetT(int size)
+        :
+        p1_(size-1),
+        rn_(0),
+        index_(size)
+        { }
+
+    void
+    add(const IndexT& i)
+        {
+        if(i.m() == 1)
+            index_.at(p1_--) = i;
+        else
+            index_.at(rn_++) = i;
+        }
+
+    private:
+    int p1_,
+        rn_;
+    storage index_;
+    friend class IndexSetT<IndexT>;
+    };
+
 template<class IndexT>
 IndexSetT<IndexT>::
 IndexSetT()
@@ -211,29 +246,14 @@ IndexSetT(const Iterable& ii, int size)
     }
 
 template <class IndexT>
+template <class _NewIndexSet>
 IndexSetT<IndexT>::
-IndexSetT(storage&& v, int rn)
+IndexSetT(_NewIndexSet&& nis)
     :
-    index_(v),
-    rn_(rn)
+    rn_(0)
     {
-#ifdef DEBUG
-    int count_n = 0;
-    for(const auto& i : index_)
-        {
-        if(i.m()==1) break;
-        ++count_n;
-        }
-    if(rn_ != count_n) 
-        {
-        printn("rn_ = %d, count_n = %d",rn_,count_n);
-        Error("Wrong rn passed to IndexSet constructor.");
-        }
-    for(int j = count_n; j < int(index_.size()); ++j)
-        {
-        if(index_[j].m()!=1) Error("Unsorted indices passed to IndexSet constructor");
-        }
-#endif
+    index_.swap(nis.index_);
+    std::swap(rn_,nis.rn_);
     }
 
 template <class IndexT>

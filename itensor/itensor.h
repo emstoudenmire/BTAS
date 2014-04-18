@@ -9,6 +9,7 @@
 
 #include "itensor/itdata/itdata.h"
 #include "itensor/itdata/realitdata.h"
+#include "itensor/detail/functions.h"
 
 namespace itensor {
 
@@ -240,6 +241,9 @@ visit(Func&& f) const
     return *this;
     }
 
+std::ostream& 
+operator<<(std::ostream & s, const ITensor& T);
+
 ITensor inline
 operator*(ITensor A, const ITensor& B) { A *= B; return A; }
 
@@ -277,78 +281,15 @@ noprime(Tensor A, const IndexT& I)
     return A; 
     }
 
-std::ostream& 
-operator<<(std::ostream & s, const ITensor& T);
-
 ITensor
 randomize(ITensor T, const OptSet& opts = Global::opts());
-
-template <typename Container>
-ITensor
-tieIndex(const ITensor& T,
-         const Container& totie)
-    {
-    //TODO: implement m==1 case
-    if(totie.front().m() == 1) Error("tieIndex not yet implemented for m==1 case");
-    btas::varray<size_t> I(totie.size());
-    const int rn = T.inds().rn(),
-              new_rn = rn-totie.size()+1,
-              r1 = T.r()-rn;
-    IndexSet::storage new_index(new_rn+r1);
-    size_t nt = 0,
-           ni = 0;
-    for(int j = 0; j < T.inds().rn(); ++j)
-        {
-        bool tied = false;
-        for(const auto& t : totie)
-            {
-            if(T.inds()[j] == t)
-                {
-                tied = true;
-                break;
-                }
-            }
-
-        if(tied)
-            {
-            if(nt == 0) new_index.at(ni++) = T.inds()[j];
-            I[nt] = j;
-            ++nt;
-            }
-        else
-            {
-            new_index.at(ni++) = T.inds()[j];
-            }
-        }
-    for(const auto& i : T.inds().m1Inds())
-        {
-        new_index.at(ni++) = i;
-        }
-    if(nt != totie.size())
-        {
-        Error("ITensor does not have requested Index to tie");
-        }
-
-    IndexSet newinds(std::move(new_index),new_rn);
-
-    auto nd = T.data().clone();
-    nd->applyRange(tieIndex(T.data().range(),I));
-
-    return ITensor(std::move(newinds),std::move(nd),T.scale());
-    }
 
 template <typename... Indices>
 ITensor
 tieIndex(const ITensor& T,
          const Index& t0,
          const Index& t1,
-         const Indices&... rest)
-         
-    {
-    const auto size = 2 + sizeof...(rest);
-    std::array<Index,size> inds{ t0, t1, static_cast<Index>(rest)...};
-    return tieIndex(T,inds);
-    }
+         const Indices&... rest);
 
 //Get scalar value of rank 0 ITensor.
 //Throws ITError if r() != 0.
@@ -371,6 +312,47 @@ Real
 norm(const ITensor& T);
 
 //TODO: add conj (complex conj)
+
+
+
+//
+// Template Method Implementations
+//
+
+template <typename... Indices>
+ITensor
+tieIndex(const ITensor& T,
+         const Index& t0,
+         const Index& t1,
+         const Indices&... rest)
+    {
+    const auto size = 2 + sizeof...(rest);
+    if(size > T.r()) Error("Cannot tie more indices than ITensor rank.");
+    std::array<Index,size> totie{ t0, t1, static_cast<Index>(rest)...};
+    std::array<size_t,size> I;
+    NewIndexSet new_index(T.r()-size+1);
+    size_t nt = 0;
+    for(int j = 0; j < T.r(); ++j)
+        {
+        const auto& J = T.inds()[j];
+        if(detail::contains(totie,J))
+            {
+            if(nt == 0) new_index.add(J);
+            I[nt++] = j;
+            }
+        else
+            {
+            new_index.add(J);
+            }
+        }
+    if(nt != totie.size())
+        Error("ITensor does not have requested Index to tie");
+
+    auto nd = T.data().clone();
+    nd->applyRange(tieIndex(T.data().range(),I));
+
+    return ITensor(new_index,std::move(nd),T.scale());
+    }
 
 }; //namespace itensor
 

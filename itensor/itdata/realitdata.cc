@@ -3,6 +3,7 @@
 #include "btas/generic/scal_impl.h"
 #include "btas/generic/axpy_impl.h"
 #include "btas/generic/contract.h"
+#include "btas/tensor_func.h"
 
 namespace itensor {
 
@@ -63,7 +64,7 @@ mult(Real r)
     }
 
 void RealITData::
-map(detail::MapBase* m)
+apply(detail::MapBase* m)
     {
     for(auto& r : t_)
         {
@@ -71,15 +72,13 @@ map(detail::MapBase* m)
         }
     }
 
-Real RealITData::
-norm() const
+void RealITData::
+visit(detail::VisitBase* v) const
     {
-    Real nrm = 0.;
     for(auto r : t_)
         {
-        nrm += r*r;
+        v->rvisit(r);
         }
-    return std::sqrt(nrm);
     }
 
 void RealITData::
@@ -99,7 +98,7 @@ print(std::ostream& s, const LogNumber& x) const
     for(const auto I : Tr)
         {
         const Real val = t_(I)*scalefac;
-        if(fabs(val) > Global::printScale())
+        //if(fabs(val) > Global::printScale())
             {
             s << "  ("; 
             for(size_t i = 0, j = 1; j <= I.size(); ++i, ++j)
@@ -115,6 +114,20 @@ print(std::ostream& s, const LogNumber& x) const
                 s << format("%.8E\n",val);
             }
         }
+    }
+
+ITData::Range RealITData::
+range() const
+    {
+    return t_.range();
+    }
+
+void RealITData::
+applyRange(const Range& r)
+    {
+    //TODO: directly assign t_ after btas Tensor = TensorView assignment bug fixed
+    storage temp = btas::TensorViewOf<storage>(r,t_.storage());
+    t_ = temp;
     }
 
 }; //namespace itensor

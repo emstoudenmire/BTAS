@@ -19,6 +19,7 @@ class ITData
     using Ptr = std::shared_ptr<ITData>;
     using CPtr = std::shared_ptr<const ITData>;
     using NewPtr = std::unique_ptr<ITData>;
+    using Range = btas::DEFAULT::range;
 
     ITData() { }
 
@@ -44,23 +45,28 @@ class ITData
     clone() const = 0;
 
     void virtual
-    mult(Real r) = 0;
-
-    Real virtual
-    norm() const = 0;
-
-    void virtual
     fill(Real r, Ptr& newdat) = 0;
 
     void virtual
     generate(std::function<Real()> rfunc, Ptr& newdat) = 0;
 
     void virtual
-    map(detail::MapBase*) = 0;
+    apply(detail::MapBase*) = 0;
+
+    void virtual
+    visit(detail::VisitBase*) const = 0;
+
+    void virtual
+    mult(Real r) = 0;
 
     void virtual
     print(std::ostream& s, const LogNumber& x) const = 0;
 
+    Range virtual
+    range() const = 0;
+
+    void virtual
+    applyRange(const Range& r) = 0;
 
     //
     // Other methods to be implemented by derived classes

@@ -50,6 +50,17 @@ ITensor(Real val)
     //fill(val);
     }
 
+ITensor::
+ITensor(IndexSet&& iset,
+        ITData::NewPtr nd,
+        LogNumber scale)
+    :
+    d_(std::move(nd)),
+    is_(iset),
+    scale_(scale)
+    {
+    }
+
 
 
 
@@ -587,10 +598,23 @@ toComplex(const ITensor& T)
     return Complex_1;
     }
 
+struct NormVisitor
+    {
+    Real nrm2 = 0.;
+
+    void
+    operator()(Real r) { nrm2 += r*r; }
+
+    void
+    operator()(Complex z) { nrm2 += sqr(z.real()) + sqr(z.imag()); }
+    };
+
 Real
 norm(const ITensor& T)
     {
-    return fabs(T.scale().real0()) * T.data().norm();
+    NormVisitor N;
+    T.visit(N);
+    return sqrt(N.nrm2);
     }
 
 //LogNumber

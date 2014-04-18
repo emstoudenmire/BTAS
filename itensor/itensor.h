@@ -135,15 +135,23 @@ class ITensor
     // Element Transformation Methods
     //
 
+    //TODO: implement in terms of apply/generate?
+    //Or just remove, how often is this needed?
+    //Maybe keep for ITData interface?
     ITensor&
     fill(Real r);
 
+    //TODO: implement in terms of apply?
     ITensor&
     generate(std::function<Real()> rfunc);
 
     template <typename Func>
     ITensor&
-    map(Func&& f);
+    apply(Func&& f);
+
+    template <typename Func>
+    const ITensor&
+    visit(Func&& f) const;
 
     void
     swap(ITensor& other);
@@ -180,6 +188,10 @@ class ITensor
     // not be explicitly needed for most user code.
     //
 
+    ITensor(IndexSet&& iset,
+            ITData::NewPtr nd,
+            LogNumber scale);
+
     //Scale factor, used internally for efficient scalar ops.
     //Mostly for developer use, not necessary to explicitly involve
     //scale factors in most ITensor operations.
@@ -210,7 +222,7 @@ ITensor(const Index& i0,
 
 template <typename Func>
 ITensor& ITensor::
-map(Func&& f)
+apply(Func&& f)
     {
     //MapWrap<F> creates a new type that holds a functor of
     //type F but which is also a virtual/polymorphic subclass
@@ -219,7 +231,16 @@ map(Func&& f)
     solo();
     scaleTo(1);
     detail::MapWrap<decltype(f)> mw(std::forward<Func>(f));
-    d_->map(&mw);
+    d_->apply(&mw);
+    return *this;
+    }
+
+template <typename Func>
+const ITensor& ITensor::
+visit(Func&& f) const
+    {
+    detail::VisitWrap<decltype(f)> vw(std::forward<Func>(f),scale());
+    d_->visit(&vw);
     return *this;
     }
 
@@ -265,6 +286,60 @@ operator<<(std::ostream & s, const ITensor& T);
 
 ITensor
 randomize(ITensor T, const OptSet& opts = Global::opts());
+
+template <typename Container>
+ITensor
+tieIndex(const ITensor& T,
+         const Container& totie)
+    {
+    //TODO: implement m==1 case
+    if(totie.front().m() == 1) Error("tieIndex not yet implemented for m==1 case");
+    btas::varray<size_t> I(totie.size());
+    const int rn = T.inds().rn(),
+              new_rn = rn-totie.size()+1,
+              r1 = T.r()-rn;
+    IndexSet::storage new_index(new_rn+r1);
+    size_t nt = 0,
+           ni = 0;
+    for(int j = 0; j < T.inds().rn(); ++j)
+        {
+        bool tied = false;
+        for(const auto& t : totie)
+            {
+            if(T.inds()[j] == t)
+                {
+                tied = true;
+                break;
+                }
+            }
+
+        if(tied)
+            {
+            if(nt == 0) new_index.at(ni++) = T.inds()[j];
+            I[nt] = j;
+            ++nt;
+            }
+        else
+            {
+            new_index.at(ni++) = T.inds()[j];
+            }
+        }
+    for(const auto& i : T.inds().m1Inds())
+        {
+        new_index.at(ni++) = i;
+        }
+    if(nt != totie.size())
+        {
+        Error("ITensor does not have requested Index to tie");
+        }
+
+    IndexSet newinds(std::move(new_index),new_rn);
+
+    ITData::NewPtr nd = T.data().clone();
+    nd->applyRange(tieIndex(T.data().range(),I));
+
+    return ITensor(std::move(newinds),std::move(nd),T.scale());
+    }
 
 //Get scalar value of rank 0 ITensor.
 //Throws ITError if r() != 0.

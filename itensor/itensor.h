@@ -209,7 +209,7 @@ ITensor(const Index& i0,
         const Indices&... rest)
 	{
     const auto size = 2 + sizeof...(rest);
-    std::array<Index,size> inds = { i0, i1, static_cast<Index>(rest)...};
+    std::array<Index,size> inds{ i0, i1, static_cast<Index>(rest)...};
     std::array<int,size> extents;
     for(size_t j = 0; j < size; ++j) extents[j] = inds[j].m();
     is_ = IndexSet(inds,size);

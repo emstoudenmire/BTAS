@@ -455,14 +455,6 @@ generate(std::function<Real()> rfunc)
     }
 
 void ITensor::
-swap(ITensor& other)
-    {
-    d_.swap(other.d_);
-    is_.swap(other.is_);
-    scale_.swap(other.scale_);
-    }
-
-void ITensor::
 scaleTo(const LogNumber& newscale)
     {
     if(scale_ == newscale) return;

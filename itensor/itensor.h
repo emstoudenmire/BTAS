@@ -21,7 +21,7 @@ class ITensor
     public:
 
     using storage = ITData;
-    using storage_ptr = std::shared_ptr<ITData>;
+    using storage_ptr = std::shared_ptr<storage>;
     using IndexT = Index;
     using IndexValT = IndexVal;
 
@@ -149,9 +149,6 @@ class ITensor
     template <typename Func>
     const ITensor&
     visit(Func&& f) const;
-
-    void
-    swap(ITensor& other);
 
     private:
 

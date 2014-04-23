@@ -433,9 +433,7 @@ operator-=(const ITensor& other)
 ITensor& ITensor::
 fill(Real r)
     {
-#ifdef DEBUG
-    if(this->empty()) Error("Cannot fill default-constructed ITensor.");
-#endif
+    if(this->empty()) return *this;
     solo();
     scale_.reset();
     d_->fill(r,d_);
@@ -445,9 +443,7 @@ fill(Real r)
 ITensor& ITensor::
 generate(std::function<Real()> rfunc)
     {
-#ifdef DEBUG
-    if(this->empty()) Error("Cannot generate elements of default-constructed ITensor.");
-#endif
+    if(this->empty()) return *this;
     solo();
     scale_.reset();
     d_->generate(rfunc,d_);

@@ -220,9 +220,6 @@ mapprime(T I, int plevold, int plevnew, IndexType type = All)
 std::string
 showm(const Index& I);
 
-std::string 
-nameint(const std::string& f, int n);
-
 std::ostream& 
 operator<<(std::ostream & s, const Index &t);
 

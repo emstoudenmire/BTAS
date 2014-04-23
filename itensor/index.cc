@@ -61,13 +61,6 @@ nameindex(IndexType it, int plev)
     return putprimes(itname.at(int(it)),plev);
     }
 
-string 
-nameint(const string& f, int n)
-    { 
-    stringstream ss; 
-    ss << f << n; 
-    return ss.str(); 
-    }
 
 
 //
@@ -89,7 +82,11 @@ struct IndexDat
         m(m_), 
         type(t_), 
         sname(sn)
-        { }
+        { 
+#ifdef DEBUG
+        if(m_ < 1) Error("Index cannot have bond dimension < 1");
+#endif
+        }
 
     }; //class IndexDat
 
@@ -319,9 +316,13 @@ operator!=(const IndexVal& other) const
     return !operator==(other);
     }
 
-
 string
-showm(const Index& I) { return nameint("m=",I.m()); }
+showm(const Index& I) 
+    { 
+    string s("m=");
+    s.append(std::to_string(I.m()));
+    return s;
+    }
 
 ostream& 
 operator<<(ostream& s, const IndexVal& iv)

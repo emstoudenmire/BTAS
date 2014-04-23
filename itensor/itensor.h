@@ -278,6 +278,13 @@ noprime(Tensor A, const IndexT& I)
     return A; 
     }
 
+template<class Tensor>
+bool
+hasIndex(const Tensor& T, const typename Tensor::IndexT& I)
+    {
+    return detail::contains(T.inds(),I);
+    }
+
 ITensor
 randomize(ITensor T, const OptSet& opts = Global::opts());
 

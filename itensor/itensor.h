@@ -334,7 +334,7 @@ tieIndex(const ITensor& T,
         const auto& J = T.inds()[j];
         if(detail::contains(totie,J))
             {
-            if(nt == 0) new_index.add(J);
+            if(J == totie.front()) new_index.add(J);
             I[nt++] = j;
             }
         else

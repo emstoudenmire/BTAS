@@ -66,19 +66,13 @@ mult(Real r)
 void RealITData::
 apply(detail::MapBase* m)
     {
-    for(auto& r : t_)
-        {
-        r = m->rmap(r);
-        }
+    m->rmap(t_.data(),t_.data()+t_.size());
     }
 
 void RealITData::
 visit(detail::VisitBase* v) const
     {
-    for(auto r : t_)
-        {
-        v->rvisit(r);
-        }
+    v->rvisit(t_.data(),t_.data()+t_.size());
     }
 
 void RealITData::

@@ -18,6 +18,12 @@ struct MapBase
 
     Complex virtual
     cmap(Complex z) const = 0;
+
+    void virtual
+    rmap(Real* begin, Real* size) const = 0;
+
+    void virtual
+    cmap(Complex* begin, Complex* size) const = 0;
     };
 
 template <typename Func>
@@ -33,6 +39,24 @@ struct MapWrap : public MapBase
 
     Complex
     cmap(Complex z) const override { return f(z); }
+
+    void
+    rmap(Real* begin, Real* end) const override
+        {
+        for(; begin != end; ++begin)
+            {
+            *begin = f(*begin);
+            }
+        }
+
+    void
+    cmap(Complex* begin, Complex* end) const override
+        {
+        for(; begin != end; ++begin)
+            {
+            *begin = f(*begin);
+            }
+        }
     };
 
 struct VisitBase
@@ -45,6 +69,12 @@ struct VisitBase
 
     void virtual
     cvisit(Complex z) const = 0;
+
+    void virtual
+    rvisit(const Real* begin, const Real* end) const = 0;
+
+    void virtual
+    cvisit(const Complex* begin, const Complex* end) const = 0;
     };
 
 template <typename Func>
@@ -55,10 +85,9 @@ struct VisitWrap : public VisitBase
 
     VisitWrap(Func&& f_, const LogNumber& scale) 
         : 
-        f(f_)
-        { 
-        scale_fac = scale.real0();
-        }
+        f(f_),
+        scale_fac(scale.real0())
+        { }
 
     virtual ~VisitWrap() { }
 
@@ -67,6 +96,24 @@ struct VisitWrap : public VisitBase
 
     void
     cvisit(Complex z) const override { f(z*scale_fac); }
+
+    void
+    rvisit(const Real* begin, const Real* end) const override
+        {
+        for(; begin != end; ++begin)
+            {
+            f((*begin)*scale_fac);
+            }
+        }
+
+    void
+    cvisit(const Complex* begin, const Complex* end) const override
+        {
+        for(; begin != end; ++begin)
+            {
+            f((*begin)*scale_fac);
+            }
+        }
     };
 
 

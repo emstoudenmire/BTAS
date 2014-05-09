@@ -5,6 +5,11 @@
 using namespace itensor;
 using detail::contains;
 
+Real
+real_part(Real r) { return r; }
+Real
+real_part(Complex z) { return z.real(); }
+
 TEST_CASE("ITensor")
     {
     Index l1("l1",3),
@@ -34,6 +39,15 @@ TEST_CASE("ITensor")
 
         REQUIRE(!T4.empty());
         REQUIRE(T4.r() == 4);
+        }
+
+    SECTION("Apply / Visit")
+        {
+        Real total = 0;
+        //real_part function defined at top of this file:
+        T2.visit([&total](auto x){ total += real_part(x); }); 
+
+        T2.apply([](auto x){ return x*x; }); 
         }
 
     SECTION("tieIndex")

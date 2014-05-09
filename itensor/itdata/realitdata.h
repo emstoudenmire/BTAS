@@ -34,47 +34,6 @@ class RealITData : public ITDispatch<RealITData>
     virtual
     ~RealITData() { }
 
-    private:
-
-    void 
-    contractEqImpl(Ptr& newdat,
-                   const RealITData* other,
-                   const btas::varray<size_t>& Tind,
-                   const btas::varray<size_t>& Oind,
-                   const btas::varray<size_t>& Rind) override;
-
-    void 
-    plusEqImpl(const RealITData* r, Ptr& newdat, Real fac) override; 
-
-    NewPtr
-    clone() const override;
-
-    public:
-
-    void
-    fill(Real r, Ptr& newdat) override;
-
-    void
-    generate(std::function<Real()> rfunc, Ptr& newdat) override;
-
-    void
-    apply(detail::MapBase* m) override;
-
-    void
-    visit(detail::VisitBase* v) const override;
-
-    void 
-    mult(Real r) override; 
-
-    void 
-    print(std::ostream& s, const LogNumber& x) const override; 
-
-    Range 
-    range() const override;
-
-    void virtual
-    applyRange(const Range& r) override;
-
     ////////////
 
     storage t_;
@@ -99,6 +58,12 @@ RealITData(const ExtentArray& extents)
     { 
     t_.fill(0.);
     }
+
+inline RealITData::
+RealITData(const storage& t)
+    :
+    t_(t)
+    { }
 
 }; //namespace itensor
 

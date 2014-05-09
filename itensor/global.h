@@ -343,8 +343,7 @@ class ResultIsZero : public ITError
     {
     public:
 
-    typedef ITError
-    Parent;
+    using Parent = ITError;
 
     ResultIsZero(const std::string& message) 
         : Parent(message)
@@ -355,8 +354,7 @@ class ArrowError : public ITError
     {
     public:
 
-    typedef ITError
-    Parent;
+    using Parent = ITError;
 
     ArrowError(const std::string& message) 
         : Parent(message)

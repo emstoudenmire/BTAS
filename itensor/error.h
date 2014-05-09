@@ -9,22 +9,6 @@
 #include <iostream>
 #include <cstdlib>
 
-/*
-class ITError : public std::runtime_error
-    {
-    public:
-
-    typedef std::runtime_error 
-    Parent;
-
-    explicit 
-    ITError(const std::string& message)
-        : Parent(message)
-        { }
-
-    }; //class ITError
-    */
-
 namespace itensor {
 
 void inline
@@ -53,28 +37,20 @@ error(const std::string& s, int line,const char* file = 0)
 #define Error(exp)  error(exp, __LINE__, __FILE__)
 
 
-class ITError
+class ITError : public std::runtime_error
     {
     public:
+
+    using Parent = std::runtime_error;
 
     explicit 
     ITError(const std::string& message = "")
         : 
-        message_(message)
+        Parent(message)
         { }
-
-    virtual 
-    const char* what() const throw()
-        {
-        return message_.c_str();
-        }
 
     virtual
     ~ITError() { }
-
-    private:
-
-    std::string message_;
 
     }; //class ITError
 
@@ -83,7 +59,7 @@ inline
 std::ostream&
 operator<<(std::ostream& s, const ITError& e)
     {
-    s << e.what();
+    s << "ITError: " << e.what();
     return s;
     }
 

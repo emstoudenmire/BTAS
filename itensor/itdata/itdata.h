@@ -23,24 +23,40 @@ struct Func1
     {
     NewData virtual
     operator()(ITDense<Real>& t) const = 0;
+    NewData virtual
+    operator()(ITDense<Complex>& t) const = 0;
     };
 
 struct ConstFunc1
     {
     void virtual
     operator()(const ITDense<Real>& t) const = 0;
+    void virtual
+    operator()(const ITDense<Complex>& t) const = 0;
     };
 
 struct Func2
     {
     NewData virtual
     operator()(const ITDense<Real>& a1,const ITDense<Real>& a2) const = 0;
+    NewData virtual
+    operator()(const ITDense<Real>& a1,const ITDense<Complex>& a2) const = 0;
+    NewData virtual
+    operator()(const ITDense<Complex>& a1,const ITDense<Real>& a2) const = 0;
+    NewData virtual
+    operator()(const ITDense<Complex>& a1,const ITDense<Complex>& a2) const = 0;
     };
 
 struct Func2Mod
     {
     NewData virtual
     operator()(ITDense<Real>& a1,const ITDense<Real>& a2) const = 0;
+    NewData virtual
+    operator()(ITDense<Real>& a1,const ITDense<Complex>& a2) const = 0;
+    NewData virtual
+    operator()(ITDense<Complex>& a1,const ITDense<Real>& a2) const = 0;
+    NewData virtual
+    operator()(ITDense<Complex>& a1,const ITDense<Complex>& a2) const = 0;
     };
 
 
@@ -70,11 +86,15 @@ class ITData
     plugSecond(const Func2Mod& f, PData& arg1) const = 0;
     NewData virtual
     plugFirst(const Func2Mod& f, const ITDense<Real>& arg2) = 0;
+    NewData virtual
+    plugFirst(const Func2Mod& f, const ITDense<Complex>& arg2) = 0;
 
     NewData virtual
     plugSecond(const Func2& f, const ITData& arg1) const = 0;
     NewData virtual
     plugFirst(const Func2& f, const ITDense<Real>& arg2) const = 0;
+    NewData virtual
+    plugFirst(const Func2& f, const ITDense<Complex>& arg2) const = 0;
 
     template <class Derived>
     friend struct ITDispatch;
@@ -120,6 +140,11 @@ struct ITDispatch : public ITData
         {
         return f(*(static_cast<Derived*>(this)),arg2);
         }
+    NewData
+    plugFirst(const Func2Mod& f, const ITDense<Complex>& arg2) final
+        {
+        return f(*(static_cast<Derived*>(this)),arg2);
+        }
 
     NewData
     plugSecond(const Func2& f, const ITData& arg1) const final
@@ -128,6 +153,11 @@ struct ITDispatch : public ITData
         }
     NewData
     plugFirst(const Func2& f, const ITDense<Real>& arg2) const final
+        {
+        return f(*(static_cast<const Derived*>(this)),arg2);
+        }
+    NewData
+    plugFirst(const Func2& f, const ITDense<Complex>& arg2) const final
         {
         return f(*(static_cast<const Derived*>(this)),arg2);
         }

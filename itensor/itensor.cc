@@ -297,15 +297,20 @@ operator/=(Real fac)
     return *this; 
     }
 
-//ITensor& ITensor::
-//operator*=(Complex z)
-//    {
-//    }
+ITensor& ITensor::
+operator*=(Complex z)
+    {
+    if(z.imag() == 0) return operator*=(z.real());
+    solo();
+    applyFunc(MultComplex{z},d_);
+    return *this;
+    }
 
-//ITensor& ITensor::
-//operator/=(Complex z)
-//    {
-//    }
+ITensor& ITensor::
+operator/=(Complex z)
+    {
+    return operator*=(1./z);
+    }
 
 ITensor ITensor::
 operator-() const 
@@ -408,6 +413,7 @@ operator+=(const ITensor& other)
     if(same_ind_order) 
         { 
         Error("operator+= not currently implemented");
+        //TODO
         //d_->plusEq(other.d_,d_,scalefac);
         }
     else // not same_ind_order

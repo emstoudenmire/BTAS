@@ -57,6 +57,13 @@ TEST_CASE("ITensor")
         PrintData(T1);
         }
 
+    SECTION("Multiply by Complex")
+        {
+        T1.fill(2.);
+        T1 *= Complex(1,1);
+        PrintData(T1);
+        }
+
     //SECTION("Apply / Visit")
     //    {
     //    Real total = 0;

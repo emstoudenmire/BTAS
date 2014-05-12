@@ -18,9 +18,26 @@ struct Fill : public Func1
 
     NewData
     operator()(ITDense<Real>& d) const final;
+    NewData
+    operator()(ITDense<Complex>& d) const final;
 
     private:
     Real r_;
+    };
+
+struct MultComplex : public Func1
+    {
+    MultComplex(Complex z)
+        : z_(z)
+        { }
+
+    NewData
+    operator()(ITDense<Real>& d) const final;
+    NewData
+    operator()(ITDense<Complex>& d) const final;
+
+    private:
+    Complex z_;
     };
 
 struct MultReal : public Func1
@@ -31,6 +48,8 @@ struct MultReal : public Func1
 
     NewData
     operator()(ITDense<Real>& d) const final;
+    NewData
+    operator()(ITDense<Complex>& d) const final;
 
     private:
     Real r_;
@@ -48,6 +67,8 @@ struct PrintIT : public ConstFunc1
 
     void
     operator()(const ITDense<Real>& d) const final;
+    void
+    operator()(const ITDense<Complex>& d) const final;
     };
 
 

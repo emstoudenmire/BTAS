@@ -7,6 +7,54 @@
 
 namespace itensor {
 
+NewData Fill::
+operator()(ITDense<Real>& d) const
+    {
+    d.t_.fill(r_);
+    return NewData();
+    }
+
+NewData MultReal::
+operator()(ITDense<Real>& d) const
+    {
+    btas::scal(r_,d.t_);
+    return NewData();
+    }
+
+void PrintIT::
+operator()(const ITDense<Real>& d) const
+    {
+    s_ << "}\n";
+    Real scalefac = 1.0;
+    if(!x_.isTooBigForReal()) scalefac = x_.real0();
+    else s_ << "  (omitting too large scale factor)\n";
+
+    const auto Tr = d.t_.range();
+
+    const auto rr = Tr.rank();
+
+    if(rr == 0) return;
+
+    for(const auto I : Tr)
+        {
+        const Real val = d.t_(I)*scalefac;
+        //if(fabs(val) > Global::printScale())
+            {
+            s_ << "  ("; 
+            for(size_t i = 0, j = 1; j <= I.size(); ++i, ++j)
+                {
+                s_ << (1+I[i]);
+                if(j < I.size()) s_ << ",";
+                }
+            s_ << ") ";
+
+            if(fabs(val) > 1E-10)
+                s_ << val << "\n";
+            else
+                s_ << format("%.8E\n",val);
+            }
+        }
+    }
 
 //void RealITData::
 //contractEqImpl(Ptr& newdat,
@@ -48,12 +96,6 @@ namespace itensor {
 //    }
 //
 //void RealITData::
-//mult(Real r)
-//    {
-//    btas::scal(r,t_);
-//    }
-//
-//void RealITData::
 //apply(detail::MapBase* m)
 //    {
 //    m->rmap(t_.data(),t_.data()+t_.size());
@@ -65,40 +107,6 @@ namespace itensor {
 //    v->rvisit(t_.data(),t_.data()+t_.size());
 //    }
 //
-//void RealITData::
-//print(std::ostream& s, const LogNumber& x) const
-//    {
-//    s << "}\n";
-//    Real scalefac = 1.0;
-//    if(!x.isTooBigForReal()) scalefac = x.real0();
-//    else s << "  (omitting too large scale factor)\n";
-//
-//    const auto Tr = t_.range();
-//
-//    const auto rr = Tr.rank();
-//
-//    if(rr == 0) return;
-//
-//    for(const auto I : Tr)
-//        {
-//        const Real val = t_(I)*scalefac;
-//        //if(fabs(val) > Global::printScale())
-//            {
-//            s << "  ("; 
-//            for(size_t i = 0, j = 1; j <= I.size(); ++i, ++j)
-//                {
-//                s << (1+I[i]);
-//                if(j < I.size()) s << ",";
-//                }
-//            s << ") ";
-//
-//            if(fabs(val) > 1E-10)
-//                s << val << "\n";
-//            else
-//                s << format("%.8E\n",val);
-//            }
-//        }
-//    }
 //
 //ITData::Range RealITData::
 //range() const

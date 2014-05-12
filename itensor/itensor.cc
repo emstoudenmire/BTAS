@@ -3,6 +3,7 @@
 //    (See accompanying LICENSE file.)
 //
 #include "itensor.h"
+#include "itensor/itdata/itdata_functions.h"
 
 using std::array;
 using std::ostream;
@@ -26,7 +27,7 @@ ITensor()
 ITensor::
 ITensor(const Index& i1) 
     :
-    d_(std::make_shared<RealITData>(i1.m())),
+    d_(std::make_shared<ITDense<Real>>(i1.m())),
     is_(i1)
 	{ 
     }
@@ -35,7 +36,7 @@ ITensor(const Index& i1)
 ITensor::
 ITensor(const Index& i1,const Index& i2) 
     :
-    d_(std::make_shared<RealITData>(i1.m(),i2.m())),
+    d_(std::make_shared<ITDense<Real>>(i1.m(),i2.m())),
     is_(i1,i2)
 	{ 
     }
@@ -52,7 +53,7 @@ ITensor(Real val)
 
 ITensor::
 ITensor(IndexSet&& iset,
-        ITData::NewPtr nd,
+        NewData nd,
         LogNumber scale)
     :
     d_(std::move(nd)),
@@ -263,7 +264,8 @@ operator*=(const ITensor& other)
     //cout << "}" << endl;
     //exit(0);
 
-    d_->contractEq(d_,other.d_,Lind,Rind,Pind);
+    Error("operator*= not currently implemented");
+    //d_->contractEq(d_,other.d_,Lind,Rind,Pind);
 
     IndexSet new_index(std::move(newind),nuniq);
 
@@ -405,7 +407,8 @@ operator+=(const ITensor& other)
 
     if(same_ind_order) 
         { 
-        d_->plusEq(other.d_,d_,scalefac);
+        Error("operator+= not currently implemented");
+        //d_->plusEq(other.d_,d_,scalefac);
         }
     else // not same_ind_order
         {
@@ -436,7 +439,7 @@ fill(Real r)
     if(this->empty()) return *this;
     solo();
     scale_.reset();
-    d_->fill(r,d_);
+    applyFunc(Fill(r),d_);
     return *this;
     }
 
@@ -446,7 +449,8 @@ generate(std::function<Real()> rfunc)
     if(this->empty()) return *this;
     solo();
     scale_.reset();
-    d_->generate(rfunc,d_);
+    //TODO
+    //d_->generate(rfunc,d_);
     return *this;
     }
 
@@ -457,7 +461,7 @@ scaleTo(const LogNumber& newscale)
     if(newscale.sign() == 0) Error("Trying to scale an ITensor to a 0 scale");
     solo();
     scale_ /= newscale;
-    d_->mult(scale_.real0());
+    applyFunc(MultReal(scale_.real0()),d_);
     scale_ = newscale;
     }
 
@@ -518,7 +522,7 @@ operator<<(ostream & s, const ITensor& t)
 
     if(ff_set || Global::printdat())
         {
-        if(!t.empty()) t.data().print(s,t.scale());
+        if(!t.empty()) applyFunc(PrintIT(s,t.scale()),t.data());
         else           s << " (empty / default constructed)}\n";
         }
     return s;

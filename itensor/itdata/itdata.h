@@ -5,79 +5,98 @@
 #ifndef __ITENSOR_ITDATA_H
 #define __ITENSOR_ITDATA_H
 #include "itensor/global.h"
-#include "btas/tensor.h"
-#include "itensor/detail/mapwrap.h"
+#include "btas/range.h"
+#include "btas/defaults.h"
 
 namespace itensor {
 
-struct Func1;
-struct ConstFunc1;
-struct Func2;
-struct Func2Mod;
+class ITData;
+
+using PData = std::shared_ptr<ITData>;
+using CPData = std::shared_ptr<const ITData>;
+using NewData = std::unique_ptr<ITData>;
+
+template <typename T_>
+class ITDense;
+
+struct Func1
+    {
+    NewData virtual
+    operator()(ITDense<Real>& t) const = 0;
+    };
+
+struct ConstFunc1
+    {
+    void virtual
+    operator()(const ITDense<Real>& t) const = 0;
+    };
+
+struct Func2
+    {
+    NewData virtual
+    operator()(const ITDense<Real>& a1,const ITDense<Real>& a2) const = 0;
+    };
+
+struct Func2Mod
+    {
+    NewData virtual
+    operator()(ITDense<Real>& a1,const ITDense<Real>& a2) const = 0;
+    };
+
 
 class ITData
     {
     public:
-
-    using Ptr = std::shared_ptr<ITData>;
-    using CPtr = std::shared_ptr<const ITData>;
-    using NewPtr = std::unique_ptr<ITData>;
-    using Range = btas::DEFAULT::range;
 
     ITData() { }
 
     virtual
     ~ITData() { }
 
-    NewPtr virtual
+    NewData virtual
     clone() const = 0;
 
     private:
 
-    ITData(const ITData&); //disabled to prevent copying
-    ITData& operator=(const ITData&); //disabled to prevent copying
+    //ITData(const ITData&) = delete; //disabled to prevent copying
+    //ITData& operator=(const ITData&) = delete; //disabled to prevent copying
 
     void virtual
     plugInto(const ConstFunc1& f) const = 0;
-    NewBase virtual
+    NewData virtual
     plugInto(const Func1& f) = 0;
 
-    NewBase virtual
-    plugSecond(const Func2Mod& f, const PBase& arg1) const = 0;
-    NewBase virtual
-    plugFirst(const Func2Mod& f, const TR& arg2) = 0;
-    NewBase virtual
-    plugFirst(const Func2Mod& f, const TC& arg2) = 0;
+    NewData virtual
+    plugSecond(const Func2Mod& f, PData& arg1) const = 0;
+    NewData virtual
+    plugFirst(const Func2Mod& f, const ITDense<Real>& arg2) = 0;
 
-    NewBase virtual
-    plugSecond(const Func2& f, const CPBase& arg1) const = 0;
-    NewBase virtual
-    plugFirst(const Func2& f, const TR& arg2) const = 0;
-    NewBase virtual
-    plugFirst(const Func2& f, const TC& arg2) const = 0;
+    NewData virtual
+    plugSecond(const Func2& f, const ITData& arg1) const = 0;
+    NewData virtual
+    plugFirst(const Func2& f, const ITDense<Real>& arg2) const = 0;
 
     template <class Derived>
     friend struct ITDispatch;
 
-    friend void apply(const Func1& f, PBase&);
-    friend void apply(const ConstFunc1&, const CPBase&);
-    friend void apply(const Func2Mod&, PBase&, const CPBase&);
-    friend NewBase apply(const Func2&, const CPBase&, const CPBase&);
-
+    friend void applyFunc(const Func1& f, PData&);
+    friend void applyFunc(const ConstFunc1&, const ITData&);
+    friend void applyFunc(const Func2Mod&, PData&, const ITData&);
+    friend NewData applyFunc(const Func2&, const ITData&, const ITData&);
     };
 
 template <class Derived>
-struct ITDispatch : public Base
+struct ITDispatch : public ITData
     {
     private:
     
-    NewBase
+    NewData
     clone() const final 
         { 
         auto pdt = static_cast<const Derived*>(this);
         //Should change this to make_unique<Derived>(t_);
         //once C++14 make_unique feature is available
-        return NewBase(new Derived(*pdt));
+        return NewData(new Derived(*pdt));
         }
 
     void
@@ -85,74 +104,64 @@ struct ITDispatch : public Base
         {
         f(*(static_cast<const Derived*>(this)));
         }
-    NewBase
+    NewData
     plugInto(const Func1& f) final
         {
         return f(*(static_cast<Derived*>(this)));
         }
 
-    NewBase
-    plugSecond(const Func2Mod& f, const PBase& arg1) const final
+    NewData
+    plugSecond(const Func2Mod& f, PData& arg1) const final
         {
         return arg1->plugFirst(f,*(static_cast<const Derived*>(this)));
         }
-    NewBase
-    plugFirst(const Func2Mod& f, const TR& arg2) final
-        {
-        return f(*(static_cast<Derived*>(this)),arg2);
-        }
-    NewBase
-    plugFirst(const Func2Mod& f, const TC& arg2) final
+    NewData
+    plugFirst(const Func2Mod& f, const ITDense<Real>& arg2) final
         {
         return f(*(static_cast<Derived*>(this)),arg2);
         }
 
-    NewBase
-    plugSecond(const Func2& f, const CPBase& arg1) const final
+    NewData
+    plugSecond(const Func2& f, const ITData& arg1) const final
         {
-        return arg1->plugFirst(f,*(static_cast<const Derived*>(this)));
+        return arg1.plugFirst(f,*(static_cast<const Derived*>(this)));
         }
-    NewBase
-    plugFirst(const Func2& f, const TR& arg2) const final
-        {
-        return f(*(static_cast<const Derived*>(this)),arg2);
-        }
-    NewBase
-    plugFirst(const Func2& f, const TC& arg2) const final
+    NewData
+    plugFirst(const Func2& f, const ITDense<Real>& arg2) const final
         {
         return f(*(static_cast<const Derived*>(this)),arg2);
         }
     };
 
 void inline
-apply(const ConstFunc1& f,
-      const CPBase& arg)
+applyFunc(const ConstFunc1& f,
+          const ITData& arg)
     {
-    arg->plugInto(f);
+    arg.plugInto(f);
     }
 
 void inline
-apply(const Func1& f,
-      PBase& arg)
+applyFunc(const Func1& f,
+          PData& arg)
     {
     auto res = arg->plugInto(f);
     if(res) arg = std::move(res);
     }
 
-NewBase inline
-apply(const Func2& f,
-      const CPBase& arg1,
-      const CPBase& arg2)
+NewData inline
+applyFunc(const Func2& f,
+          const ITData& arg1,
+          const ITData& arg2)
     {
-    return arg2->plugSecond(f,arg1);
+    return arg2.plugSecond(f,arg1);
     }
 
 void inline
-apply(const Func2Mod& f,
-      PBase&  arg1,
-      const CPBase& arg2)
+applyFunc(const Func2Mod& f,
+          PData&  arg1,
+          const ITData& arg2)
     {
-    auto res = arg2->plugSecond(f,arg1);
+    auto res = arg2.plugSecond(f,arg1);
     if(res) arg1 = std::move(res);
     }
 

@@ -7,8 +7,7 @@
 #include "itensor/real.h"
 #include "itensor/indexset.h"
 
-#include "itensor/itdata/itdata.h"
-#include "itensor/itdata/realitdata.h"
+#include "itensor/itdata/itdense.h"
 #include "itensor/detail/functions.h"
 
 namespace itensor {
@@ -21,7 +20,7 @@ class ITensor
     public:
 
     using storage = ITData;
-    using storage_ptr = std::shared_ptr<storage>;
+    using storage_ptr = PData;
     using IndexT = Index;
     using IndexValT = IndexVal;
 
@@ -183,7 +182,7 @@ class ITensor
     //
 
     ITensor(IndexSet&& iset,
-            ITData::NewPtr nd,
+            NewData nd,
             LogNumber scale);
 
     //Scale factor, used internally for efficient scalar ops.
@@ -211,7 +210,7 @@ ITensor(const Index& i0,
     std::array<int,size> extents;
     for(size_t j = 0; j < size; ++j) extents[j] = inds[j].m();
     is_ = IndexSet(inds,size);
-    d_ = std::make_shared<RealITData>(extents);
+    d_ = std::make_shared<ITDense<Real>>(extents);
 	}
 
 template <typename Func>
@@ -224,8 +223,9 @@ apply(Func&& f)
     //a uniform function signature
     solo();
     scaleTo(1);
-    detail::MapWrap<decltype(f)> mw(std::forward<Func>(f));
-    d_->apply(&mw);
+    //TODO
+    //detail::MapWrap<decltype(f)> mw(std::forward<Func>(f));
+    //d_->apply(&mw);
     return *this;
     }
 
@@ -233,8 +233,9 @@ template <typename Func>
 const ITensor& ITensor::
 visit(Func&& f) const
     {
-    detail::VisitWrap<decltype(f)> vw(std::forward<Func>(f),scale());
-    d_->visit(&vw);
+    //TODO
+    //detail::VisitWrap<decltype(f)> vw(std::forward<Func>(f),scale());
+    //d_->visit(&vw);
     return *this;
     }
 
@@ -352,8 +353,9 @@ tieIndex(const ITensor& T,
     if(nt != totie.size())
         Error("ITensor does not have requested Index to tie");
 
+    //TODO
     auto nd = T.data().clone();
-    nd->applyRange(tieIndex(T.data().range(),I));
+    //nd->applyRange(tieIndex(T.data().range(),I));
 
     return ITensor(new_index,std::move(nd),T.scale());
     }

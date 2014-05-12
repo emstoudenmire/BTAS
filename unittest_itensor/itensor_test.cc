@@ -41,28 +41,44 @@ TEST_CASE("ITensor")
         REQUIRE(T4.r() == 4);
         }
 
-    SECTION("Apply / Visit")
+    SECTION("Fill and Generate")
         {
-        Real total = 0;
-        //real_part function defined at top of this file:
-        T2.visit([&total](auto x){ total += real_part(x); }); 
+        T1.fill(1.);
+        PrintData(T1);
 
-        T2.apply([](auto x){ return x*x; }); 
+        T2.fill(2.);
+        PrintData(T2);
         }
 
-    SECTION("tieIndex")
+    SECTION("Multiply by Real")
         {
-        auto tied_s1 = tieIndex(T4,s1,s2);
-        REQUIRE(tied_s1.r() == 3);
-        REQUIRE(hasIndex(tied_s1,l1));
-        REQUIRE(hasIndex(tied_s1,l2));
-        REQUIRE(hasIndex(tied_s1,s1));
-
-        auto tied_s2 = tieIndex(T4,s2,s1);
-        REQUIRE(tied_s2.r() == 3);
-        REQUIRE(hasIndex(tied_s2,l1));
-        REQUIRE(hasIndex(tied_s2,l2));
-        REQUIRE(hasIndex(tied_s2,s2));
+        T1.fill(1.);
+        T1 *= 3.1415926536;
+        PrintData(T1);
         }
+
+    //SECTION("Apply / Visit")
+    //    {
+    //    Real total = 0;
+    //    //real_part function defined at top of this file:
+    //    T2.visit([&total](auto x){ total += real_part(x); }); 
+
+    //    T2.apply([](auto x){ return x*x; }); 
+    //    }
+
+    //SECTION("tieIndex")
+    //    {
+    //    auto tied_s1 = tieIndex(T4,s1,s2);
+    //    REQUIRE(tied_s1.r() == 3);
+    //    REQUIRE(hasIndex(tied_s1,l1));
+    //    REQUIRE(hasIndex(tied_s1,l2));
+    //    REQUIRE(hasIndex(tied_s1,s1));
+
+    //    auto tied_s2 = tieIndex(T4,s2,s1);
+    //    REQUIRE(tied_s2.r() == 3);
+    //    REQUIRE(hasIndex(tied_s2,l1));
+    //    REQUIRE(hasIndex(tied_s2,l2));
+    //    REQUIRE(hasIndex(tied_s2,s2));
+    //    }
 
     }

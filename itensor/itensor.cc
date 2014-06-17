@@ -140,8 +140,8 @@ ITensor(IndexSet&& iset,
 ITensor& ITensor::
 operator*=(const ITensor& other)
     {
-    if(this->empty() || other.empty())
-        Error("Empty ITensor in product");
+    if(!(*this) || !other)
+        Error("Default constructed ITensor in product");
 
     if(this == &other)
         return operator=( ITensor(sqr(norm(*this))) );
@@ -441,7 +441,7 @@ operator-=(const ITensor& other)
 ITensor& ITensor::
 fill(Real r)
     {
-    if(this->empty()) return *this;
+    if(!(*this)) return *this;
     solo();
     scale_.reset();
     applyFunc(Fill(r),d_);
@@ -451,7 +451,7 @@ fill(Real r)
 //ITensor& ITensor::
 //generate(std::function<Real()> rfunc)
 //    {
-//    if(this->empty()) return *this;
+//    if(!(*this)) return *this;
 //    solo();
 //    scale_.reset();
 //    //TODO
@@ -527,8 +527,8 @@ operator<<(ostream & s, const ITensor& t)
 
     if(ff_set || Global::printdat())
         {
-        if(!t.empty()) applyFunc(PrintIT(s,t.scale()),t.data());
-        else           s << " (empty / default constructed)}\n";
+        if(t) applyFunc(PrintIT(s,t.scale()),t.data());
+        else           s << " (default constructed)}\n";
         }
     return s;
     }
@@ -545,7 +545,7 @@ Real
 toReal(const ITensor& T)
 	{ 
 #ifdef DEBUG
-    if(T.empty()) Error("ITensor is empty / default constructed");
+    if(!T) Error("ITensor is default constructed");
 #endif
 
     if(T.inds().rn() != 0)
@@ -583,7 +583,7 @@ Complex
 toComplex(const ITensor& T)
     {
 #ifdef DEBUG
-    if(T.empty()) Error("ITensor is empty / default constructed");
+    if(!T) Error("ITensor is default constructed");
 #endif
     if(T.inds().rn() != 0)
         {

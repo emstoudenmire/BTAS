@@ -32,19 +32,19 @@ TEST_CASE("ITensor")
 
     SECTION("Basic Accessors")
         {
-        REQUIRE(T0.empty());
+        REQUIRE(!T0);
         REQUIRE(T0.r() == 0);
 
-        REQUIRE(!T1.empty());
+        REQUIRE(T1);
         REQUIRE(T1.r() == 1);
 
-        REQUIRE(!T2.empty());
+        REQUIRE(T2);
         REQUIRE(T2.r() == 2);
 
-        REQUIRE(!T3.empty());
+        REQUIRE(T3);
         REQUIRE(T3.r() == 3);
 
-        REQUIRE(!T4.empty());
+        REQUIRE(T4);
         REQUIRE(T4.r() == 4);
         }
 

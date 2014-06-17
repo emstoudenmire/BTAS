@@ -3,7 +3,6 @@
 //    (See accompanying LICENSE file.)
 //
 #include "itensor.h"
-#include "itensor/itdata/itdata_functions.h"
 
 using std::array;
 using std::ostream;
@@ -449,16 +448,16 @@ fill(Real r)
     return *this;
     }
 
-ITensor& ITensor::
-generate(std::function<Real()> rfunc)
-    {
-    if(this->empty()) return *this;
-    solo();
-    scale_.reset();
-    //TODO
-    //d_->generate(rfunc,d_);
-    return *this;
-    }
+//ITensor& ITensor::
+//generate(std::function<Real()> rfunc)
+//    {
+//    if(this->empty()) return *this;
+//    solo();
+//    scale_.reset();
+//    //TODO
+//    //d_->generate(rfunc,d_);
+//    return *this;
+//    }
 
 void ITensor::
 scaleTo(const LogNumber& newscale)

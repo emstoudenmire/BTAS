@@ -151,19 +151,6 @@ operator()(const ITDense<Complex>& d) const
 //    btas::axpy(fac,d->t_,t_);
 //    }
 //
-//RealITData::NewPtr RealITData::
-//clone() const
-//    {
-//    //Should change this to make_unique<RealITData>(t_);
-//    //once C++14 make_unique feature is available
-//    return RealITData::NewPtr(new RealITData(t_));
-//    }
-//
-//void RealITData::
-//fill(Real r, Ptr& newdat)
-//    {
-//    t_.fill(r);
-//    }
 //
 //void RealITData::
 //generate(std::function<Real()> rfunc, Ptr& newdat)
@@ -190,12 +177,5 @@ operator()(const ITDense<Complex>& d) const
 //    return t_.range();
 //    }
 //
-//void RealITData::
-//applyRange(const Range& r)
-//    {
-//    //TODO: directly assign t_ after btas Tensor = TensorView assignment bug fixed
-//    storage temp = btas::TensorViewOf<storage>(r,t_.storage());
-//    t_ = std::move(temp);
-//    }
 
 }; //namespace itensor

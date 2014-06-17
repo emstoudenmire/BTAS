@@ -10,6 +10,13 @@ real_part(Real r) { return r; }
 Real
 real_part(Complex z) { return z.real(); }
 
+struct Square
+    {
+    template <typename T>
+    T
+    operator()(T x) const { return x*x; }
+    };
+
 TEST_CASE("ITensor")
     {
     Index l1("l1",3),
@@ -64,28 +71,31 @@ TEST_CASE("ITensor")
         PrintData(T1);
         }
 
-    //SECTION("Apply / Visit")
-    //    {
-    //    Real total = 0;
-    //    //real_part function defined at top of this file:
-    //    T2.visit([&total](auto x){ total += real_part(x); }); 
+    SECTION("Apply / Visit")
+        {
+        T2.apply([](auto x){ return x*x; }); 
+        T2.apply(Square());
+        PrintData(T2);
 
-    //    T2.apply([](auto x){ return x*x; }); 
-    //    }
+        Real total = 0;
+        //real_part function defined at top of this file:
+        T2.visit([&total](auto x){ total += real_part(x); }); 
+        printn("total = %.20f",total);
+        }
 
-    //SECTION("tieIndex")
-    //    {
-    //    auto tied_s1 = tieIndex(T4,s1,s2);
-    //    REQUIRE(tied_s1.r() == 3);
-    //    REQUIRE(hasIndex(tied_s1,l1));
-    //    REQUIRE(hasIndex(tied_s1,l2));
-    //    REQUIRE(hasIndex(tied_s1,s1));
+    SECTION("tieIndex")
+        {
+        auto tied_s1 = tieIndex(T4,s1,s2);
+        REQUIRE(tied_s1.r() == 3);
+        REQUIRE(hasIndex(tied_s1,l1));
+        REQUIRE(hasIndex(tied_s1,l2));
+        REQUIRE(hasIndex(tied_s1,s1));
 
-    //    auto tied_s2 = tieIndex(T4,s2,s1);
-    //    REQUIRE(tied_s2.r() == 3);
-    //    REQUIRE(hasIndex(tied_s2,l1));
-    //    REQUIRE(hasIndex(tied_s2,l2));
-    //    REQUIRE(hasIndex(tied_s2,s2));
-    //    }
+        auto tied_s2 = tieIndex(T4,s2,s1);
+        REQUIRE(tied_s2.r() == 3);
+        REQUIRE(hasIndex(tied_s2,l1));
+        REQUIRE(hasIndex(tied_s2,l2));
+        REQUIRE(hasIndex(tied_s2,s2));
+        }
 
     }

@@ -100,7 +100,9 @@ class ITData
     friend struct ITDispatch;
 
     friend void applyFunc(const Func1& f, PData&);
+    friend void applyFunc(const Func1& f, NewData&);
     friend void applyFunc(const ConstFunc1&, const ITData&);
+    friend void applyFunc(const ConstFunc1&, const CPData&);
     friend void applyFunc(const Func2Mod&, PData&, const ITData&);
     friend NewData applyFunc(const Func2&, const ITData&, const ITData&);
     };
@@ -171,8 +173,23 @@ applyFunc(const ConstFunc1& f,
     }
 
 void inline
+applyFunc(const ConstFunc1& f,
+          const CPData& arg)
+    {
+    arg->plugInto(f);
+    }
+
+void inline
 applyFunc(const Func1& f,
           PData& arg)
+    {
+    auto res = arg->plugInto(f);
+    if(res) arg = std::move(res);
+    }
+
+void inline
+applyFunc(const Func1& f,
+          NewData& arg)
     {
     auto res = arg->plugInto(f);
     if(res) arg = std::move(res);

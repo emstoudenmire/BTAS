@@ -10,6 +10,13 @@ real_part(Real r) { return r; }
 Real
 real_part(Complex z) { return z.real(); }
 
+struct Square
+    {
+    template <typename T>
+    T
+    operator()(T x) const { return x*x; }
+    };
+
 TEST_CASE("ITensor")
     {
     Index l1("l1",3),
@@ -25,29 +32,55 @@ TEST_CASE("ITensor")
 
     SECTION("Basic Accessors")
         {
-        REQUIRE(T0.empty());
+        REQUIRE(!T0);
         REQUIRE(T0.r() == 0);
 
-        REQUIRE(!T1.empty());
+        REQUIRE(T1);
         REQUIRE(T1.r() == 1);
 
-        REQUIRE(!T2.empty());
+        REQUIRE(T2);
         REQUIRE(T2.r() == 2);
 
-        REQUIRE(!T3.empty());
+        REQUIRE(T3);
         REQUIRE(T3.r() == 3);
 
-        REQUIRE(!T4.empty());
+        REQUIRE(T4);
         REQUIRE(T4.r() == 4);
+        }
+
+    SECTION("Fill and Generate")
+        {
+        T1.fill(1.);
+        PrintData(T1);
+
+        T2.fill(2.);
+        PrintData(T2);
+        }
+
+    SECTION("Multiply by Real")
+        {
+        T1.fill(1.);
+        T1 *= 3.1415926536;
+        PrintData(T1);
+        }
+
+    SECTION("Multiply by Complex")
+        {
+        T1.fill(2.);
+        T1 *= Complex(1,1);
+        PrintData(T1);
         }
 
     SECTION("Apply / Visit")
         {
+        T2.apply([](auto x){ return x*x; }); 
+        T2.apply(Square());
+        PrintData(T2);
+
         Real total = 0;
         //real_part function defined at top of this file:
         T2.visit([&total](auto x){ total += real_part(x); }); 
-
-        T2.apply([](auto x){ return x*x; }); 
+        printn("total = %.20f",total);
         }
 
     SECTION("tieIndex")

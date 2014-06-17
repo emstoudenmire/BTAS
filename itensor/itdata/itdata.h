@@ -5,169 +5,213 @@
 #ifndef __ITENSOR_ITDATA_H
 #define __ITENSOR_ITDATA_H
 #include "itensor/global.h"
-#include "btas/tensor.h"
-#include "itensor/detail/mapwrap.h"
+#include "btas/range.h"
+#include "btas/defaults.h"
 
 namespace itensor {
 
-class RealITData;
+class ITData;
+
+using PData = std::shared_ptr<ITData>;
+using CPData = std::shared_ptr<const ITData>;
+using NewData = std::unique_ptr<ITData>;
+
+template <typename T_>
+class ITDense;
+
+struct Func1
+    {
+    NewData virtual
+    operator()(ITDense<Real>& t) const = 0;
+    NewData virtual
+    operator()(ITDense<Complex>& t) const = 0;
+    };
+
+struct ConstFunc1
+    {
+    void virtual
+    operator()(const ITDense<Real>& t) const = 0;
+    void virtual
+    operator()(const ITDense<Complex>& t) const = 0;
+    };
+
+struct Func2
+    {
+    NewData virtual
+    operator()(const ITDense<Real>& a1,const ITDense<Real>& a2) const = 0;
+    NewData virtual
+    operator()(const ITDense<Real>& a1,const ITDense<Complex>& a2) const = 0;
+    NewData virtual
+    operator()(const ITDense<Complex>& a1,const ITDense<Real>& a2) const = 0;
+    NewData virtual
+    operator()(const ITDense<Complex>& a1,const ITDense<Complex>& a2) const = 0;
+    };
+
+struct Func2Mod
+    {
+    NewData virtual
+    operator()(ITDense<Real>& a1,const ITDense<Real>& a2) const = 0;
+    NewData virtual
+    operator()(ITDense<Real>& a1,const ITDense<Complex>& a2) const = 0;
+    NewData virtual
+    operator()(ITDense<Complex>& a1,const ITDense<Real>& a2) const = 0;
+    NewData virtual
+    operator()(ITDense<Complex>& a1,const ITDense<Complex>& a2) const = 0;
+    };
+
 
 class ITData
     {
     public:
-
-    using Ptr = std::shared_ptr<ITData>;
-    using CPtr = std::shared_ptr<const ITData>;
-    using NewPtr = std::unique_ptr<ITData>;
-    using Range = btas::DEFAULT::range;
 
     ITData() { }
 
     virtual
     ~ITData() { }
 
-    //
-    // Public interface
-    //
-
-    void virtual
-    contractEq(Ptr& newdat,
-               const CPtr& other, 
-               const btas::varray<size_t>& Tind,
-               const btas::varray<size_t>& Oind,
-               const btas::varray<size_t>& Rind
-              );
-
-    void
-    plusEq(const CPtr& other, Ptr& newdat, Real fac = 1);
-
-    NewPtr virtual
+    NewData virtual
     clone() const = 0;
 
-    void virtual
-    fill(Real r, Ptr& newdat) = 0;
-
-    void virtual
-    generate(std::function<Real()> rfunc, Ptr& newdat) = 0;
-
-    void virtual
-    apply(detail::MapBase*) = 0;
-
-    void virtual
-    visit(detail::VisitBase*) const = 0;
-
-    void virtual
-    mult(Real r) = 0;
-
-    void virtual
-    print(std::ostream& s, const LogNumber& x) const = 0;
-
-    Range virtual
-    range() const = 0;
-
-    void virtual
-    applyRange(const Range& r) = 0;
-
-    //
-    // Other methods to be implemented by derived classes
-    //
-
-    void virtual
-    plusEqImpl(const RealITData* d, Ptr& newdat, Real fac) = 0;
-
-    //void virtual
-    //plusEqImpl(const ComplexITData* d, Ptr& newdat, Real fac) const = 0;
-
-    void virtual
-    contractEqImpl(Ptr& newdat,
-                   const RealITData* other,
-                   const btas::varray<size_t>& Tind,
-                   const btas::varray<size_t>& Oind,
-                   const btas::varray<size_t>& Rind) = 0;
-
     private:
 
-    ITData(const ITData&); //disabled to prevent copying
-    ITData& operator=(const ITData&); //disabled to prevent copying
-
-    //
-    // "Double-dispatch" related wrapper functions.
-    // Will be overloaded by class Dispatch<Derived>.
-    // 
+    //ITData(const ITData&) = delete; //disabled to prevent copying
+    //ITData& operator=(const ITData&) = delete; //disabled to prevent copying
 
     void virtual
-    addTo(ITData* d, Ptr& newdat, Real fac) const = 0;
+    plugInto(const ConstFunc1& f) const = 0;
+    NewData virtual
+    plugInto(const Func1& f) = 0;
 
-    void virtual
-    contractWith(ITData* d, 
-                 Ptr& newdat,
-                 const btas::varray<size_t>& Tind,
-                 const btas::varray<size_t>& Oind,
-                 const btas::varray<size_t>& Rind
-                ) const = 0;
+    NewData virtual
+    plugSecond(const Func2Mod& f, PData& arg1) const = 0;
+    NewData virtual
+    plugFirst(const Func2Mod& f, const ITDense<Real>& arg2) = 0;
+    NewData virtual
+    plugFirst(const Func2Mod& f, const ITDense<Complex>& arg2) = 0;
 
-    friend class RealITData;
+    NewData virtual
+    plugSecond(const Func2& f, const ITData& arg1) const = 0;
+    NewData virtual
+    plugFirst(const Func2& f, const ITDense<Real>& arg2) const = 0;
+    NewData virtual
+    plugFirst(const Func2& f, const ITDense<Complex>& arg2) const = 0;
 
+    template <class Derived>
+    friend struct ITDispatch;
+
+    friend void applyFunc(const Func1& f, PData&);
+    friend void applyFunc(const Func1& f, NewData&);
+    friend void applyFunc(const ConstFunc1&, const ITData&);
+    friend void applyFunc(const ConstFunc1&, const CPData&);
+    friend void applyFunc(const Func2Mod&, PData&, const ITData&);
+    friend NewData applyFunc(const Func2&, const ITData&, const ITData&);
     };
 
 template <class Derived>
-class ITDispatch : public ITData
+struct ITDispatch : public ITData
     {
-    public:
-    ITDispatch() { }
-    virtual
-    ~ITDispatch() { }
-
     private:
-
-    using Ptr = ITData::Ptr;
-
-    void 
-    addTo(ITData* d, Ptr& newdat,  Real fac) const final;
+    
+    NewData
+    clone() const final 
+        { 
+        auto pdt = static_cast<const Derived*>(this);
+        //Should change this to make_unique<Derived>(t_);
+        //once C++14 make_unique feature is available
+        return NewData(new Derived(*pdt));
+        }
 
     void
-    contractWith(ITData* d, 
-                 Ptr& newdat,
-                 const btas::varray<size_t>& Tind,
-                 const btas::varray<size_t>& Oind,
-                 const btas::varray<size_t>& Rind
-                ) const final;
+    plugInto(const ConstFunc1& f) const final
+        {
+        f(*(static_cast<const Derived*>(this)));
+        }
+    NewData
+    plugInto(const Func1& f) final
+        {
+        return f(*(static_cast<Derived*>(this)));
+        }
+
+    NewData
+    plugSecond(const Func2Mod& f, PData& arg1) const final
+        {
+        return arg1->plugFirst(f,*(static_cast<const Derived*>(this)));
+        }
+    NewData
+    plugFirst(const Func2Mod& f, const ITDense<Real>& arg2) final
+        {
+        return f(*(static_cast<Derived*>(this)),arg2);
+        }
+    NewData
+    plugFirst(const Func2Mod& f, const ITDense<Complex>& arg2) final
+        {
+        return f(*(static_cast<Derived*>(this)),arg2);
+        }
+
+    NewData
+    plugSecond(const Func2& f, const ITData& arg1) const final
+        {
+        return arg1.plugFirst(f,*(static_cast<const Derived*>(this)));
+        }
+    NewData
+    plugFirst(const Func2& f, const ITDense<Real>& arg2) const final
+        {
+        return f(*(static_cast<const Derived*>(this)),arg2);
+        }
+    NewData
+    plugFirst(const Func2& f, const ITDense<Complex>& arg2) const final
+        {
+        return f(*(static_cast<const Derived*>(this)),arg2);
+        }
     };
 
-void inline ITData::
-contractEq(Ptr& newdat,
-           const CPtr& other, 
-           const btas::varray<size_t>& Tind,
-           const btas::varray<size_t>& Oind,
-           const btas::varray<size_t>& Rind)
+void inline
+applyFunc(const ConstFunc1& f,
+          const ITData& arg)
     {
-    other->contractWith(this,newdat,Tind,Oind,Rind);
+    arg.plugInto(f);
     }
 
-void inline ITData::
-plusEq(const CPtr& other, Ptr& newptr, Real fac) 
-    { 
-    other->addTo(this,newptr,fac); 
-    }
-
-template <class Derived>
-void ITDispatch<Derived>::
-addTo(ITData* d, Ptr& newdat,  Real fac) const
-    { 
-    d->plusEqImpl(static_cast<const Derived*>(this),newdat,fac); 
-    }
-
-template <class Derived>
-void ITDispatch<Derived>::
-contractWith(ITData* d, 
-             Ptr& newdat,
-             const btas::varray<size_t>& Tind,
-             const btas::varray<size_t>& Oind,
-             const btas::varray<size_t>& Rind
-            ) const
+void inline
+applyFunc(const ConstFunc1& f,
+          const CPData& arg)
     {
-    d->contractEqImpl(newdat,static_cast<const Derived*>(this),Tind,Oind,Rind);
+    arg->plugInto(f);
     }
+
+void inline
+applyFunc(const Func1& f,
+          PData& arg)
+    {
+    auto res = arg->plugInto(f);
+    if(res) arg = std::move(res);
+    }
+
+void inline
+applyFunc(const Func1& f,
+          NewData& arg)
+    {
+    auto res = arg->plugInto(f);
+    if(res) arg = std::move(res);
+    }
+
+NewData inline
+applyFunc(const Func2& f,
+          const ITData& arg1,
+          const ITData& arg2)
+    {
+    return arg2.plugSecond(f,arg1);
+    }
+
+void inline
+applyFunc(const Func2Mod& f,
+          PData&  arg1,
+          const ITData& arg2)
+    {
+    auto res = arg2.plugSecond(f,arg1);
+    if(res) arg1 = std::move(res);
+    }
+
 
 }; //namespace itensor
 

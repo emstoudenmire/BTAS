@@ -10,7 +10,7 @@ include ../options.mk
 
 SOURCES=util/option.cc 
 SOURCES+= index.cc 
-SOURCES+= itdata/realitdata.cc 
+SOURCES+= itdata/itdata_functions.cc 
 SOURCES+= itensor.cc 
 #SOURCES+= iqindex.cc 
 #SOURCES+= iqtensor.cc 
@@ -22,7 +22,8 @@ SOURCES+= itensor.cc
 #SOURCES+= tevol.cc
 
 HEADERS=util/option.h global.h real.h complex.h index.h error.h \
-        indexset.h itdata/itdata.h itdata/realitdata.h itensor.h 
+        indexset.h itdata/itdata.h itdata/itdense.h itdata/itdata_functions.h \
+        itensor.h 
         #qn.h iqindex.h iqtdat.h iqtensor.h \
         condenser.h combiner.h qcounter.h iqcombiner.h \
         spectrum.h svdalgs.h mps.h mpo.h core.h observer.h DMRGObserver.h \
@@ -90,10 +91,7 @@ index.o: $(DEPHEADERS)
 DEPHEADERS+= indexset.h 
 indexset.o: $(DEPHEADERS)
 .debug_objs/indexset.o: $(DEPHEADERS)
-DEPHEADERS+= itdata/itdata.h
-itdata/itdat.o: $(DEPHEADERS)
-.debug_objs/itdata/itdat.o: $(DEPHEADERS)
-DEPHEADERS+= itensor.h 
+DEPHEADERS+= itdata/itdata.h itdata/itdense.h itdata/itdata_functions.h itensor.h 
 itensor.o: $(DEPHEADERS)
 .debug_objs/itensor.o: $(DEPHEADERS)
 

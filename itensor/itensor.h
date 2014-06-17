@@ -7,8 +7,7 @@
 #include "itensor/real.h"
 #include "itensor/indexset.h"
 
-#include "itensor/itdata/itdata.h"
-#include "itensor/itdata/realitdata.h"
+#include "itensor/itdata/itdata_functions.h"
 #include "itensor/detail/functions.h"
 
 namespace itensor {
@@ -21,7 +20,7 @@ class ITensor
     public:
 
     using storage = ITData;
-    using storage_ptr = std::shared_ptr<storage>;
+    using storage_ptr = PData;
     using IndexT = Index;
     using IndexValT = IndexVal;
 
@@ -61,9 +60,8 @@ class ITensor
     const IndexSet&
     inds() const { return is_; }
 
-    //true if ITensor is default constructed
-    bool 
-    empty() const { return !bool(d_); }
+    //false if ITensor is default constructed
+    explicit operator bool() const { return bool(d_); }
 
     //
     // Operators
@@ -138,9 +136,9 @@ class ITensor
     ITensor&
     fill(Real r);
 
-    //TODO: implement in terms of apply?
+    template <typename Func>
     ITensor&
-    generate(std::function<Real()> rfunc);
+    generate(Func&& f);
 
     template <typename Func>
     ITensor&
@@ -183,7 +181,7 @@ class ITensor
     //
 
     ITensor(IndexSet&& iset,
-            ITData::NewPtr nd,
+            NewData nd,
             LogNumber scale);
 
     //Scale factor, used internally for efficient scalar ops.
@@ -211,21 +209,26 @@ ITensor(const Index& i0,
     std::array<int,size> extents;
     for(size_t j = 0; j < size; ++j) extents[j] = inds[j].m();
     is_ = IndexSet(inds,size);
-    d_ = std::make_shared<RealITData>(extents);
+    d_ = std::make_shared<ITDense<Real>>(extents);
 	}
+
+template <typename Func>
+ITensor& ITensor::
+generate(Func&& f)
+    {
+    solo();
+    scaleTo(1);
+    applyFunc(GenerateIT<decltype(f)>(std::forward<Func>(f)),d_);
+    return *this;
+    }
 
 template <typename Func>
 ITensor& ITensor::
 apply(Func&& f)
     {
-    //MapWrap<F> creates a new type that holds a functor of
-    //type F but which is also a virtual/polymorphic subclass
-    //of MapBase so that subclasses of ITData can call f through
-    //a uniform function signature
     solo();
     scaleTo(1);
-    detail::MapWrap<decltype(f)> mw(std::forward<Func>(f));
-    d_->apply(&mw);
+    applyFunc(ApplyIT<decltype(f)>(std::forward<Func>(f)),d_);
     return *this;
     }
 
@@ -233,8 +236,7 @@ template <typename Func>
 const ITensor& ITensor::
 visit(Func&& f) const
     {
-    detail::VisitWrap<decltype(f)> vw(std::forward<Func>(f),scale());
-    d_->visit(&vw);
+    applyFunc(VisitIT<decltype(f)>(std::forward<Func>(f),scale()),d_);
     return *this;
     }
 
@@ -353,7 +355,8 @@ tieIndex(const ITensor& T,
         Error("ITensor does not have requested Index to tie");
 
     auto nd = T.data().clone();
-    nd->applyRange(tieIndex(T.data().range(),I));
+    const auto f = [&I](const btas::Range& r) { return tieIndex(r,I); };
+    applyFunc(ApplyRange<decltype(f)>(f),nd);
 
     return ITensor(new_index,std::move(nd),T.scale());
     }

@@ -80,7 +80,7 @@ TEST_CASE("ITensor")
         Real total = 0;
         //real_part function defined at top of this file:
         T2.visit([&total](auto x){ total += real_part(x); }); 
-        printn("total = %.20f",total);
+        printfln("total = %.20f",total);
         }
 
     SECTION("tieIndex")

@@ -41,7 +41,7 @@ IntToIndexType(int i)
     if(i == 1) return Link;
     if(i == 2) return Site;
     if(i == 3) return All;
-    printn("No IndexType value defined for i=%d",i);
+    println("No IndexType value defined for i=",i);
     Error("Undefined IntToIndexType value");
     return Link;
     }

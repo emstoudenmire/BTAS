@@ -21,7 +21,7 @@ SOURCES+= itensor.cc
 #SOURCES+= mpo.cc 
 #SOURCES+= tevol.cc
 
-HEADERS=util/option.h global.h real.h complex.h index.h error.h \
+HEADERS=util/option.h print.h global.h real.h complex.h index.h error.h \
         indexset.h itdata/itdata.h itdata/itdense.h itdata/itdata_functions.h \
         itensor.h 
         #qn.h iqindex.h iqtdat.h iqtensor.h \

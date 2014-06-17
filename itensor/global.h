@@ -1,5 +1,5 @@
 //
-// Distributed under the ITensor Library License, Version 1.0.
+// Distributed under the ITensor Library License, Version 1.1.
 //    (See accompanying LICENSE file.)
 //
 #ifndef __ITENSOR_GLOBAL_H
@@ -8,41 +8,24 @@
 #include <cstdlib>
 #include <vector>
 #include <array>
-#include <iostream>
 #include <fstream>
 #include "assert.h"
 #include <unistd.h>
 #include <random>
 
-#include "tinyformat.h"
-
+#include "itensor/print.h"
 #include "itensor/complex.h"
 #include "itensor/util/option.h"
 
 namespace itensor {
 
-using tinyformat::printf;
-using tinyformat::format;
-
-template <typename... Args>
-void
-printn(const char* fmt_string, const Args&... args)
-    {
-    tinyformat::printf(fmt_string,args...);
-    std::cout << std::endl;
-    }
-void inline
-printn(const char* string)
-    {
-    std::cout << string << std::endl;
-    }
 
 enum Printdat { ShowData, HideData };
 
 #define PrintEither(X,Y) \
     {\
-    if(Y) printn("\n%s = %f",#X,X);\
-    else  printn("\n%s = %s",#X,X);\
+    if(Y) printfln("\n%s = %f",#X,X);\
+    else  printfln("\n%s = %s",#X,X);\
     }
 #define PrintVar(X)  PrintEither(X,false)
 #define PrintData(X) PrintEither(X,true)

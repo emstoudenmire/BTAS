@@ -46,10 +46,10 @@ fillEls(DTensor& T)
 TEST_CASE("Tensor")
     {
 
-    DTensor T2(3,2);
+    DTensor T2(3,4);
     fillEls(T2);
 
-    DTensor T3(3,2,4);
+    DTensor T3(3,4,2);
     fillEls(T3);
 
 
@@ -116,8 +116,11 @@ TEST_CASE("Tensor")
         {
         enum {i,j,k};
 
-        DTensor R;
-        contract(1.0,T2,{j,i},T2,{j,k},0.0,R,{i,k});
+        DTensor R2;
+        contract(1.0,T2,{j,i},T2,{j,k},0.0,R2,{i,k});
+
+        //DTensor R1;
+        //contract(1.0,T2,{1,2},T3,{1,2,3},0.0,R1,{3});
                     
         }
 

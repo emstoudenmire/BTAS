@@ -98,4 +98,10 @@ TEST_CASE("ITensor")
         REQUIRE(hasIndex(tied_s2,s2));
         }
 
+    SECTION("Contract")
+        {
+        auto R = T3 * T2;
+        printfln("R = %s",R);
+        }
+
     }

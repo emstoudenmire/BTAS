@@ -8,11 +8,12 @@
 #include "btas/tensor.h"
 #include "itensor/itdata/itdense.h"
 #include "btas/tensor_func.h"
+#include "btas/generic/contract.h"
 
 namespace itensor {
 
 template <typename F>
-struct ApplyIT : public Func1
+struct ApplyIT : public Func1<ApplyIT<F>>
     {
     ApplyIT(F&& f)
         : f_(f)
@@ -30,17 +31,12 @@ struct ApplyIT : public Func1
         return NewData();
         }
 
-    NewData
-    operator()(ITDense<Real>& d) const final { return apply(d); }
-    NewData
-    operator()(ITDense<Complex>& d) const final { return apply(d); }
-
     private:
     F& f_;
     };
 
 template <typename RangeFunc>
-struct ApplyRange : public Func1
+struct ApplyRange : public Func1<ApplyRange<RangeFunc>>
     {
     using Range = btas::Range;
 
@@ -59,32 +55,72 @@ struct ApplyRange : public Func1
         return NewData();
         }
 
-    NewData
-    operator()(ITDense<Real>& d) const final { return apply(d); }
-    NewData
-    operator()(ITDense<Complex>& d) const final { return apply(d); }
-
     private:
     const RangeFunc& f_;
     };
 
-struct Fill : public Func1
+struct Contract : public Func2<Contract>
+    {
+    using annotation = btas::varray<size_t>;
+
+    Contract(const annotation& Lind,
+             const annotation& Rind,
+             const annotation& Pind)
+        :
+        Lind_(Lind),
+        Rind_(Rind),
+        Pind_(Pind)
+        { }
+
+    template <typename T>
+    NewData
+    apply(const ITDense<T>& a1,
+          const ITDense<T>& a2) const
+        {
+        static const auto One = T(1.),
+                          Zero = T(0.);
+        auto res = new ITDense<T>();
+        btas::contract(One,a1.t_,Lind_,a2.t_,Rind_,Zero,res->t_,Pind_);
+        return NewData(res);
+        }
+
+    template <typename T1, typename T2>
+    NewData
+    apply(const ITDense<T1>& a1,
+          const ITDense<T2>& a2) const
+        {
+        using product_type = decltype(::std::declval<T1>() * ::std::declval<T2>());
+        static const auto One = product_type(1.),
+                          Zero = product_type(0.);
+        auto res = new ITDense<product_type>();
+        Error("Contract not implemented for tensors of different element types.");
+        //btas::contract(One,a1.t_,Lind_,a2.t_,Rind_,Zero,res->t_,Pind_);
+        return NewData(res);
+        }
+ 
+    private:
+    const annotation& Lind_,
+                      Rind_,
+                      Pind_;
+    };
+
+struct Fill : public Func1<Fill>
     {
     Fill(Real r)
         : r_(r)
         { }
 
     NewData
-    operator()(ITDense<Real>& d) const final;
+    apply(ITDense<Real>& d) const;
     NewData
-    operator()(ITDense<Complex>& d) const final;
+    apply(ITDense<Complex>& d) const;
 
     private:
     Real r_;
     };
 
 template <typename F>
-struct GenerateIT : public Func1
+struct GenerateIT : public Func1<GenerateIT<F>>
     {
     GenerateIT(F&& f)
         : f_(f)
@@ -102,46 +138,41 @@ struct GenerateIT : public Func1
         return NewData();
         }
 
-    NewData
-    operator()(ITDense<Real>& d) const final { return apply(d); }
-    NewData
-    operator()(ITDense<Complex>& d) const final { return apply(d); }
-
     private:
     F& f_;
     };
 
-struct MultComplex : public Func1
+struct MultComplex : public Func1<MultComplex>
     {
     MultComplex(Complex z)
         : z_(z)
         { }
 
     NewData
-    operator()(ITDense<Real>& d) const final;
+    apply(ITDense<Real>& d) const;
     NewData
-    operator()(ITDense<Complex>& d) const final;
+    apply(ITDense<Complex>& d) const;
 
     private:
     Complex z_;
     };
 
-struct MultReal : public Func1
+struct MultReal : public Func1<MultReal>
     {
     MultReal(Real r)
         : r_(r)
         { }
 
     NewData
-    operator()(ITDense<Real>& d) const final;
+    apply(ITDense<Real>& d) const;
     NewData
-    operator()(ITDense<Complex>& d) const final;
+    apply(ITDense<Complex>& d) const;
 
     private:
     Real r_;
     };
 
-struct PrintIT : public ConstFunc1
+struct PrintIT : public ConstFunc1<PrintIT>
     {
     std::ostream& s_;
     const LogNumber& x_;
@@ -152,13 +183,13 @@ struct PrintIT : public ConstFunc1
         { }
 
     void
-    operator()(const ITDense<Real>& d) const final;
+    apply(const ITDense<Real>& d) const;
     void
-    operator()(const ITDense<Complex>& d) const final;
+    apply(const ITDense<Complex>& d) const;
     };
 
 template <typename F>
-struct VisitIT : public ConstFunc1
+struct VisitIT : public ConstFunc1<VisitIT<F>>
     {
     VisitIT(F&& f, const LogNumber& scale)
         : f_(f), scale_fac(scale.real0())
@@ -174,11 +205,6 @@ struct VisitIT : public ConstFunc1
             f_((*it)*scale_fac);
             }
         }
-
-    void
-    operator()(const ITDense<Real>& d) const final { apply(d); }
-    void
-    operator()(const ITDense<Complex>& d) const final { apply(d); }
 
     private:
     F& f_;

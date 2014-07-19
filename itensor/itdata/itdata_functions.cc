@@ -2,20 +2,19 @@
 
 #include "btas/generic/scal_impl.h"
 #include "btas/generic/axpy_impl.h"
-#include "btas/generic/contract.h"
 #include "btas/tensor_func.h"
 
 namespace itensor {
 
 NewData Fill::
-operator()(ITDense<Real>& d) const
+apply(ITDense<Real>& d) const
     {
     d.t_.fill(r_);
     return NewData();
     }
 
 NewData Fill::
-operator()(ITDense<Complex>& d) const
+apply(ITDense<Complex>& d) const
     {
     const auto z = Complex(r_,0.);
     d.t_.fill(z);
@@ -23,42 +22,42 @@ operator()(ITDense<Complex>& d) const
     }
 
 NewData MultComplex::
-operator()(ITDense<Real>& d) const
+apply(ITDense<Real>& d) const
     {
     //TODO: would like btas::Tensor copy construct to work here
-    //ITDense<Complex> nd(d);
+    //auto nd = NewData(new ITDense<Complex>(d));
 
-    ITDense<Complex> nd(d.t_.range());
-    std::copy(d.t_.cbegin(),d.t_.cend(),nd.t_.begin());
+    auto nd = NewData(new ITDense<Complex>(d.t_.range()));
+    std::copy(d.t_.cbegin(),d.t_.cend(),nd->t_.begin());
 
-    btas::scal(z_,nd.t_);
+    btas::scal(z_,nd->t_);
 
-    return NewData(new ITDense<Complex>(std::move(nd)));
+    return nd;
     }
 
 NewData MultComplex::
-operator()(ITDense<Complex>& d) const
+apply(ITDense<Complex>& d) const
     {
     btas::scal(z_,d.t_);
     return NewData();
     }
 
 NewData MultReal::
-operator()(ITDense<Real>& d) const
+apply(ITDense<Real>& d) const
     {
     btas::scal(r_,d.t_);
     return NewData();
     }
 
 NewData MultReal::
-operator()(ITDense<Complex>& d) const
+apply(ITDense<Complex>& d) const
     {
     btas::scal(Complex(r_,0),d.t_);
     return NewData();
     }
 
 void PrintIT::
-operator()(const ITDense<Real>& d) const
+apply(const ITDense<Real>& d) const
     {
     s_ << "}\n";
     Real scalefac = 1.0;
@@ -93,7 +92,7 @@ operator()(const ITDense<Real>& d) const
     }
 
 void PrintIT::
-operator()(const ITDense<Complex>& d) const
+apply(const ITDense<Complex>& d) const
     {
     s_ << "}\n";
     Real scalefac = 1.0;

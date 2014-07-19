@@ -56,10 +56,10 @@ TEST_CASE("Tensor")
     SECTION("Range")
         {
         Range r0;
-        println("r0.area() = ",r0.area());
+        //println("r0.area() = ",r0.area());
 
         DTensor T0(r0);
-        println("T0.rank() = ",T0.rank());
+        //println("T0.rank() = ",T0.rank());
         }
 
     SECTION("Fill")

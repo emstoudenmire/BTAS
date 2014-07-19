@@ -263,8 +263,8 @@ operator*=(const ITensor& other)
     //cout << "}" << endl;
     //exit(0);
 
-    Error("operator*= not currently implemented");
-    //d_->contractEq(d_,other.d_,Lind,Rind,Pind);
+    auto nd = applyFunc(Contract{Lind,Rind,Pind},d_,other.d_);
+    d_ = std::move(nd);
 
     IndexSet new_index(std::move(newind),nuniq);
 

@@ -178,7 +178,7 @@ namespace btas {
       /// It will accept Tensors and TensorViews
       template<class _Tensor, class = typename std::enable_if<is_boxtensor<_Tensor>::value>::type>
       Tensor (const _Tensor& x)
-        :  
+        :
         range_ (x.range().lobound(), x.range().upbound()),
         storage_(x.cbegin(),x.cend())
       {
@@ -503,7 +503,7 @@ namespace btas {
       }
 
       ///@} // element accessors with range check
-   
+
       /// resize array with range object
       template <typename Range>
       void
@@ -661,6 +661,30 @@ namespace btas {
     return os;
   }
 
+  /// Tensor comparison operator
+
+  template <class _Tensor1, class _Tensor2,
+            class = typename std::enable_if<btas::is_boxtensor<_Tensor1>::value>::type,
+            class = typename std::enable_if<btas::is_boxtensor<_Tensor2>::value>::type >
+  bool operator==(const _Tensor1& t1, const _Tensor2& t2) {
+      if (t1.range().order == t2.range().order &&
+          t1.range().ordinal().contiguous() &&
+          t2.range().ordinal().contiguous()) // plain Tensor
+        return congruent(t1.range(), t2.range()) && std::equal(std::cbegin(t1.storage()),
+                                                               std::cend(t1.storage()),
+                                                               std::cbegin(t2.storage()));
+      else { // not plain, or different orders
+        auto cong = congruent(t1.range(), t2.range());
+        if (not cong)
+          return false;
+        typedef TensorView<typename _Tensor1::value_type, typename _Tensor1::range_type, const typename _Tensor1::storage_type>  cview1;
+        typedef TensorView<typename _Tensor2::value_type, typename _Tensor2::range_type, const typename _Tensor2::storage_type>  cview2;
+        cview1 vt1(t1);
+        cview2 vt2(t2);
+        return std::equal(vt1.cbegin(), vt1.cend(), vt2.cbegin());
+      }
+  }
+
 } // namespace btas
 
 namespace boost {
@@ -671,8 +695,25 @@ namespace boost {
              typename _T,
              class _Range,
              class _Storage>
-    void serialize(Archive& ar, btas::Tensor<_T,_Range,_Storage> t, const unsigned int version) {
-      ar & t.range() & t.storage();
+    void serialize(Archive& ar, btas::Tensor<_T,_Range,_Storage>& t, const unsigned int version) {
+      boost::serialization::split_free(ar, t, version);
+    }
+    template<class Archive,
+             typename _T,
+             class _Range,
+             class _Storage>
+    void save(Archive& ar, const btas::Tensor<_T,_Range,_Storage>& t, const unsigned int version) {
+      ar << t.range() << t.storage();
+    }
+    template<class Archive,
+             typename _T,
+             class _Range,
+             class _Storage>
+    void load(Archive& ar, btas::Tensor<_T,_Range,_Storage>& t, const unsigned int version) {
+      _Range range;
+      _Storage storage;
+      ar >> range >> storage;
+      t = btas::Tensor<_T,_Range,_Storage>(range, storage);
     }
 
   } // namespace serialization

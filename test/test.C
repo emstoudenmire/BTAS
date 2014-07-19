@@ -1,6 +1,11 @@
 #include <iostream>
 #include <algorithm>
 #include <set>
+#include <fstream>
+
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+
 using namespace std;
 
 #include <btas/range.h>
@@ -48,6 +53,12 @@ int main()
     Range1 r6 = {-3, 3};      r6 = {2, 7};
     Range1 r7 = {-3, 13, 2};  r7 = {-1, 10, 2};
 
+    // test equality
+    assert(r0 != r1);
+    assert(r1 != r2);
+    assert(congruent(r1,r2));
+    Range1 r1copy(0, 5, 1);
+    assert(r1 == r1copy);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -59,6 +70,7 @@ int main()
   // default (empty) Range
   Range x0;
   cout << "x0 = " << x0 << " area=" << x0.area() << endl;
+  assert(x0.rank() == 0);  // std::cout << "rank = 0" << std::endl;
 
   // Range initialized by extents of each dimension
   Range x1(3, 2, 3);
@@ -110,6 +122,14 @@ int main()
 
   Range x6 ({-1, -1, -1}, {2, 3, 4});
   cout << "x6 = " << x6 << " area=" << x6.area() << endl;
+
+  {
+    typedef RangeNd<CblasRowMajor, std::array<size_t, 3>> Range3d;
+    Range3d x;
+    cout << "Static 3-d Range: x7 = " << x << " area=" << x.area() << endl;
+    assert(x.rank() == 3);
+    static_assert(x.rank() == 3, "default Range rank");
+  }
 
   //////////////////////////////////////////////////////////////////////////////
   // Tensor tests
@@ -239,6 +259,44 @@ int main()
 
     CMTensor c(2, 3);
     gemm(CblasNoTrans, CblasTrans, 1.0, a, b, 0.0, c);
+  }
+
+  // test 11: serialization
+  {
+    const auto archive_fname = "test1.archive";
+
+    Tensor<std::array<complex<double>,3>> T1(2,3,4);
+    T1.fill({{{1.0,2.0}, {2.0,1.0}, {2.0,3.0} }});
+
+    // write
+    {
+      std::ofstream os(archive_fname);
+      assert(os.good());
+      boost::archive::text_oarchive ar(os);
+      ar << t; // fixed-size Tensor
+      ar << A; // Tensor of Tensor
+      ar << T1; // Tensor of complex datatypes
+    }
+    // read
+    {
+      std::ifstream is(archive_fname);
+      assert(is.good());
+      boost::archive::text_iarchive ar(is);
+
+      TArray<double,3> tcopy;
+      ar >> tcopy;
+
+      Tensor<Tensor<double>> Acopy;
+      ar >> Acopy; // Tensor of Tensor
+
+      Tensor<std::array<complex<double>,3>> T1copy;
+      ar >> T1copy; // Tensor of complex datatypes
+
+      assert(t == tcopy);
+      assert(A == Acopy);
+      assert(T1 == T1copy);
+    }
+    std::remove(archive_fname);
   }
 
   //////////////////////////////////////////////////////////////////////////////

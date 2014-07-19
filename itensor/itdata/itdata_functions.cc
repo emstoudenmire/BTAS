@@ -27,12 +27,12 @@ apply(ITDense<Real>& d) const
     //TODO: would like btas::Tensor copy construct to work here
     //auto nd = NewData(new ITDense<Complex>(d));
 
-    auto nd = NewData(new ITDense<Complex>(d.t_.range()));
+    auto nd = new ITDense<Complex>(d.t_.range());
     std::copy(d.t_.cbegin(),d.t_.cend(),nd->t_.begin());
 
     btas::scal(z_,nd->t_);
 
-    return nd;
+    return NewData(nd);
     }
 
 NewData MultComplex::

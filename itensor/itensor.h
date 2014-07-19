@@ -205,7 +205,7 @@ ITensor(const Index& i0,
         const Indices&... rest)
 	{
     const auto size = 2 + sizeof...(rest);
-    std::array<Index,size> inds{ i0, i1, static_cast<Index>(rest)...};
+    std::array<Index,size> inds = {{ i0, i1, static_cast<Index>(rest)...}};
     std::array<int,size> extents;
     for(size_t j = 0; j < size; ++j) extents[j] = inds[j].m();
     is_ = IndexSet(inds,size);
@@ -334,7 +334,7 @@ tieIndex(const ITensor& T,
     {
     const auto size = 2 + sizeof...(rest);
     if(size > T.r()) Error("Cannot tie more indices than ITensor rank.");
-    std::array<Index,size> totie{ t0, t1, static_cast<Index>(rest)...};
+    std::array<Index,size> totie = {{ t0, t1, static_cast<Index>(rest)...}};
     std::array<size_t,size> I;
     NewIndexSet new_index(T.r()-size+1);
     size_t nt = 0;

@@ -90,8 +90,8 @@ struct Contract : public Func2<Contract>
           const ITDense<T2>& a2) const
         {
         using product_type = decltype(::std::declval<T1>() * ::std::declval<T2>());
-        static const auto One = product_type(1.),
-                          Zero = product_type(0.);
+        //static const auto One = product_type(1.),
+        //                  Zero = product_type(0.);
         auto res = new ITDense<product_type>();
         Error("Contract not implemented for tensors of different element types.");
         //btas::contract(One,a1.t_,Lind_,a2.t_,Rind_,Zero,res->t_,Pind_);

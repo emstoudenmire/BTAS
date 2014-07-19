@@ -236,7 +236,6 @@ operator*=(const ITensor& other)
             newind.at(ni++) = other.is_[j];
         }
 
-    //TODO: replace Pind with static-allocated array
     btas::varray<size_t> Pind(nuniq);
     for(size_t i = 0, u = 1+ncont; i < nuniq; ++i,++u)
         {
@@ -448,17 +447,6 @@ fill(Real r)
     return *this;
     }
 
-//ITensor& ITensor::
-//generate(std::function<Real()> rfunc)
-//    {
-//    if(!(*this)) return *this;
-//    solo();
-//    scale_.reset();
-//    //TODO
-//    //d_->generate(rfunc,d_);
-//    return *this;
-//    }
-
 void ITensor::
 scaleTo(const LogNumber& newscale)
     {
@@ -480,6 +468,7 @@ solo()
 void ITensor::
 scaleOutNorm()
     {
+    //TODO
     //Real f = normNoScale();
     ////If norm already 1 return so
     ////we don't have to call solo()
@@ -556,6 +545,8 @@ toReal(const ITensor& T)
 
     Error("Not implemented");
 
+    //TODO
+
 	//try {
 	//    return r_->v(1)*scale_.real(); 
 	//    }
@@ -591,6 +582,7 @@ toComplex(const ITensor& T)
         Error("ITensor not a scalar");
         }
 
+    //TODO
     Error("Not implemented");
     return Complex_1;
     }

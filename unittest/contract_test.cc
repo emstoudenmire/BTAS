@@ -65,14 +65,6 @@ TEST_CASE("Tensor Contract")
 
         DTensor A;
         contract(1.0,T2,{j,i},T2,{j,k},0.0,A,{i,k});
-        //cout << "A = \n" << A << endl;
-
-        // If using fillEls(T2) to set elements
-        // of T2, correct entries of A should be:
-        //
-        // 36500 36830
-        // 36830 37163
-        //
 
         auto rmax = T2.extent(1),
              cmax = T2.extent(1);
@@ -105,6 +97,18 @@ TEST_CASE("Tensor Contract")
             CHECK(val == B(r,c));
             //cout << r << " " << c << " " << val << " " << B(r,c) << endl;
             }
+        }
+
+    SECTION("Memory Bug #56")
+        {
+        //
+        // Regression test for github issue #56
+        //
+        DTensor T(3,4);
+        T.generate(rng);
+        enum {i,j,k};
+        DTensor R;
+        contract(1.0,T,{j,i},T,{j,k},0.0,R,{i,k});
         }
 
 

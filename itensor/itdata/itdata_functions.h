@@ -50,7 +50,7 @@ struct ApplyRange : public Func1<ApplyRange<RangeFunc>>
         {
         using storage = typename ITDense<T>::storage;
         storage temp = 
-            btas::TensorViewOf<storage>(f_(d.t_.range()),d.t_.storage());
+            btas::make_view(f_(d.t_.range()),d.t_.storage());
         d.t_ = std::move(temp);
         return NewData();
         }

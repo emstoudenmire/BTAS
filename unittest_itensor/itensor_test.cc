@@ -101,7 +101,7 @@ TEST_CASE("ITensor")
     SECTION("Contract")
         {
         auto R = T3 * T2;
-        printfln("R = %s",R);
+        printfln("R = %f",R);
         }
 
     }

@@ -182,9 +182,9 @@ struct PrintIT : public ConstFunc1<PrintIT>
         : s_(s), x_(x)
         { }
 
-    void
+    NewData
     apply(const ITDense<Real>& d) const;
-    void
+    NewData
     apply(const ITDense<Complex>& d) const;
     };
 
@@ -196,7 +196,7 @@ struct VisitIT : public ConstFunc1<VisitIT<F>>
         { }
 
     template <typename T>
-    void
+    NewData
     apply(const ITDense<T>& d) const
         {
         const auto end = d.t_.data()+d.t_.size();
@@ -204,6 +204,7 @@ struct VisitIT : public ConstFunc1<VisitIT<F>>
             {
             f_((*it)*scale_fac);
             }
+        return NewData();
         }
 
     private:

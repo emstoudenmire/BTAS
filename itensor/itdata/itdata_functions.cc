@@ -56,7 +56,7 @@ apply(ITDense<Complex>& d) const
     return NewData();
     }
 
-void PrintIT::
+NewData PrintIT::
 apply(const ITDense<Real>& d) const
     {
     s_ << "}\n";
@@ -68,7 +68,7 @@ apply(const ITDense<Real>& d) const
 
     const auto rr = Tr.rank();
 
-    if(rr == 0) return;
+    if(rr == 0) return NewData();
 
     for(const auto I : Tr)
         {
@@ -89,9 +89,10 @@ apply(const ITDense<Real>& d) const
                 s_ << format("%.8E\n",val);
             }
         }
+    return NewData();
     }
 
-void PrintIT::
+NewData PrintIT::
 apply(const ITDense<Complex>& d) const
     {
     s_ << "}\n";
@@ -103,7 +104,7 @@ apply(const ITDense<Complex>& d) const
 
     const auto rr = Tr.rank();
 
-    if(rr == 0) return;
+    if(rr == 0) return NewData();
 
     for(const auto I : Tr)
         {
@@ -129,6 +130,7 @@ apply(const ITDense<Complex>& d) const
                 }
             }
         }
+    return NewData();
     }
 
 //void RealITData::

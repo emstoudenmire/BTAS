@@ -44,24 +44,24 @@ struct Func1 : public Func1Base
 
 struct ConstFunc1Base
     {
-    void virtual
+    NewData virtual
     operator()(const ITDense<Real>& t) const = 0;
-    void virtual
+    NewData virtual
     operator()(const ITDense<Complex>& t) const = 0;
     };
 
 template <typename Derived>
 struct ConstFunc1 : public ConstFunc1Base
     {
-    void virtual
+    NewData virtual
     operator()(const ITDense<Real>& t) const final
         {
-        static_cast<const Derived*>(this)->apply(t);
+        return static_cast<const Derived*>(this)->apply(t);
         }
-    void virtual
+    NewData virtual
     operator()(const ITDense<Complex>& t) const final
         {
-        static_cast<const Derived*>(this)->apply(t);
+        return static_cast<const Derived*>(this)->apply(t);
         }
     };
 
@@ -139,6 +139,50 @@ struct Func2Mod : public Func2ModBase
         }
     };
 
+template <typename T2>
+struct CurryFunc2 : public ConstFunc1<CurryFunc2<T2>>
+    {
+    CurryFunc2(const Func2Base& f,
+           const T2& a2)
+        :
+        f_(f),
+        a2_(a2)
+        { }
+
+    template <typename T1>
+    NewData
+    apply(const T1& a1) const
+        {
+        return f_(a1,a2_);
+        }
+
+    private:
+    const Func2Base& f_;
+    const T2& a2_;
+    };
+
+template <typename T2>
+struct CurryFunc2Mod : public Func1<CurryFunc2Mod<T2>>
+    {
+    CurryFunc2Mod(const Func2ModBase& f,
+                  const T2& a2)
+        :
+        f_(f),
+        a2_(a2)
+        { }
+
+    template <typename T1>
+    NewData
+    apply(T1& a1) const
+        {
+        return f_(a1,a2_);
+        }
+
+    private:
+    const Func2ModBase& f_;
+    const T2& a2_;
+    };
+
 
 class ITData
     {
@@ -157,30 +201,23 @@ class ITData
     //ITData(const ITData&) = delete; //disabled to prevent copying
     //ITData& operator=(const ITData&) = delete; //disabled to prevent copying
 
-    void virtual
+    NewData virtual
     plugInto(const ConstFunc1Base& f) const = 0;
+
     NewData virtual
     plugInto(const Func1Base& f) = 0;
 
     NewData virtual
     plugSecond(const Func2ModBase& f, PData& arg1) const = 0;
-    NewData virtual
-    plugFirst(const Func2ModBase& f, const ITDense<Real>& arg2) = 0;
-    NewData virtual
-    plugFirst(const Func2ModBase& f, const ITDense<Complex>& arg2) = 0;
 
     NewData virtual
     plugSecond(const Func2Base& f, const ITData& arg1) const = 0;
-    NewData virtual
-    plugFirst(const Func2Base& f, const ITDense<Real>& arg2) const = 0;
-    NewData virtual
-    plugFirst(const Func2Base& f, const ITDense<Complex>& arg2) const = 0;
 
     template <class Derived>
     friend struct ITDispatch;
 
-    friend void applyFunc(const ConstFunc1Base&, const ITData&);
-    friend void applyFunc(const ConstFunc1Base&, const CPData&);
+    friend NewData applyFunc(const ConstFunc1Base&, const ITData&);
+    friend NewData applyFunc(const ConstFunc1Base&, const CPData&);
     friend void applyFunc(const Func1Base& f, PData&);
     friend void applyFunc(const Func1Base& f, NewData&);
     friend NewData applyFunc(const Func2Base&, const ITData&, const ITData&);
@@ -201,11 +238,12 @@ struct ITDispatch : public ITData
         return NewData(new Derived(*pdt));
         }
 
-    void
+    NewData
     plugInto(const ConstFunc1Base& f) const final
         {
-        f(*(static_cast<const Derived*>(this)));
+        return f(*(static_cast<const Derived*>(this)));
         }
+        
     NewData
     plugInto(const Func1Base& f) final
         {
@@ -215,48 +253,30 @@ struct ITDispatch : public ITData
     NewData
     plugSecond(const Func2ModBase& f, PData& arg1) const final
         {
-        return arg1->plugFirst(f,*(static_cast<const Derived*>(this)));
-        }
-    NewData
-    plugFirst(const Func2ModBase& f, const ITDense<Real>& arg2) final
-        {
-        return f(*(static_cast<Derived*>(this)),arg2);
-        }
-    NewData
-    plugFirst(const Func2ModBase& f, const ITDense<Complex>& arg2) final
-        {
-        return f(*(static_cast<Derived*>(this)),arg2);
+        const auto& dt = *(static_cast<const Derived*>(this));
+        return arg1->plugInto(CurryFunc2Mod<Derived>{f,dt});
         }
 
     NewData
     plugSecond(const Func2Base& f, const ITData& arg1) const final
         {
-        return arg1.plugFirst(f,*(static_cast<const Derived*>(this)));
-        }
-    NewData
-    plugFirst(const Func2Base& f, const ITDense<Real>& arg2) const final
-        {
-        return f(*(static_cast<const Derived*>(this)),arg2);
-        }
-    NewData
-    plugFirst(const Func2Base& f, const ITDense<Complex>& arg2) const final
-        {
-        return f(*(static_cast<const Derived*>(this)),arg2);
+        const auto& dt = *(static_cast<const Derived*>(this));
+        return arg1.plugInto(CurryFunc2<Derived>{f,dt});
         }
     };
 
-void inline
+NewData inline
 applyFunc(const ConstFunc1Base& f,
           const ITData& arg)
     {
-    arg.plugInto(f);
+    return arg.plugInto(f);
     }
 
-void inline
+NewData inline
 applyFunc(const ConstFunc1Base& f,
           const CPData& arg)
     {
-    arg->plugInto(f);
+    return arg->plugInto(f);
     }
 
 void inline

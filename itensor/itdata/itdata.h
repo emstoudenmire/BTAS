@@ -253,7 +253,9 @@ class ITData
     friend void applyFunc(const Func1Base& f, PData&);
     friend void applyFunc(const Func1Base& f, NewData&);
     friend NewData applyFunc(const Func2Base&, const ITData&, const ITData&);
+    friend NewData applyFunc(const Func2Base&, const PData&, const PData&);
     friend void applyFunc(const Func2ModBase&, PData&, const ITData&);
+    friend void applyFunc(const Func2ModBase&, PData&, const PData&);
     };
 
 template <class Derived>
@@ -335,6 +337,14 @@ applyFunc(const Func2Base& f,
     return arg2.plugSecond(f,arg1);
     }
 
+NewData inline
+applyFunc(const Func2Base& f,
+          const PData& arg1,
+          const PData& arg2)
+    {
+    return arg2->plugSecond(f,*arg1);
+    }
+
 void inline
 applyFunc(const Func2ModBase& f,
           PData&  arg1,
@@ -344,6 +354,14 @@ applyFunc(const Func2ModBase& f,
     if(res) arg1 = std::move(res);
     }
 
+void inline
+applyFunc(const Func2ModBase& f,
+          PData&  arg1,
+          const PData& arg2)
+    {
+    auto res = arg2->plugSecond(f,arg1);
+    if(res) arg1 = std::move(res);
+    }
 
 }; //namespace itensor
 

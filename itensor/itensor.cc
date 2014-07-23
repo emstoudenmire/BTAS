@@ -262,7 +262,7 @@ operator*=(const ITensor& other)
     //cout << "}" << endl;
     //exit(0);
 
-    auto nd = applyFunc(Contract{Lind,Rind,Pind},*d_,*other.d_);
+    auto nd = applyFunc(Contract{Lind,Rind,Pind},d_,other.d_);
     d_ = std::move(nd);
 
     IndexSet new_index(std::move(newind),nuniq);
@@ -410,12 +410,11 @@ operator+=(const ITensor& other)
 
     if(same_ind_order) 
         { 
-        Error("operator+= not currently implemented");
-        //TODO
-        //d_->plusEq(other.d_,d_,scalefac);
+        applyFunc(PlusEQ{scalefac},d_,other.d_);
         }
     else // not same_ind_order
         {
+        //TODO
         Error("Can currently only add if same index order");
         }
 

@@ -28,7 +28,7 @@ class ITensor
     // Constructors
     //
 
-    //Construct Null ITensor, isNull returns true
+    //Construct Null ITensor, ITensor will evaluate to false in boolean context
     ITensor();
 
     //Construct rank 1 ITensor, all entries set to zero

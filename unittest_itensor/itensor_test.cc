@@ -98,6 +98,16 @@ TEST_CASE("ITensor")
         REQUIRE(hasIndex(tied_s2,s2));
         }
 
+    SECTION("Add")
+        {
+        printfln("T2 = %f",T2);
+        auto Radd = T2 + T2;
+        printfln("Radd = %f",Radd);
+        Radd += T2;
+        printfln("Radd = %f",Radd);
+        printfln("T2 = %f",T2);
+        }
+
     SECTION("Contract")
         {
         auto R = T3 * T2;

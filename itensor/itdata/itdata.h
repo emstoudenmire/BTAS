@@ -25,6 +25,14 @@ struct Func1Base
     operator()(ITDense<Real>& t) const = 0;
     NewData virtual
     operator()(ITDense<Complex>& t) const = 0;
+
+    template <typename T>
+    NewData
+    operator()(T& t) const
+        {
+        throw ITError("Operation not defined for ITData subtype. [Func1Base]");
+        return NewData();
+        }
     };
 
 template <typename Derived>
@@ -48,6 +56,14 @@ struct ConstFunc1Base
     operator()(const ITDense<Real>& t) const = 0;
     NewData virtual
     operator()(const ITDense<Complex>& t) const = 0;
+
+    template <typename T>
+    NewData
+    operator()(const T& t) const
+        {
+        throw ITError("Operation not defined for ITData subtype. [ConstFunc1Base]");
+        return NewData();
+        }
     };
 
 template <typename Derived>
@@ -75,6 +91,14 @@ struct Func2Base
     operator()(const ITDense<Complex>& a1,const ITDense<Real>& a2) const = 0;
     NewData virtual
     operator()(const ITDense<Complex>& a1,const ITDense<Complex>& a2) const = 0;
+
+    template <typename T1,typename T2>
+    NewData
+    operator()(const T1& t1, const T2& t2) const
+        {
+        throw ITError("Operation not defined for ITData subtype. [Func2Base]");
+        return NewData();
+        }
     };
 
 template <typename Derived>
@@ -112,6 +136,14 @@ struct Func2ModBase
     operator()(ITDense<Complex>& a1,const ITDense<Real>& a2) const = 0;
     NewData virtual
     operator()(ITDense<Complex>& a1,const ITDense<Complex>& a2) const = 0;
+
+    template <typename T1,typename T2>
+    NewData
+    operator()(T1& t1, const T2& t2) const
+        {
+        throw ITError("Operation not defined for ITData subtype. [Func2ModBase]");
+        return NewData();
+        }
     };
 
 template <typename Derived>

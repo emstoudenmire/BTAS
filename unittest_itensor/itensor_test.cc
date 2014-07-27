@@ -114,4 +114,19 @@ TEST_CASE("ITensor")
         printfln("R = %f",R);
         }
 
+    SECTION("Elements")
+        {
+        PrintData(T2);
+        Elements<Real> eT2a(T2,l1,l2);
+        PrintVar(eT2a);
+        Elements<Real> eT2b(T2,l2,l1);
+        PrintVar(eT2b);
+        PrintVar(eT2b(0,0));
+        PrintVar(eT2b(0,1));
+        PrintVar(eT2b(3,1));
+        PrintVar(eT2a(1,3));
+
+        CHECK( eT2a(1,2) == eT2b(2,1) );
+        }
+
     }

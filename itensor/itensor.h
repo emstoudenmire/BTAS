@@ -4,11 +4,12 @@
 //
 #ifndef __ITENSOR_ITENSOR_H
 #define __ITENSOR_ITENSOR_H
-#include "itensor/real.h"
 #include "itensor/indexset.h"
 
 #include "itensor/itdata/itdata_functions.h"
 #include "itensor/detail/functions.h"
+
+#include "btas/generic/scal_impl.h"
 
 namespace itensor {
 
@@ -197,6 +198,180 @@ class ITensor
     scaleTo(const LogNumber& newscale);
 
     }; // class ITensor
+
+template <typename T_>
+class Elements
+    {
+    public:
+
+    using tensor_type = btas::Tensor<T_>;
+    using value_type = typename tensor_type::value_type;
+    using reference = typename tensor_type::reference;
+    using const_reference = typename tensor_type::const_reference;
+    using iterator = typename tensor_type::iterator;
+    using const_iterator = typename tensor_type::const_iterator;
+    using size_type = typename tensor_type::size_type;
+
+    template <typename... Indices>
+    Elements(const ITensor& t,
+             const Index& i0, 
+             const Index& i1, 
+             const Indices&... rest);
+
+    const IndexSet&
+    inds() const { return is_; }
+
+    size_type
+    rank() const { return d_.rank(); }
+
+    size_type
+    r() const { return d_.rank(); }
+
+    const_iterator
+    begin() const { return cbegin(); }
+    const_iterator
+    end() const { return cend(); }
+
+    const_iterator
+    cbegin() const { return d_.cbegin(); }
+    const_iterator
+    cend() const { return d_.cend(); }
+
+    iterator
+    begin() { return d_.begin(); }
+    iterator
+    end() { return d_.end(); }
+
+    size_type
+    size() const { return d_.size(); }
+
+    bool
+    empty() const { return d_.empty(); }
+
+    template<typename index0, typename... _args>
+    const_reference
+    operator()(const index0& first, const _args&... rest) const
+        {
+        return d_(first,rest...);
+        }
+
+    template<typename index0, typename... _args>
+    reference
+    operator()(const index0& first, const _args&... rest)
+        {
+        return d_(first,rest...);
+        }
+
+    template <typename IndexOrdinal>
+    const_reference
+    operator[](const IndexOrdinal& index) const
+        {
+        return d_[index];
+        }
+
+    template <typename IndexOrdinal>
+    reference
+    operator[](const IndexOrdinal& index)
+        {
+        return d_[index];
+        }
+
+    const value_type*
+    data() const { return d_.data(); }
+
+    value_type*
+    data() { return d_.data(); }
+
+    const tensor_type&
+    toTensor() const { return d_; }
+
+    private:
+
+    //////////////
+
+    IndexSet is_;
+    tensor_type d_;
+
+    //////////////
+
+    template <typename T>
+    struct GetData : public ConstFunc1<GetData<T>>
+        {
+        using ptr_type = typename ITDense<T>::storage*;
+
+        GetData(ptr_type p) : p_(p) { }
+
+        NewData
+        apply(const ITDense<T>& d) const
+            {
+            *p_ = d.t_;
+            return NewData();
+            }
+
+        template <typename OtherITData>
+        NewData
+        apply(const OtherITData& d) const
+            {
+            throw ITError("ITensor data not of type ITDense<T>");
+            return NewData();
+            }
+
+        private:
+        ptr_type p_;
+        };
+
+    }; // class Elements
+
+template <typename T_>
+template <typename... Indices>
+Elements<T_>::
+Elements(const ITensor& t,
+         const Index& i0, 
+         const Index& i1, 
+         const Indices&... rest)
+    {
+    const auto size = 2 + sizeof...(rest);
+    std::array<Index,size> inds = {{ i0, i1, static_cast<Index>(rest)...}};
+    is_ = IndexSet(inds,size);
+    
+    std::array<int,size> perm;
+    detail::calc_permutation(t.inds(),inds,perm);
+
+    println("perm = ");
+    for(auto x : perm) print(x," ");
+    println();
+
+    GetData<T_> g(&d_);
+    applyFunc(g,t.data());
+
+    //tensor_type tmp = btas::permute(d_,perm);
+    //d_ = tmp;
+
+    d_ = btas::permute(d_,perm);
+
+    const T_ fac = t.scale().real0(); 
+    btas::scal(fac,d_);
+    }
+
+
+template <typename value_type>
+std::ostream&
+operator<<(std::ostream& s, const Elements<value_type>& els)
+    {
+    const auto& T = els.toTensor();
+    s << "Elements r = " << T.rank() << ": ";
+    s << els.inds() << "\n";
+    for(auto x : T.range()) 
+        {
+        s << "  " << x << " ";
+        const auto val = T(x);
+        if(fabs(val) > 1E-10)
+            s << val << "\n";
+        else
+            s << format("%.8E\n",val);
+        }
+    return s;
+    }
 
 template <typename... Indices>
 ITensor::

@@ -65,6 +65,9 @@ class IndexSetT
     int
     rn() const { return rn_; }
 
+    size_t
+    size() const { return index_.size(); }
+
     IPair
     mnInds() const { return IPair(index_.begin(),index_.begin()+rn_); }
 

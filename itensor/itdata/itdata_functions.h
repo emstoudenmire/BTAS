@@ -13,36 +13,6 @@
 
 namespace itensor {
 
-struct PlusEQ : public Func2Mod<PlusEQ>
-    {
-    PlusEQ(Real fac)
-        :
-        fac_(fac)
-        { }
-
-    template <typename T>
-    NewData
-    apply(ITDense<T>& a1,
-          const ITDense<T>& a2) const
-        {
-        //axpy computes a1.t_ += a2.t_ * fac
-        btas::axpy(fac_,a2.t_,a1.t_);
-        return NewData();
-        }
-
-    template <typename T1, typename T2>
-    NewData
-    apply(ITDense<T1>& a1,
-          const ITDense<T2>& a2) const
-        {
-        Error("+= not implemented for tensors of different element types.");
-        return NewData();
-        }
- 
-    private:
-    const Real fac_;
-    };
-
 template <typename F>
 struct ApplyIT : public Func1<ApplyIT<F>>
     {
@@ -202,6 +172,37 @@ struct MultReal : public Func1<MultReal>
     private:
     Real r_;
     };
+
+struct PlusEQ : public Func2Mod<PlusEQ>
+    {
+    PlusEQ(Real fac)
+        :
+        fac_(fac)
+        { }
+
+    template <typename T>
+    NewData
+    apply(ITDense<T>& a1,
+          const ITDense<T>& a2) const
+        {
+        //axpy computes a1.t_ += a2.t_ * fac
+        btas::axpy(fac_,a2.t_,a1.t_);
+        return NewData();
+        }
+
+    template <typename T1, typename T2>
+    NewData
+    apply(ITDense<T1>& a1,
+          const ITDense<T2>& a2) const
+        {
+        Error("+= not implemented for tensors of different element types.");
+        return NewData();
+        }
+ 
+    private:
+    const Real fac_;
+    };
+
 
 struct PrintIT : public ConstFunc1<PrintIT>
     {

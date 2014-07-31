@@ -193,6 +193,18 @@ conj(Index res) { res.conj(); return res; }
 IndexVal inline
 conj(IndexVal res) { res.conj(); return res; }
 
+bool inline
+operator==(const Index& i, const IndexVal& iv) { return i==Index(iv); }
+
+bool inline
+operator==(const IndexVal& iv, const Index& i) { return operator==(i,iv); }
+
+bool inline
+operator!=(const Index& i, const IndexVal& iv) { return !operator==(i,iv); }
+
+bool inline
+operator!=(const IndexVal& iv, const Index& i) { return !operator==(i,iv); }
+
 //Return a copy of I, increasing primelevel.
 template<class T>
 T

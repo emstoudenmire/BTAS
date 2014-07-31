@@ -14,7 +14,7 @@
 namespace itensor {
 
 template <typename F>
-struct ApplyIT : public Func1<ApplyIT<F>>
+struct ApplyIT
     {
     ApplyIT(F&& f)
         : f_(f)
@@ -22,7 +22,7 @@ struct ApplyIT : public Func1<ApplyIT<F>>
 
     template <typename T>
     NewData
-    apply(ITDense<T>& d) const
+    operator()(ITDense<T>& d) const
         {
         const auto end = d.t_.data()+d.t_.size();
         for(auto it = d.t_.data(); it != end; ++it)
@@ -37,7 +37,7 @@ struct ApplyIT : public Func1<ApplyIT<F>>
     };
 
 template <typename RangeFunc>
-struct ApplyRange : public Func1<ApplyRange<RangeFunc>>
+struct ApplyRange
     {
     using Range = btas::Range;
 
@@ -47,7 +47,7 @@ struct ApplyRange : public Func1<ApplyRange<RangeFunc>>
 
     template <typename T>
     NewData
-    apply(ITDense<T>& d) const
+    operator()(ITDense<T>& d) const
         {
         using storage = typename ITDense<T>::storage;
         storage temp = 
@@ -60,7 +60,7 @@ struct ApplyRange : public Func1<ApplyRange<RangeFunc>>
     const RangeFunc& f_;
     };
 
-struct Contract : public Func2<Contract>
+struct Contract
     {
     using annotation = btas::varray<size_t>;
 
@@ -75,8 +75,8 @@ struct Contract : public Func2<Contract>
 
     template <typename T>
     NewData
-    apply(const ITDense<T>& a1,
-          const ITDense<T>& a2) const
+    operator()(const ITDense<T>& a1,
+               const ITDense<T>& a2) const
         {
         static const auto One = T(1.),
                           Zero = T(0.);
@@ -87,8 +87,8 @@ struct Contract : public Func2<Contract>
 
     template <typename T1, typename T2>
     NewData
-    apply(const ITDense<T1>& a1,
-          const ITDense<T2>& a2) const
+    operator()(const ITDense<T1>& a1,
+               const ITDense<T2>& a2) const
         {
         using product_type = decltype(::std::declval<T1>() * ::std::declval<T2>());
         //static const auto One = product_type(1.),
@@ -105,23 +105,23 @@ struct Contract : public Func2<Contract>
                       Pind_;
     };
 
-struct Fill : public Func1<Fill>
+struct Fill
     {
     Fill(Real r)
         : r_(r)
         { }
 
     NewData
-    apply(ITDense<Real>& d) const;
+    operator()(ITDense<Real>& d) const;
     NewData
-    apply(ITDense<Complex>& d) const;
+    operator()(ITDense<Complex>& d) const;
 
     private:
     Real r_;
     };
 
 template <typename F>
-struct GenerateIT : public Func1<GenerateIT<F>>
+struct GenerateIT
     {
     GenerateIT(F&& f)
         : f_(f)
@@ -129,7 +129,7 @@ struct GenerateIT : public Func1<GenerateIT<F>>
 
     template <typename T>
     NewData
-    apply(ITDense<T>& d) const
+    operator()(ITDense<T>& d) const
         {
         const auto end = d.t_.data()+d.t_.size();
         for(auto it = d.t_.data(); it != end; ++it)
@@ -143,37 +143,66 @@ struct GenerateIT : public Func1<GenerateIT<F>>
     F& f_;
     };
 
-struct MultComplex : public Func1<MultComplex>
+template<typename T, int size>
+struct GetElt
+    {
+    GetElt(const std::array<int,size>& inds)
+        : inds_(inds)
+        { }
+
+    explicit operator T() const { return elt_; }
+
+    NewData
+    operator()(const ITDense<T>& d)
+        {
+        elt_ = d.t_(inds_);
+        return NewData();
+        }
+
+    template <typename DType>
+    NewData
+    operator()(const DType& d)
+        {
+        throw ITError("ITensor does not have requested element type");
+        return NewData();
+        }
+
+    private:
+    T elt_;
+    const std::array<int,size>& inds_;
+    };
+
+struct MultComplex
     {
     MultComplex(Complex z)
         : z_(z)
         { }
 
     NewData
-    apply(ITDense<Real>& d) const;
+    operator()(const ITDense<Real>& d) const;
     NewData
-    apply(ITDense<Complex>& d) const;
+    operator()(ITDense<Complex>& d) const;
 
     private:
     Complex z_;
     };
 
-struct MultReal : public Func1<MultReal>
+struct MultReal
     {
     MultReal(Real r)
         : r_(r)
         { }
 
     NewData
-    apply(ITDense<Real>& d) const;
+    operator()(ITDense<Real>& d) const;
     NewData
-    apply(ITDense<Complex>& d) const;
+    operator()(ITDense<Complex>& d) const;
 
     private:
     Real r_;
     };
 
-struct PlusEQ : public Func2Mod<PlusEQ>
+struct PlusEQ
     {
     PlusEQ(Real fac)
         :
@@ -182,7 +211,7 @@ struct PlusEQ : public Func2Mod<PlusEQ>
 
     template <typename T>
     NewData
-    apply(ITDense<T>& a1,
+    operator()(ITDense<T>& a1,
           const ITDense<T>& a2) const
         {
         //axpy computes a1.t_ += a2.t_ * fac
@@ -192,7 +221,7 @@ struct PlusEQ : public Func2Mod<PlusEQ>
 
     template <typename T1, typename T2>
     NewData
-    apply(ITDense<T1>& a1,
+    operator()(ITDense<T1>& a1,
           const ITDense<T2>& a2) const
         {
         Error("+= not implemented for tensors of different element types.");
@@ -204,7 +233,7 @@ struct PlusEQ : public Func2Mod<PlusEQ>
     };
 
 
-struct PrintIT : public ConstFunc1<PrintIT>
+struct PrintIT
     {
     std::ostream& s_;
     const LogNumber& x_;
@@ -215,13 +244,71 @@ struct PrintIT : public ConstFunc1<PrintIT>
         { }
 
     NewData
-    apply(const ITDense<Real>& d) const;
+    operator()(const ITDense<Real>& d) const;
     NewData
-    apply(const ITDense<Complex>& d) const;
+    operator()(const ITDense<Complex>& d) const;
+    };
+
+template<int size>
+struct SetEltComplex
+    {
+    SetEltComplex(const Complex& elt,
+                  const std::array<int,size>& inds)
+        : elt_(elt),
+          inds_(inds)
+        { }
+
+    NewData
+    operator()(const ITDense<Real>& d) const
+        {
+        auto nd = new ITDense<Complex>(d.t_.range());
+        std::copy(d.t_.cbegin(),d.t_.cend(),nd->t_.begin());
+        nd->t_(inds_) = elt_;
+        return NewData(nd);
+        }
+
+    NewData
+    operator()(ITDense<Complex>& d) const
+        {
+        d.t_(inds_) = elt_;
+        return NewData();
+        }
+
+    private:
+    const Complex& elt_;
+    const std::array<int,size>& inds_;
+    };
+
+template<int size>
+struct SetEltReal
+    {
+    SetEltReal(Real elt,
+               const std::array<int,size>& inds)
+        : elt_(elt),
+          inds_(inds)
+        { }
+
+    NewData
+    operator()(ITDense<Real>& d) const
+        {
+        d.t_(inds_) = elt_;
+        return NewData();
+        }
+
+    NewData
+    operator()(ITDense<Complex>& d) const
+        {
+        d.t_(inds_) = Complex(elt_,0);
+        return NewData();
+        }
+
+    private:
+    Real elt_;
+    const std::array<int,size>& inds_;
     };
 
 template <typename F>
-struct VisitIT : public ConstFunc1<VisitIT<F>>
+struct VisitIT
     {
     VisitIT(F&& f, const LogNumber& scale)
         : f_(f), scale_fac(scale.real0())
@@ -229,7 +316,7 @@ struct VisitIT : public ConstFunc1<VisitIT<F>>
 
     template <typename T>
     NewData
-    apply(const ITDense<T>& d) const
+    operator()(const ITDense<T>& d) const
         {
         const auto end = d.t_.data()+d.t_.size();
         for(auto it = d.t_.data(); it != end; ++it)

@@ -30,14 +30,15 @@ GOBJECTS=$(patsubst %.cc,.debug_objs/%.o, $(SOURCES))
 
 #Targets -----------------
 
-run: test
-	./test
+run: test-g
+	./test-g
+
+test-g: mkdebugdir $(GOBJECTS)
+	$(CCCOM) $(CCGFLAGS) $(GOBJECTS) -o test-g $(LIBGFLAGS)
 
 test: $(OBJECTS)
 	$(CCCOM) $(CCFLAGS) $(OBJECTS) -o test $(LIBFLAGS)
 
-test-g: mkdebugdir $(GOBJECTS)
-	$(CCCOM) $(CCGFLAGS) $(GOBJECTS) -o test-g $(LIBGFLAGS)
 
 mkdebugdir:
 	mkdir -p .debug_objs

@@ -262,8 +262,7 @@ operator*=(const ITensor& other)
     //cout << "}" << endl;
     //exit(0);
 
-    auto nd = applyFunc(Contract{Lind,Rind,Pind},d_,other.d_);
-    d_ = std::move(nd);
+    applyFunc(Contract{Lind,Rind,Pind},d_,other.d_);
 
     IndexSet new_index(std::move(newind),nuniq);
 
@@ -415,6 +414,8 @@ operator+=(const ITensor& other)
     else // not same_ind_order
         {
         //TODO
+        //Create version of PlusEQ that takes a permutation 
+        //in the constructor
         Error("Can currently only add if same index order");
         }
 

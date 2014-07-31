@@ -64,6 +64,22 @@ class ITensor
     //false if ITensor is default constructed
     explicit operator bool() const { return bool(d_); }
 
+    template <typename... IndexVals>
+    Real
+    real(const IndexVals&... ivs) const;
+
+    template <typename... IndexVals>
+    Complex
+    cplx(const IndexVals&... ivs) const;
+
+    template<typename... IndexVals>
+    void
+    set(Real val, const IndexVals&... ivs);
+
+    template<typename... IndexVals>
+    void
+    set(Complex val, const IndexVals&... ivs);
+
     //
     // Operators
     //
@@ -295,14 +311,14 @@ class Elements
     //////////////
 
     template <typename T>
-    struct GetData : public ConstFunc1<GetData<T>>
+    struct GetData
         {
         using ptr_type = typename ITDense<T>::storage*;
 
         GetData(ptr_type p) : p_(p) { }
 
         NewData
-        apply(const ITDense<T>& d) const
+        operator()(const ITDense<T>& d) const
             {
             *p_ = d.t_;
             return NewData();
@@ -310,7 +326,7 @@ class Elements
 
         template <typename OtherITData>
         NewData
-        apply(const OtherITData& d) const
+        operator()(const OtherITData& d) const
             {
             throw ITError("ITensor data not of type ITDense<T>");
             return NewData();
@@ -337,15 +353,8 @@ Elements(const ITensor& t,
     std::array<int,size> perm;
     detail::calc_permutation(t.inds(),inds,perm);
 
-    println("perm = ");
-    for(auto x : perm) print(x," ");
-    println();
-
     GetData<T_> g(&d_);
     applyFunc(g,t.data());
-
-    //tensor_type tmp = btas::permute(d_,perm);
-    //d_ = tmp;
 
     d_ = btas::permute(d_,perm);
 
@@ -386,6 +395,101 @@ ITensor(const Index& i0,
     is_ = IndexSet(inds,size);
     d_ = std::make_shared<ITDense<Real>>(extents);
 	}
+
+template <typename... IndexVals>
+Real ITensor::
+real(const IndexVals&... ivs) const
+    {
+    const auto size = sizeof...(ivs);
+    //TODO: implement scalar case
+    if(size == 0) throw ITError("scalar real case not yet supported");
+    const std::array<IndexVal,size> vals = {{ static_cast<IndexVal>(ivs)...}};
+    std::array<int,size> inds;
+    detail::permute_map(is_,vals,inds,[](const IndexVal& iv) { return iv.i-1; });
+    GetElt<Real,size> g(inds);
+    applyFunc(g,d_);
+	try {
+	    return Real(g)*scale_.real(); 
+	    }
+	catch(const TooBigForReal& e)
+	    {
+	    println("too big for real in real(...), scale = ",scale());
+	    throw e;
+	    }
+	catch(TooSmallForReal)
+	    {
+        println("warning: too small for real in real(...)");
+	    return 0.;
+	    }
+    return NAN;
+    }
+
+template <typename... IndexVals>
+Complex ITensor::
+cplx(const IndexVals&... ivs) const
+    {
+    const auto size = sizeof...(ivs);
+    //TODO: implement scalar case
+    if(size == 0) throw ITError("scalar complex case not yet supported");
+    const std::array<IndexVal,size> vals = {{ static_cast<IndexVal>(ivs)...}};
+    std::array<int,size> inds;
+    detail::permute_map(is_,vals,inds,[](const IndexVal& iv) { return iv.i-1; });
+    GetElt<Complex,size> g(inds);
+    applyFunc(g,d_);
+	try {
+	    return Complex(g)*scale_.real(); 
+	    }
+	catch(const TooBigForReal& e)
+	    {
+	    println("too big for real in cplx(...), scale = ",scale());
+	    throw e;
+	    }
+	catch(TooSmallForReal)
+	    {
+        println("warning: too small for real in cplx(...)");
+	    return Complex(0.,0.);
+	    }
+    return Complex(NAN,NAN);
+    }
+
+template <typename... IndexVals>
+void ITensor::
+set(Real val, const IndexVals&... ivs)
+    {
+    const auto size = sizeof...(ivs);
+    //TODO: implement scalar case
+    if(size == 0) throw ITError("scalar real case not yet supported");
+    scaleTo(1.);
+    const std::array<IndexVal,size> vals = {{ static_cast<IndexVal>(ivs)...}};
+    std::array<int,size> inds;
+    detail::permute_map(is_,vals,inds,[](const IndexVal& iv) { return iv.i-1; });
+    applyFunc(SetEltReal<size>(val,inds),d_);
+    }
+
+template <typename... IndexVals>
+void ITensor::
+set(Complex val, const IndexVals&... ivs)
+    {
+    const auto size = sizeof...(ivs);
+    //TODO: implement scalar case
+    if(size == 0) throw ITError("scalar complex case not yet supported");
+    scaleTo(1.);
+    const std::array<IndexVal,size> vals = {{ static_cast<IndexVal>(ivs)...}};
+    std::array<int,size> inds;
+    detail::permute_map(is_,vals,inds,[](const IndexVal& iv) { return iv.i-1; });
+    applyFunc(SetEltComplex<size>(val,inds),d_);
+    }
+
+//template <typename T, typename... inds>
+//T& ITensor::
+//elt(int i1, inds... rest)
+//    {
+//    const auto size = 1 + sizeof...(rest);
+//    const std::array<int,size> inds = {{ i0, i1, static_cast<int>(rest)...}};
+//    T* p = nullptr;
+//    applyFunc(GetElt<T,size>(inds,p),d_);
+//    return *p;
+//    }
 
 template <typename Func>
 ITensor& ITensor::
@@ -471,19 +575,6 @@ tieIndex(const ITensor& T,
          const Index& t0,
          const Index& t1,
          const Indices&... rest);
-
-//Get scalar value of rank 0 ITensor.
-//Throws ITError if r() != 0.
-//Throws if imaginary part is non-zero.
-//TODO: make an external method
-Real
-toReal(const ITensor& T);
-
-//Get scalar value of complex rank 0 ITensor.
-//Throws ITError if r() != 0
-//TODO: make an external method
-Complex
-toComplex(const ITensor& T);
 
 //Compute the norm of an ITensor.
 //Thinking of elements as a vector, equivalent to sqrt(v*v).

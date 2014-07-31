@@ -94,6 +94,8 @@ indexset.o: $(DEPHEADERS)
 DEPHEADERS+= itdata/itdata.h itdata/itdense.h itdata/itdata_functions.h itensor.h 
 itensor.o: $(DEPHEADERS)
 .debug_objs/itensor.o: $(DEPHEADERS)
+itdata_functions.o: $(DEPHEADERS)
+.debug_objs/itdata_functions.o: $(DEPHEADERS)
 
 #DEPHEADERS+= qn.h iqindex.h
 #iqindex.o: $(DEPHEADERS)

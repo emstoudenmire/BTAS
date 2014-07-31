@@ -7,14 +7,14 @@
 namespace itensor {
 
 NewData Fill::
-apply(ITDense<Real>& d) const
+operator()(ITDense<Real>& d) const
     {
     d.t_.fill(r_);
     return NewData();
     }
 
 NewData Fill::
-apply(ITDense<Complex>& d) const
+operator()(ITDense<Complex>& d) const
     {
     const auto z = Complex(r_,0.);
     d.t_.fill(z);
@@ -22,7 +22,7 @@ apply(ITDense<Complex>& d) const
     }
 
 NewData MultComplex::
-apply(ITDense<Real>& d) const
+operator()(const ITDense<Real>& d) const
     {
     //TODO: would like btas::Tensor copy construct to work here
     //auto nd = NewData(new ITDense<Complex>(d));
@@ -36,28 +36,28 @@ apply(ITDense<Real>& d) const
     }
 
 NewData MultComplex::
-apply(ITDense<Complex>& d) const
+operator()(ITDense<Complex>& d) const
     {
     btas::scal(z_,d.t_);
     return NewData();
     }
 
 NewData MultReal::
-apply(ITDense<Real>& d) const
+operator()(ITDense<Real>& d) const
     {
     btas::scal(r_,d.t_);
     return NewData();
     }
 
 NewData MultReal::
-apply(ITDense<Complex>& d) const
+operator()(ITDense<Complex>& d) const
     {
     btas::scal(Complex(r_,0),d.t_);
     return NewData();
     }
 
 NewData PrintIT::
-apply(const ITDense<Real>& d) const
+operator()(const ITDense<Real>& d) const
     {
     s_ << "}\n";
     Real scalefac = 1.0;
@@ -93,7 +93,7 @@ apply(const ITDense<Real>& d) const
     }
 
 NewData PrintIT::
-apply(const ITDense<Complex>& d) const
+operator()(const ITDense<Complex>& d) const 
     {
     s_ << "}\n";
     Real scalefac = 1.0;

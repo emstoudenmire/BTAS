@@ -114,6 +114,22 @@ TEST_CASE("ITensor")
         printfln("R = %f",R);
         }
 
+    SECTION("Element Accessors")
+        {
+        PrintData(T2);
+
+        PrintVar(T2.real(l1(1),l2(2)));
+
+        auto r2 = T2.real(l2(2),l1(1));
+        PrintVar(r2);
+
+        T2.set(5,l2(2),l1(1));
+        PrintData(T2);
+
+        T2.set(Complex(0,1),l2(2),l1(1));
+        PrintData(T2);
+        }
+
     SECTION("Elements")
         {
         PrintData(T2);

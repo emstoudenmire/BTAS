@@ -6,6 +6,7 @@ INCLUDEFLAGS=-I..
 #Define source files ----------
 
 SOURCES = test.cc
+SOURCES+= complex_test.cc
 SOURCES+= tensor_test.cc
 SOURCES+= index_test.cc
 SOURCES+= itensor_test.cc

@@ -12,8 +12,49 @@ namespace itensor {
 
 using Complex = std::complex<Real>;
 
-static const Complex Complex_1 = Complex(1,0);
-static const Complex Complex_i = Complex(0,1);
+template<typename T, typename std::enable_if<std::is_integral<T>::value>::type* = nullptr>
+Complex inline
+operator*(T i, const Complex& z) { return Real(i)*z; }
+
+template<typename T, typename std::enable_if<std::is_integral<T>::value>::type* = nullptr>
+Complex
+operator*(const Complex& z, T i) { return z*Real(i); }
+
+template<typename T, typename std::enable_if<std::is_integral<T>::value>::type* = nullptr>
+Complex inline
+operator/(T i, const Complex& z) { return Real(i)/z; }
+
+template<typename T, typename std::enable_if<std::is_integral<T>::value>::type* = nullptr>
+Complex
+operator/(const Complex& z, T i) { return z/Real(i); }
+
+template<typename T, typename std::enable_if<std::is_integral<T>::value>::type* = nullptr>
+Complex 
+operator+(T i, const Complex& z) { return Real(i)+z; }
+
+template<typename T, typename std::enable_if<std::is_integral<T>::value>::type* = nullptr>
+Complex 
+operator+(const Complex& z, T i) { return z+Real(i); }
+
+template<typename T, typename std::enable_if<std::is_integral<T>::value>::type* = nullptr>
+Complex 
+operator-(T i, const Complex& z) { return Real(i)-z; }
+
+template<typename T, typename std::enable_if<std::is_integral<T>::value>::type* = nullptr>
+Complex 
+operator-(const Complex& z, int i) { return z-Real(i); }
+
+Complex constexpr inline
+operator""_i(unsigned long long int i)
+    {
+    return Complex(0.,i);
+    }
+
+Complex constexpr inline
+operator""_i(long double x)
+    {
+    return Complex(0.,x);
+    }
 
 }; //namespace itensor
 

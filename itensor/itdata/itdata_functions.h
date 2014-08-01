@@ -105,19 +105,34 @@ struct Contract
                       Pind_;
     };
 
-struct Fill
+struct FillReal
     {
-    Fill(Real r)
+    FillReal(Real r)
         : r_(r)
         { }
 
     NewData
     operator()(ITDense<Real>& d) const;
     NewData
-    operator()(ITDense<Complex>& d) const;
+    operator()(const ITDense<Complex>& d) const;
 
     private:
     Real r_;
+    };
+
+struct FillCplx
+    {
+    FillCplx(Complex z)
+        : z_(z)
+        { }
+
+    NewData
+    operator()(const ITDense<Real>& d) const;
+    NewData
+    operator()(ITDense<Complex>& d) const;
+
+    private:
+    Complex z_;
     };
 
 template <typename F>

@@ -41,6 +41,12 @@ class ITDense : public ITDispatch<ITDense<T_>>
         : t_(t)
         { }
 
+    template<typename OtherType>
+    explicit
+    ITDense(const ITDense<OtherType>& d)
+        : t_(d.t_)
+        { }
+
     virtual
     ~ITDense() { }
 

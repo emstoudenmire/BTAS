@@ -443,7 +443,17 @@ fill(Real r)
     if(!(*this)) return *this;
     solo();
     scale_.reset();
-    applyFunc(Fill(r),d_);
+    applyFunc(FillReal(r),d_);
+    return *this;
+    }
+
+ITensor& ITensor::
+fill(Complex z)
+    {
+    if(!(*this)) return *this;
+    solo();
+    scale_.reset();
+    applyFunc(FillCplx(z),d_);
     return *this;
     }
 
@@ -523,7 +533,7 @@ operator<<(ostream & s, const ITensor& t)
     }
 
 ITensor
-randomize(ITensor T, const OptSet& opts)
+random(ITensor T, const OptSet& opts)
     {
     //std::uniform_real_distribution<Real> dist(-1.,1.);
     T.generate(Global::random);
@@ -584,7 +594,7 @@ toComplex(const ITensor& T)
 
     //TODO
     Error("Not implemented");
-    return Complex_1;
+    return Complex(1,0);
     }
 
 struct NormVisitor
@@ -604,6 +614,25 @@ norm(const ITensor& T)
     NormVisitor N;
     T.visit(N);
     return sqrt(N.nrm2);
+    }
+
+struct CheckComplex
+    {
+    bool isComplex;
+    CheckComplex() : isComplex(false) { }
+
+    NewData
+    operator()(const ITDense<Real>& d) { isComplex = false; return NewData(); }
+    NewData
+    operator()(const ITDense<Complex>& d) { isComplex = true; return NewData(); }
+    };
+
+bool
+isComplex(const ITensor& t)
+    {
+    CheckComplex cc;
+    applyFunc(cc,t.data());
+    return cc.isComplex;
     }
 
 //LogNumber

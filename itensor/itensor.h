@@ -33,14 +33,14 @@ class ITensor
     ITensor();
 
     //Construct rank 1 ITensor, all entries set to zero
-    explicit 
+    explicit
     ITensor(const Index& i1);
 
     //Construct rank 2 ITensor, all entries set to zero
     ITensor(const Index& i1,
             const Index& i2);
 
-    //Construct ITensor up to rank 8, entries set to zero
+    //Construct ITensor with arbitrary rank, entries set to zero
     template <typename... Indices>
     ITensor(const Index& i0, 
             const Index& i1, 
@@ -152,6 +152,9 @@ class ITensor
     //Maybe keep for ITData interface?
     ITensor&
     fill(Real r);
+
+    ITensor&
+    fill(Complex z);
 
     template <typename Func>
     ITensor&
@@ -388,7 +391,7 @@ ITensor(const Index& i0,
         const Index& i1,
         const Indices&... rest)
 	{
-    const auto size = 2 + sizeof...(rest);
+    static constexpr auto size = 2 + sizeof...(rest);
     std::array<Index,size> inds = {{ i0, i1, static_cast<Index>(rest)...}};
     std::array<int,size> extents;
     for(size_t j = 0; j < size; ++j) extents[j] = inds[j].m();
@@ -400,7 +403,7 @@ template <typename... IndexVals>
 Real ITensor::
 real(const IndexVals&... ivs) const
     {
-    const auto size = sizeof...(ivs);
+    static constexpr auto size = sizeof...(ivs);
     //TODO: implement scalar case
     if(size == 0) throw ITError("scalar real case not yet supported");
     const std::array<IndexVal,size> vals = {{ static_cast<IndexVal>(ivs)...}};
@@ -428,7 +431,7 @@ template <typename... IndexVals>
 Complex ITensor::
 cplx(const IndexVals&... ivs) const
     {
-    const auto size = sizeof...(ivs);
+    static constexpr auto size = sizeof...(ivs);
     //TODO: implement scalar case
     if(size == 0) throw ITError("scalar complex case not yet supported");
     const std::array<IndexVal,size> vals = {{ static_cast<IndexVal>(ivs)...}};
@@ -456,7 +459,7 @@ template <typename... IndexVals>
 void ITensor::
 set(Real val, const IndexVals&... ivs)
     {
-    const auto size = sizeof...(ivs);
+    static constexpr auto size = sizeof...(ivs);
     //TODO: implement scalar case
     if(size == 0) throw ITError("scalar real case not yet supported");
     scaleTo(1.);
@@ -470,7 +473,7 @@ template <typename... IndexVals>
 void ITensor::
 set(Complex val, const IndexVals&... ivs)
     {
-    const auto size = sizeof...(ivs);
+    static constexpr auto size = sizeof...(ivs);
     //TODO: implement scalar case
     if(size == 0) throw ITError("scalar complex case not yet supported");
     scaleTo(1.);
@@ -567,7 +570,14 @@ hasIndex(const Tensor& T, const typename Tensor::IndexT& I)
     }
 
 ITensor
-randomize(ITensor T, const OptSet& opts = Global::opts());
+random(ITensor T, const OptSet& opts = Global::opts());
+
+template <typename... Indices>
+ITensor
+random(const Index& i1, const Indices&... rest)
+    {
+    return random(ITensor(i1,rest...));
+    }
 
 template <typename... Indices>
 ITensor
@@ -585,6 +595,9 @@ norm(const ITensor& T);
 
 //TODO: add conj (complex conj)
 
+bool
+isComplex(const ITensor& T);
+
 
 
 //
@@ -598,7 +611,7 @@ tieIndex(const ITensor& T,
          const Index& t1,
          const Indices&... rest)
     {
-    const auto size = 2 + sizeof...(rest);
+    static constexpr auto size = 2 + sizeof...(rest);
     if(size > T.r()) Error("Cannot tie more indices than ITensor rank.");
     std::array<Index,size> totie = {{ t0, t1, static_cast<Index>(rest)...}};
     std::array<size_t,size> I;

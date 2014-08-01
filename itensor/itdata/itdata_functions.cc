@@ -6,32 +6,41 @@
 
 namespace itensor {
 
-NewData Fill::
+NewData FillReal::
 operator()(ITDense<Real>& d) const
     {
     d.t_.fill(r_);
     return NewData();
     }
 
-NewData Fill::
+NewData FillReal::
+operator()(const ITDense<Complex>& d) const
+    {
+    auto nd = new ITDense<Real>(d.t_.range());
+    nd->t_.fill(r_);
+    return NewData(nd);
+    }
+
+NewData FillCplx::
+operator()(const ITDense<Real>& d) const
+    {
+    auto nd = new ITDense<Complex>(d.t_.range());
+    nd->t_.fill(z_);
+    return NewData(nd);
+    }
+
+NewData FillCplx::
 operator()(ITDense<Complex>& d) const
     {
-    const auto z = Complex(r_,0.);
-    d.t_.fill(z);
+    d.t_.fill(z_);
     return NewData();
     }
 
 NewData MultComplex::
 operator()(const ITDense<Real>& d) const
     {
-    //TODO: would like btas::Tensor copy construct to work here
-    //auto nd = NewData(new ITDense<Complex>(d));
-
-    auto nd = new ITDense<Complex>(d.t_.range());
-    std::copy(d.t_.cbegin(),d.t_.cend(),nd->t_.begin());
-
+    auto nd = new ITDense<Complex>(d);
     btas::scal(z_,nd->t_);
-
     return NewData(nd);
     }
 

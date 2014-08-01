@@ -18,6 +18,8 @@ realPart(Real r) { return r; }
 Real static
 realPart(Complex z) { return z.real(); }
 
+//Function object returning the square of its argument
+//Used in a test below
 struct Square
     {
     template <typename T>
@@ -33,6 +35,7 @@ TEST_CASE("ITensor")
           s2("s2",2,Site);
 
     auto T0 = ITensor();
+    //Calling random(inds...) returns a random ITensor(inds...)
     auto T1 = random(l1);
     auto T2 = random(l1,l2);
     auto T3 = random(l1,l2,s1);
@@ -77,14 +80,14 @@ TEST_CASE("ITensor")
 
         CHECK( !isComplex(T1) );
 
-        const auto z = Complex(1,2);
+        const auto z = 1+2_i;
         T2.fill(z);
 
         CHECK( isComplex(T2) );
 
-        T2.visit([&z](auto x) 
+        T2.visit([z](auto x) 
                 { 
-                CHECK( abs(Complex(x)-z) < 1E-10 ); 
+                CHECK_CLOSE(x,z,1E-10);
                 });
         }
         
@@ -107,7 +110,7 @@ TEST_CASE("ITensor")
         T1 *= Complex(1,1);
         T1.visit([fac](auto x) 
                 { 
-                CHECK( abs(Complex(x)-2.*fac) < 1E-10 ); 
+                CHECK_CLOSE(x,2*fac,1E-10);
                 });
         }
 
@@ -190,7 +193,7 @@ TEST_CASE("ITensor")
         for(int i1 = 1; i1 <= l1.m(); ++i1)
         for(int i2 = 1; i2 <= l2.m(); ++i2)
             {
-            CHECK( fabs( Radd.real(l1(i1),l2(i2)) - (fac1+fac2)*T2.real(l1(i1),l2(i2)) ) < 1E-10 );
+            CHECK_CLOSE( Radd.real(l1(i1),l2(i2)) , (fac1+fac2)*T2.real(l1(i1),l2(i2)) , 1E-10);
             }
         }
 
@@ -198,6 +201,7 @@ TEST_CASE("ITensor")
         {
         const auto fac1 = rng();
         T3 *= fac1;
+        //Automatically contracts over common indices l1, l2
         const auto R1 = T3 * T2;
 
         CHECK( hasIndex(R1,s1) );
@@ -210,10 +214,12 @@ TEST_CASE("ITensor")
                 {
                 val += T3.real(l1(i1),l2(i2),s1(j1)) * T2.real(l1(i1),l2(i2));
                 }
-            CHECK( fabs( val - R1.real(s1(j1)) ) < 1E-10 );
+            CHECK_CLOSE( val, R1.real(s1(j1)) , 1E-10);
             }
 
         const auto fac2 = rng();
+        //Automatically contracts over common index l1
+        //(Index l2' of prime(T2,l2) does not match Index l2 of T3)
         const auto R2 = fac2 * T3 * prime(T2,l2);
 
         CHECK( hasIndex(R2,s1) );
@@ -229,7 +235,7 @@ TEST_CASE("ITensor")
                 {
                 val += fac2 * T3.real(l1(i1),l2(i2),s1(j1)) * T2.real(l1(i1),l2(i2p));
                 }
-            CHECK( fabs( val - R2.real(s1(j1),l2(i2),prime(l2)(i2p)) ) < 1E-10 );
+            CHECK_CLOSE( val , R2.real(s1(j1),l2(i2),prime(l2)(i2p)) , 1E-10 );
             }
 
         }

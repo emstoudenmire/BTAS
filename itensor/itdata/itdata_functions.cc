@@ -122,7 +122,7 @@ operator()(const ITDense<Complex>& d) const
             if(std::norm(val) > 1E-10)
                 {
                 const auto sgn = (val.imag() < 0 ? '-' : '+');
-                s_ << format("%.10f%s%.10fi\n",val.real(),sgn,val.imag());
+                s_ << val.real() << sgn << fabs(val.imag()) << "i\n";
                 }
             else
                 {

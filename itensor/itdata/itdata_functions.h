@@ -320,6 +320,26 @@ struct PlusEQ
         fac_(fac)
         { }
 
+    NewData
+    operator()(ITDense<Real>& a1,
+               const ITDense<Complex>& a2) const
+        {
+        auto np = new ITDense<Complex>(a1);
+        operator()(*np,a2);
+        return NewData(np);
+        }
+
+    //TODO: handle this case automatically in btas::axpy
+    //      once it is supported
+    NewData
+    operator()(ITDense<Complex>& a1,
+               const ITDense<Real>& a2) const
+        {
+        ITDense<Complex> a2c(a2);
+        operator()(a1,a2c);
+        return NewData();
+        }
+
     template <typename T>
     NewData
     operator()(ITDense<T>& a1,
@@ -343,16 +363,6 @@ struct PlusEQ
             //auto a2view = permute(a2.t_,P_);
             //btas::axpy(fac_,a2view,a1.t_);
             }
-        return NewData();
-        }
-
-    template <typename T1, typename T2>
-    NewData
-    operator()(ITDense<T1>& a1,
-          const ITDense<T2>& a2) const
-        {
-        //TODO:
-        Error("+= not implemented for tensors of different element types.");
         return NewData();
         }
 

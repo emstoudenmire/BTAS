@@ -242,6 +242,24 @@ TEST_CASE("ITensor")
             }
 
         //
+        // Rank 2, different index order, mixing real / complex
+        //
+        T2p.fill(1.+1._i);
+        const auto Radd2c1 = T2+T2p;
+        for(int i1 = 1; i1 <= l1.m(); ++i1)
+        for(int i2 = 1; i2 <= l2.m(); ++i2)
+            {
+            CHECK_CLOSE( Radd2c1.cplx(l1(i1),l2(i2)) , T2.real(l1(i1),l2(i2))+T2p.cplx(l1(i1),l2(i2)) , Epsilon);
+            }
+
+        const auto Radd2c2 = T2p+T2;
+        for(int i1 = 1; i1 <= l1.m(); ++i1)
+        for(int i2 = 1; i2 <= l2.m(); ++i2)
+            {
+            CHECK_CLOSE( Radd2c2.cplx(l1(i1),l2(i2)) , T2.real(l1(i1),l2(i2))+T2p.cplx(l1(i1),l2(i2)) , Epsilon);
+            }
+
+        //
         // Rank 3, different index order
         //
         auto T3p = randIT(s1,l1,l2);

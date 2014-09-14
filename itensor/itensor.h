@@ -401,35 +401,6 @@ ITensor(const Index& i0,
 	}
 
 template <typename... IndexVals>
-Real ITensor::
-real(const IndexVals&... ivs) const
-    {
-#ifdef DEBUG
-    if(!*this) Error("ITensor is default constructed");
-#endif
-    static constexpr auto size = sizeof...(ivs);
-    const std::array<IndexVal,size> vals = {{ static_cast<IndexVal>(ivs)...}};
-    std::array<int,size> inds;
-    detail::permute_map(is_,vals,inds,[](const IndexVal& iv) { return iv.i-1; });
-    GetElt<Real,size> g(inds);
-    applyFunc(g,d_);
-	try {
-	    return Real(g)*scale_.real(); 
-	    }
-	catch(const TooBigForReal& e)
-	    {
-	    println("too big for real in real(...), scale = ",scale());
-	    throw e;
-	    }
-	catch(TooSmallForReal)
-	    {
-        println("warning: too small for real in real(...)");
-	    return 0.;
-	    }
-    return NAN;
-    }
-
-template <typename... IndexVals>
 Complex ITensor::
 cplx(const IndexVals&... ivs) const
     {
@@ -456,6 +427,20 @@ cplx(const IndexVals&... ivs) const
 	    return Complex(0.,0.);
 	    }
     return Complex(NAN,NAN);
+    }
+
+
+template <typename... IndexVals>
+Real ITensor::
+real(const IndexVals&... ivs) const
+    {
+    auto z = cplx(ivs...);
+    if(fabs(z.imag()) != 0)
+        {
+        printfln("element = (%.5E,%.5E)",z.real(),z.imag());
+        Error("ITensor is Complex-valued, use .cplx(...) method");
+        }
+    return z.real();
     }
 
 template <typename... IndexVals>
@@ -569,13 +554,13 @@ hasIndex(const Tensor& T, const typename Tensor::IndexT& I)
     }
 
 ITensor
-random(ITensor T, const OptSet& opts = Global::opts());
+randIT(ITensor T, const OptSet& opts = Global::opts());
 
 template <typename... Indices>
 ITensor
-random(const Index& i1, const Indices&... rest)
+randIT(const Index& i1, const Indices&... rest)
     {
-    return random(ITensor(i1,rest...));
+    return randIT(ITensor(i1,rest...));
     }
 
 template <typename... Indices>
@@ -592,7 +577,11 @@ tieIndex(const ITensor& T,
 Real 
 norm(const ITensor& T);
 
-//TODO: add conj (complex conj)
+ITensor
+conj(const ITensor& T);
+
+ITensor inline
+dag(const ITensor& T) { return conj(T); }
 
 bool
 isComplex(const ITensor& T);

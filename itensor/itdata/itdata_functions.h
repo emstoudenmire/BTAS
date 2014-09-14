@@ -21,7 +21,8 @@ struct ApplyIT
         : f_(f)
         { }
 
-    template <typename T>
+    template <typename T,
+              typename std::enable_if<std::is_same<T,std::result_of_t<F(T)>>::value>::type* = nullptr>
     NewData
     operator()(ITDense<T>& d) const
         {
@@ -36,7 +37,8 @@ struct ApplyIT
     //TODO:
     //Could unify this with ITDense by providing
     //subset of Tensor interface, like data() pointer
-    template <typename T>
+    template <typename T,
+              typename std::enable_if<std::is_same<T,std::result_of_t<F(T)>>::value>::type* = nullptr>
     NewData
     operator()(ITScalar<T>& d) const
         {
@@ -119,21 +121,6 @@ struct Contract
         return NewData(res);
         }
 
-    template <typename T>
-    NewData
-    operator()(const ITDense<T>&  a1,
-               const ITScalar<T>& a2) const
-        {
-        auto res = a1;
-        res *= a2.v_;
-        return NewData(res);
-        }
-
-    template <typename T>
-    NewData
-    operator()(const ITScalar<T>& a1,
-               const ITDense<T>& a2) const 
-        { return operator()(a2,a1); }
  
     private:
     const annotation& Lind_,
@@ -151,6 +138,17 @@ struct FillReal
     operator()(ITDense<Real>& d) const;
     NewData
     operator()(const ITDense<Complex>& d) const;
+    NewData
+    operator()(ITScalar<Real>& d) const
+        {
+        d.x_ = r_;
+        return NewData();
+        }
+    NewData
+    operator()(const ITScalar<Complex>& d) const
+        {
+        return NewData(new ITScalar<Real>(r_));
+        }
 
     private:
     Real r_;
@@ -166,6 +164,17 @@ struct FillCplx
     operator()(const ITDense<Real>& d) const;
     NewData
     operator()(ITDense<Complex>& d) const;
+    NewData
+    operator()(const ITScalar<Real>& d) const
+        {
+        return NewData(new ITScalar<Complex>(z_));
+        }
+    NewData
+    operator()(ITScalar<Complex>& d) const
+        {
+        d.x_ = z_;
+        return NewData();
+        }
 
     private:
     Complex z_;
@@ -182,10 +191,29 @@ struct GenerateIT
     NewData
     operator()(ITDense<T>& d) const
         {
+        //TODO: implement for case when return type of f_ != T
         const auto end = d.t_.data()+d.t_.size();
         for(auto it = d.t_.data(); it != end; ++it)
             {
             *it = f_();
+            }
+        return NewData();
+        }
+
+    template <typename T>
+    NewData
+    operator()(ITScalar<T>& d) const
+        {
+        auto val = f_();
+        using ftype = decltype(val);
+        if(std::is_same<ftype,T>::value)
+            {
+            d.x_ = val;
+            }
+        else
+            {
+            auto nd = new ITScalar<ftype>(val);
+            return NewData(nd);
             }
         return NewData();
         }
@@ -203,23 +231,27 @@ struct GetElt
 
     explicit operator T() const { return elt_; }
 
+    template <typename V,
+              typename std::enable_if<std::is_convertible<V,T>::value>::type* = nullptr>
     NewData
-    operator()(const ITDense<T>& d)
+    operator()(const ITDense<V>& d)
         {
-        elt_ = d.t_(inds_);
+        elt_ = T(d.t_(inds_));
         return NewData();
         }
 
+    template <typename V,
+              typename std::enable_if<std::is_convertible<V,T>::value>::type* = nullptr>
     NewData
-    operator()(const ITScalar<T>& d)
+    operator()(const ITScalar<V>& d)
         {
-        elt_ = d.x_;
+        elt_ = T(d.x_);
         return NewData();
         }
 
-    template <typename DType>
+    template <class D>
     NewData
-    operator()(const DType& d)
+    operator()(const D& d)
         {
         throw ITError("ITensor does not have requested element type");
         return NewData();
@@ -240,6 +272,10 @@ struct MultComplex
     operator()(const ITDense<Real>& d) const;
     NewData
     operator()(ITDense<Complex>& d) const;
+    NewData
+    operator()(const ITScalar<Real>& d) const;
+    NewData
+    operator()(ITScalar<Complex>& d) const;
 
     private:
     Complex z_;
@@ -256,24 +292,57 @@ struct MultReal
     NewData
     operator()(ITDense<Complex>& d) const;
 
+    template <typename T>
+    NewData
+    operator()(ITScalar<T>& d) const
+        {
+        d.x_ *= r_;
+        return NewData();
+        }
+
     private:
     Real r_;
     };
 
 struct PlusEQ
     {
+    using perm = btas::varray<size_t>;
+
     PlusEQ(Real fac)
         :
+        fac_(fac)
+        { }
+
+    PlusEQ(const perm& P,
+           Real fac)
+        :
+        P_(P),
         fac_(fac)
         { }
 
     template <typename T>
     NewData
     operator()(ITDense<T>& a1,
-          const ITDense<T>& a2) const
+               const ITDense<T>& a2) const
         {
         //axpy computes a1.t_ += a2.t_ * fac
-        btas::axpy(fac_,a2.t_,a1.t_);
+        if(P_.empty())
+            {
+            btas::axpy(fac_,a2.t_,a1.t_);
+            }
+        else
+            {
+            //TODO: inefficient - have to copy permutation
+            //      of a2.t_ instead of using a TensorView
+            //      because axpy doesn't work for TensorViews
+            //      or for mixed Tensor/TensorView arguments
+            decltype(a2.t_) a2copy = permute(a2.t_,P_);
+            btas::axpy(fac_,a2copy,a1.t_);
+
+            //Would like to do:
+            //auto a2view = permute(a2.t_,P_);
+            //btas::axpy(fac_,a2view,a1.t_);
+            }
         return NewData();
         }
 
@@ -282,11 +351,32 @@ struct PlusEQ
     operator()(ITDense<T1>& a1,
           const ITDense<T2>& a2) const
         {
+        //TODO:
         Error("+= not implemented for tensors of different element types.");
         return NewData();
         }
+
+    template <typename T>
+    NewData
+    operator()(ITScalar<T>& a1,
+               const ITScalar<T>& a2) const
+        {
+        a1.x_ += fac_*a2.x_;
+        return NewData();
+        }
+
+    template <typename T1, typename T2>
+    NewData
+    operator()(ITScalar<T1>& a1,
+               const ITScalar<T2>& a2) const
+        {
+        auto res = a1.x_+fac_*a2.x_;
+        auto nd = new ITScalar<decltype(res)>(res);
+        return NewData(nd);
+        }
  
     private:
+    perm P_;
     const Real fac_;
     };
 
@@ -413,6 +503,14 @@ struct VisitIT
             {
             f_((*it)*scale_fac);
             }
+        return NewData();
+        }
+
+    template <typename T>
+    NewData
+    operator()(const ITScalar<T>& d) const
+        {
+        f_(d.x_*scale_fac);
         return NewData();
         }
 

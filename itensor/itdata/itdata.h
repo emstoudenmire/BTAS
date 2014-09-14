@@ -109,6 +109,33 @@ struct Func2Base
     NewData virtual
     operator()(const ITDense<Complex>& a1,const ITDense<Complex>& a2) const = 0;
 
+    NewData virtual
+    operator()(const ITScalar<Real>& a1,const ITScalar<Real>& a2) const = 0;
+    NewData virtual
+    operator()(const ITScalar<Real>& a1,const ITScalar<Complex>& a2) const = 0;
+    NewData virtual
+    operator()(const ITScalar<Complex>& a1,const ITScalar<Real>& a2) const = 0;
+    NewData virtual
+    operator()(const ITScalar<Complex>& a1,const ITScalar<Complex>& a2) const = 0;
+
+    NewData virtual
+    operator()(const ITDense<Real>& a1,const ITScalar<Real>& a2) const = 0;
+    NewData virtual
+    operator()(const ITDense<Real>& a1,const ITScalar<Complex>& a2) const = 0;
+    NewData virtual
+    operator()(const ITDense<Complex>& a1,const ITScalar<Real>& a2) const = 0;
+    NewData virtual
+    operator()(const ITDense<Complex>& a1,const ITScalar<Complex>& a2) const = 0;
+
+    NewData virtual
+    operator()(const ITScalar<Real>& a1,const ITDense<Real>& a2) const = 0;
+    NewData virtual
+    operator()(const ITScalar<Real>& a1,const ITDense<Complex>& a2) const = 0;
+    NewData virtual
+    operator()(const ITScalar<Complex>& a1,const ITDense<Real>& a2) const = 0;
+    NewData virtual
+    operator()(const ITScalar<Complex>& a1,const ITDense<Complex>& a2) const = 0;
+
     template <typename T1,typename T2>
     NewData
     operator()(const T1& t1, const T2& t2) const
@@ -124,25 +151,41 @@ struct Func2 : public Func2Base
     Func2(Derived&& d) : d_(d) { }
 
     NewData virtual
-    operator()(const ITDense<Real>& a1,const ITDense<Real>& a2) const final
-        {
-        return d_(a1,a2);
-        }
+    operator()(const ITDense<Real>& a1,const ITDense<Real>& a2) const final { return detail::call<NewData>(d_,a1,a2); }
     NewData virtual
-    operator()(const ITDense<Real>& a1,const ITDense<Complex>& a2) const final
-        {
-        return d_(a1,a2);
-        }
+    operator()(const ITDense<Real>& a1,const ITDense<Complex>& a2) const final { return detail::call<NewData>(d_,a1,a2); }
     NewData virtual
-    operator()(const ITDense<Complex>& a1,const ITDense<Real>& a2) const final
-        {
-        return d_(a1,a2);
-        }
+    operator()(const ITDense<Complex>& a1,const ITDense<Real>& a2) const final { return detail::call<NewData>(d_,a1,a2); }
     NewData virtual
-    operator()(const ITDense<Complex>& a1,const ITDense<Complex>& a2) const final
-        {
-        return d_(a1,a2);
-        }
+    operator()(const ITDense<Complex>& a1,const ITDense<Complex>& a2) const final { return detail::call<NewData>(d_,a1,a2); }
+
+    NewData virtual
+    operator()(const ITScalar<Real>& a1,const ITScalar<Real>& a2) const final { return detail::call<NewData>(d_,a1,a2); }
+    NewData virtual
+    operator()(const ITScalar<Real>& a1,const ITScalar<Complex>& a2) const final { return detail::call<NewData>(d_,a1,a2); }
+    NewData virtual
+    operator()(const ITScalar<Complex>& a1,const ITScalar<Real>& a2) const final { return detail::call<NewData>(d_,a1,a2); }
+    NewData virtual
+    operator()(const ITScalar<Complex>& a1,const ITScalar<Complex>& a2) const final { return detail::call<NewData>(d_,a1,a2); }
+
+    NewData virtual
+    operator()(const ITDense<Real>& a1,const ITScalar<Real>& a2) const final { return detail::call<NewData>(d_,a1,a2); }
+    NewData virtual
+    operator()(const ITDense<Real>& a1,const ITScalar<Complex>& a2) const final { return detail::call<NewData>(d_,a1,a2); }
+    NewData virtual
+    operator()(const ITDense<Complex>& a1,const ITScalar<Real>& a2) const final { return detail::call<NewData>(d_,a1,a2); }
+    NewData virtual
+    operator()(const ITDense<Complex>& a1,const ITScalar<Complex>& a2) const final { return detail::call<NewData>(d_,a1,a2); }
+
+    NewData virtual
+    operator()(const ITScalar<Real>& a1,const ITDense<Real>& a2) const final { return detail::call<NewData>(d_,a1,a2); }
+    NewData virtual
+    operator()(const ITScalar<Real>& a1,const ITDense<Complex>& a2) const final { return detail::call<NewData>(d_,a1,a2); }
+    NewData virtual
+    operator()(const ITScalar<Complex>& a1,const ITDense<Real>& a2) const final { return detail::call<NewData>(d_,a1,a2); }
+    NewData virtual
+    operator()(const ITScalar<Complex>& a1,const ITDense<Complex>& a2) const final { return detail::call<NewData>(d_,a1,a2); }
+
     private:
     Derived& d_;
     };
@@ -157,6 +200,33 @@ struct Func2ModBase
     operator()(ITDense<Complex>& a1,const ITDense<Real>& a2) const = 0;
     NewData virtual
     operator()(ITDense<Complex>& a1,const ITDense<Complex>& a2) const = 0;
+
+    NewData virtual
+    operator()(ITScalar<Real>& a1,const ITScalar<Real>& a2) const = 0;
+    NewData virtual
+    operator()(ITScalar<Real>& a1,const ITScalar<Complex>& a2) const = 0;
+    NewData virtual
+    operator()(ITScalar<Complex>& a1,const ITScalar<Real>& a2) const = 0;
+    NewData virtual
+    operator()(ITScalar<Complex>& a1,const ITScalar<Complex>& a2) const = 0;
+
+    NewData virtual
+    operator()(ITDense<Real>& a1,const ITScalar<Real>& a2) const = 0;
+    NewData virtual
+    operator()(ITDense<Real>& a1,const ITScalar<Complex>& a2) const = 0;
+    NewData virtual
+    operator()(ITDense<Complex>& a1,const ITScalar<Real>& a2) const = 0;
+    NewData virtual
+    operator()(ITDense<Complex>& a1,const ITScalar<Complex>& a2) const = 0;
+
+    NewData virtual
+    operator()(ITScalar<Real>& a1,const ITDense<Real>& a2) const = 0;
+    NewData virtual
+    operator()(ITScalar<Real>& a1,const ITDense<Complex>& a2) const = 0;
+    NewData virtual
+    operator()(ITScalar<Complex>& a1,const ITDense<Real>& a2) const = 0;
+    NewData virtual
+    operator()(ITScalar<Complex>& a1,const ITDense<Complex>& a2) const = 0;
 
     template <typename T1,typename T2>
     NewData
@@ -173,13 +243,40 @@ struct Func2Mod : public Func2ModBase
     Func2Mod(Derived&& d) : d_(d) { }
 
     NewData virtual
-    operator()(ITDense<Real>& a1,const ITDense<Real>& a2) const final { return d_(a1,a2); }
+    operator()(ITDense<Real>& a1,const ITDense<Real>& a2) const final { return detail::call<NewData>(d_,a1,a2); }
     NewData virtual
-    operator()(ITDense<Real>& a1,const ITDense<Complex>& a2) const final { return d_(a1,a2); }
+    operator()(ITDense<Real>& a1,const ITDense<Complex>& a2) const final { return detail::call<NewData>(d_,a1,a2); }
     NewData virtual
-    operator()(ITDense<Complex>& a1,const ITDense<Real>& a2) const final { return d_(a1,a2); }
+    operator()(ITDense<Complex>& a1,const ITDense<Real>& a2) const final { return detail::call<NewData>(d_,a1,a2); }
     NewData virtual
-    operator()(ITDense<Complex>& a1,const ITDense<Complex>& a2) const final { return d_(a1,a2); }
+    operator()(ITDense<Complex>& a1,const ITDense<Complex>& a2) const final { return detail::call<NewData>(d_,a1,a2); }
+
+    NewData virtual
+    operator()(ITScalar<Real>& a1,const ITScalar<Real>& a2) const final { return detail::call<NewData>(d_,a1,a2); }
+    NewData virtual
+    operator()(ITScalar<Real>& a1,const ITScalar<Complex>& a2) const final { return detail::call<NewData>(d_,a1,a2); }
+    NewData virtual
+    operator()(ITScalar<Complex>& a1,const ITScalar<Real>& a2) const final { return detail::call<NewData>(d_,a1,a2); }
+    NewData virtual
+    operator()(ITScalar<Complex>& a1,const ITScalar<Complex>& a2) const final { return detail::call<NewData>(d_,a1,a2); }
+
+    NewData virtual
+    operator()(ITDense<Real>& a1,const ITScalar<Real>& a2) const final { return detail::call<NewData>(d_,a1,a2); }
+    NewData virtual
+    operator()(ITDense<Real>& a1,const ITScalar<Complex>& a2) const final { return detail::call<NewData>(d_,a1,a2); }
+    NewData virtual
+    operator()(ITDense<Complex>& a1,const ITScalar<Real>& a2) const final { return detail::call<NewData>(d_,a1,a2); }
+    NewData virtual
+    operator()(ITDense<Complex>& a1,const ITScalar<Complex>& a2) const final { return detail::call<NewData>(d_,a1,a2); }
+
+    NewData virtual
+    operator()(ITScalar<Real>& a1,const ITDense<Real>& a2) const final { return detail::call<NewData>(d_,a1,a2); }
+    NewData virtual
+    operator()(ITScalar<Real>& a1,const ITDense<Complex>& a2) const final { return detail::call<NewData>(d_,a1,a2); }
+    NewData virtual
+    operator()(ITScalar<Complex>& a1,const ITDense<Real>& a2) const final { return detail::call<NewData>(d_,a1,a2); }
+    NewData virtual
+    operator()(ITScalar<Complex>& a1,const ITDense<Complex>& a2) const final { return detail::call<NewData>(d_,a1,a2); }
 
     private:
     Derived& d_;
@@ -258,6 +355,22 @@ struct ITDispatch : public ITData
         auto C = [&f,&a2](const auto& a1) { return f(a1,a2); };
         return arg1.plugInto(ConstFunc1<decltype(C)>(C));
         }
+
+    //
+    // Think of external template function "apply" as replacing
+    // the Func1Base or ConstFunc1Base objects, and think of f,a1,a2
+    // as the arguments of apply with the detail that f is a FuncWrap
+    // instead of an ITData
+    //
+    // Test use of "apply" in the f(a1) case first [apply(f,a1)]
+    //
+    //NewData
+    //plugThird(const FuncWrap& f, const ITData& arg1) const final
+    //    {
+    //    const auto& a2 = *(static_cast<const Derived*>(this));
+    //    auto C = [&f,&a2](const auto& a1) { return apply(f,a1,a2); };
+    //    return arg1.plugSecond(f,ConstFunc1<decltype(C)>(C));
+    //    }
     };
 
 template<typename F>

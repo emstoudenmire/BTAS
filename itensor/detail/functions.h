@@ -133,7 +133,9 @@ template <typename Ret, class T, typename V1, typename V2>
 Ret
 call(T&& obj, V1&& v1, V2&& v2)
     {
-    return call_impl<Ret,T,V1,V2>(std::forward<decltype(obj)>(obj),v1,v2,0);
+    return call_impl<Ret,T,V1,V2>(std::forward<T>(obj),
+                                  std::forward<V1>(v1),
+                                  std::forward<V2>(v2),0);
     }
 
 

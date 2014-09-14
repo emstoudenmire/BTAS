@@ -36,12 +36,13 @@ TEST_CASE("ITensor")
           s1("s1",2,Site),
           s2("s2",2,Site);
 
-    auto T0 = ITensor();
-    //Calling random(inds...) returns a random ITensor(inds...)
-    auto T1 = random(l1);
-    auto T2 = random(l1,l2);
-    auto T3 = random(l1,l2,s1);
-    auto T4 = random(l1,l2,s1,s2);
+    auto Tn = ITensor();
+    auto T0 = ITensor(4.0);
+    //Calling randIT(inds...) returns a random ITensor(inds...)
+    auto T1 = randIT(l1);
+    auto T2 = randIT(l1,l2);
+    auto T3 = randIT(l1,l2,s1);
+    auto T4 = randIT(l1,l2,s1,s2);
 
     SECTION("Scalar Constructors and Element Access")
         {
@@ -67,8 +68,8 @@ TEST_CASE("ITensor")
     SECTION("Basic Accessors")
         {
         //Default constructed ITensor evaluates to false in boolean context
-        CHECK(!T0);
-        CHECK(T0.r() == 0);
+        CHECK(!Tn);
+        CHECK(Tn.r() == 0);
 
         //Non-default constructed ITensor evaluates to true in boolean context
         CHECK(T1);
@@ -112,6 +113,13 @@ TEST_CASE("ITensor")
                 { 
                 CHECK_CLOSE(x,z,Epsilon);
                 });
+
+        //Scalar ITensor
+        T0.fill(2.);
+        CHECK_CLOSE(T0.real(), 2., Epsilon);
+
+        T0.fill(2.+2._i);
+        CHECK_CLOSE(T0.cplx(), 2.+2._i, Epsilon);
         }
         
 
@@ -212,17 +220,59 @@ TEST_CASE("ITensor")
         {
         const auto fac1 = rng(),
                    fac2 = rng();
+        //
+        // Rank 2, same index order
+        //
         const auto Radd = fac1*T2 + fac2*T2;
         for(int i1 = 1; i1 <= l1.m(); ++i1)
         for(int i2 = 1; i2 <= l2.m(); ++i2)
             {
             CHECK_CLOSE( Radd.real(l1(i1),l2(i2)) , (fac1+fac2)*T2.real(l1(i1),l2(i2)) , Epsilon);
             }
+
+        //
+        // Rank 2, different index order
+        //
+        auto T2p = randIT(l2,l1);
+        const auto Radd2 = T2+T2p;
+        for(int i1 = 1; i1 <= l1.m(); ++i1)
+        for(int i2 = 1; i2 <= l2.m(); ++i2)
+            {
+            CHECK_CLOSE( Radd2.real(l1(i1),l2(i2)) , T2.real(l1(i1),l2(i2))+T2p.real(l1(i1),l2(i2)) , Epsilon);
+            }
+
+        //
+        // Rank 3, different index order
+        //
+        auto T3p = randIT(s1,l1,l2);
+        const auto Radd3 = fac1*T3+fac2*T3p;
+        for(int j1 = 1; j1 <= s1.m(); ++j1)
+        for(int i1 = 1; i1 <= l1.m(); ++i1)
+        for(int i2 = 1; i2 <= l2.m(); ++i2)
+            {
+            CHECK_CLOSE( Radd3.real(s1(j1),l1(i1),l2(i2)) , fac1*T3.real(s1(j1),l1(i1),l2(i2))+fac2*T3p.real(s1(j1),l1(i1),l2(i2)) , Epsilon);
+            }
+
+        //
+        // Scalar (rank 0)
+        //
+        ITensor T0a(1.);
+        T0a = randIT(T0a);
+        ITensor T0b(1.);
+        T0a = randIT(T0b);
+        auto Radd4 = fac1*T0a + fac2*T0b;
+        CHECK_CLOSE( Radd4.real() , fac1*T0a.real() + fac2*T0b.real() , Epsilon );
+
+        ITensor T0c(1.0+1.0_i);
+        auto Radd5 = fac1*T0a + fac2*T0c;
+        CHECK_CLOSE( Radd5.cplx() , fac1*T0a.cplx() + fac2*T0c.cplx() , Epsilon );
         }
 
     SECTION("Contract")
         {
-        const auto fac1 = rng();
+        const auto fac1 = rng(),
+                   fac2 = rng(),
+                   fac3 = rng();
         T3 *= fac1;
         //Automatically contracts over common indices l1, l2
         const auto R1 = T3 * T2;
@@ -240,7 +290,6 @@ TEST_CASE("ITensor")
             CHECK_CLOSE( val, R1.real(s1(j1)) , Epsilon);
             }
 
-        const auto fac2 = rng();
         //Automatically contracts over common index l1
         //(Index l2' of prime(T2,l2) does not match Index l2 of T3)
         const auto R2 = fac2 * T3 * prime(T2,l2);
@@ -261,6 +310,49 @@ TEST_CASE("ITensor")
             CHECK_CLOSE( val , R2.real(s1(j1),l2(i2),prime(l2)(i2p)) , Epsilon );
             }
 
+
+        //
+        // Contract scalar tensor with non-scalar
+        //
+        const auto R3 = fac2 * T3 * T0;
+        auto T0real = T0.real();
+        for(int j1 = 1; j1 <= s1.m(); ++j1)
+        for(int i1 = 1; i1 <= l1.m(); ++i1)
+        for(int i2 = 1; i2 <= l2.m(); ++i2)
+            {
+            CHECK_CLOSE( R3.real(l1(i1),l2(i2),s1(j1)), fac2*T3.real(l1(i1),l2(i2),s1(j1))*T0real , Epsilon );
+            }
+
+        T0.fill(1.+1._i);
+        const auto R4 = fac2 * T0 * T3;
+        auto T0cplx = T0.cplx();
+        for(int j1 = 1; j1 <= s1.m(); ++j1)
+        for(int i1 = 1; i1 <= l1.m(); ++i1)
+        for(int i2 = 1; i2 <= l2.m(); ++i2)
+            {
+            CHECK_CLOSE( R4.cplx(l1(i1),l2(i2),s1(j1)), fac2*T0cplx*T3.real(l1(i1),l2(i2),s1(j1)), Epsilon );
+            }
+
+        //
+        // Contract scalar ITensor with scalar ITensor
+        //
+        auto T0a(T0);
+        auto T0b(T0);
+
+        T0a.fill(fac1);
+        T0b.fill(fac2);
+        auto R5 = fac3*T0a*T0b;
+        CHECK_CLOSE(R5.real(), fac3*T0a.real()*T0b.real(), Epsilon);
+
+        T0a.fill(fac1*(1.+1._i));
+        T0b.fill(fac2);
+        auto R6 = fac3*T0a*T0b;
+        CHECK_CLOSE(R6.cplx(), fac3*T0a.cplx()*T0b.cplx(), Epsilon);
+
+        T0a.fill(fac1*(1.+1._i));
+        T0b.fill(fac2*(-2.+3._i));
+        auto R7 = fac3*T0a*T0b;
+        CHECK_CLOSE(R7.cplx(), fac3*T0a.cplx()*T0b.cplx(), Epsilon);
         }
 
     //SECTION("Elements")

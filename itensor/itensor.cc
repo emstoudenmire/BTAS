@@ -140,6 +140,26 @@ ITensor(IndexSet&& iset,
 //    }
 
 
+struct IsScalar
+    {
+    bool value = false;
+
+    template <typename T>
+    NewData
+    operator()(const ITScalar<T>& d)
+        {
+        value = true;
+        return NewData();
+        }
+
+    template <class T>
+    NewData
+    operator()(const T& d)
+        {
+        value = false;
+        return NewData();
+        }
+    };
 
 
 ITensor& ITensor::
@@ -151,17 +171,31 @@ operator*=(const ITensor& other)
     if(this == &other)
         return operator=( ITensor(sqr(norm(*this))) );
 
+    IsScalar st,so;
+    applyFunc(so,other.d_);
+    if(so.value)
+        {
+        operator*=(other.cplx());
+        return *this;
+        }
+
+    applyFunc(st,d_);
+    if(st.value)
+        {
+        auto z = this->cplx();
+        operator=(other);
+        operator*=(z);
+        return *this;
+        }
+
     btas::varray<bool> contL(size_t(is_.r()),false),
                        contR(size_t(other.is_.r()),false);
 
-    //TODO: replace Lind, Rind with static-allocated arrays
-    //TODO: redefine btas::contract to take pair of iterators
-    //      to annotations instead of containers
-    //      reimplement current version as just as wrapper
-    //TODO: make sure:
-    //         1. scalar * dense
-    //         2. scalar * scalar
-    //      cases are implemented
+    //Possible optimization:
+    // o replace Lind, Rind with static-allocated arrays
+    // o redefine btas::contract to take pair of iterators
+    //   to annotations instead of containers
+    // o reimplement current version as just as wrapper
 
     //Set Lind, Rind to zero. Special value 0 marks
     //uncontracted indices. Later will assign unique numbers
@@ -422,10 +456,9 @@ operator+=(const ITensor& other)
         }
     else // not same_ind_order
         {
-        //TODO
-        //Create version of PlusEQ that takes a permutation 
-        //in the constructor
-        Error("Can currently only add if same index order");
+        PlusEQ::perm P(is_.size());
+        detail::calc_permutation(is_,other.is_,P);
+        applyFunc(PlusEQ{P,scalefac},d_,other.d_);
         }
 
     return *this;
@@ -542,7 +575,7 @@ operator<<(ostream & s, const ITensor& t)
     }
 
 ITensor
-random(ITensor T, const OptSet& opts)
+randIT(ITensor T, const OptSet& opts)
     {
     //std::uniform_real_distribution<Real> dist(-1.,1.);
     T.generate(Global::random);
@@ -569,6 +602,23 @@ norm(const ITensor& T)
     return sqrt(N.nrm2);
     }
 
+//Possible optimization:
+// this will get called a lot,
+// optimize by requiring all ITData subtypes to
+// have a virtual method bool isComplex() ?
+ITensor
+conj(const ITensor& T)
+    {
+    if(isComplex(T))
+        {
+        auto Tc = T;
+        Tc.apply([](auto z) { return std::conj(z); });
+        return Tc;
+        }
+    return T;
+    }
+
+
 struct CheckComplex
     {
     bool isComplex;
@@ -578,6 +628,18 @@ struct CheckComplex
     operator()(const ITDense<Real>& d) { isComplex = false; return NewData(); }
     NewData
     operator()(const ITDense<Complex>& d) { isComplex = true; return NewData(); }
+    NewData
+    operator()(const ITScalar<Real>& d) { isComplex = false; return NewData(); }
+    NewData
+    operator()(const ITScalar<Complex>& d) { isComplex = true; return NewData(); }
+
+    template <class T>
+    NewData
+    operator()(const T& d)
+        {
+        Error("CheckComplex not implemented for data type.");
+        return NewData();
+        }
     };
 
 bool

@@ -51,6 +51,20 @@ operator()(ITDense<Complex>& d) const
     return NewData();
     }
 
+NewData MultComplex::
+operator()(const ITScalar<Real>& d) const
+    {
+    auto nd = new ITScalar<Complex>(z_*d.x_);
+    return NewData(nd);
+    }
+
+NewData MultComplex::
+operator()(ITScalar<Complex>& d) const
+    {
+    d.x_ *= z_;
+    return NewData();
+    }
+
 NewData MultReal::
 operator()(ITDense<Real>& d) const
     {

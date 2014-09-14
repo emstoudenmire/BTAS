@@ -81,6 +81,62 @@ contains(const Container& C,
     }
 
 
+template <typename Ret, class T, typename V>
+auto 
+call_impl(T&& obj, V&& v, int) -> decltype(obj(v))
+    {
+    return obj(v);
+    }
+template <typename Ret, class T, typename V>
+Ret
+call_impl(T&& obj, V&& v, long) 
+    {
+    throw std::runtime_error("Object does not support operator() for specified type.");
+    return Ret();
+    }
+//
+// The call(obj,v) function uses substitution-failure-is-not-an-error (sfinae)
+// to either "plug" v into obj's operator() method if it has one defined
+// or else to throw a runtime error if not.
+// Use call(obj,v) to convert the absence of a specific operator() method
+// to be a run-time error instead of a compile-time error.
+//
+template <typename Ret, class T, typename V>
+Ret
+call(T&& obj, V&& v)
+    {
+    return call_impl<Ret,T,V>(std::forward<decltype(obj)>(obj),v,0);
+    }
+
+
+template <typename Ret, class T, typename V1, typename V2>
+auto 
+call_impl(T&& obj, V1&& v1, V2&& v2, int) -> decltype(obj(v1,v2))
+    {
+    return obj(v1,v2);
+    }
+template <typename Ret, class T, typename V1, typename V2>
+Ret
+call_impl(T&& obj, V1&& v1, V2&& v2, long) 
+    {
+    throw std::runtime_error("Object does not support operator() for specified type.");
+    return Ret();
+    }
+//
+// The call(obj,v1,v2) function uses substitution-failure-is-not-an-error (sfinae)
+// to either "plug" v1,v2 into obj's operator() method if it has one defined
+// or else to throw a runtime error if not.
+// Use call(obj,v1,v2) to convert the absence of a specific operator() method
+// to be a run-time error instead of a compile-time error.
+//
+template <typename Ret, class T, typename V1, typename V2>
+Ret
+call(T&& obj, V1&& v1, V2&& v2)
+    {
+    return call_impl<Ret,T,V1,V2>(std::forward<decltype(obj)>(obj),v1,v2,0);
+    }
+
+
 
 }; //namespace detail
 }; //namespace itensor

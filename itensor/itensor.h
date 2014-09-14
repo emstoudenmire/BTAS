@@ -50,6 +50,10 @@ class ITensor
     explicit
     ITensor(Real val);
 
+    //Construct rank 0 ITensor (scalar), value set to val
+    explicit
+    ITensor(Complex val);
+
     //
     // Accessor Methods
     //
@@ -147,9 +151,6 @@ class ITensor
     // Element Transformation Methods
     //
 
-    //TODO: implement in terms of apply/generate?
-    //Or just remove, how often is this needed?
-    //Maybe keep for ITData interface?
     ITensor&
     fill(Real r);
 
@@ -403,9 +404,10 @@ template <typename... IndexVals>
 Real ITensor::
 real(const IndexVals&... ivs) const
     {
+#ifdef DEBUG
+    if(!*this) Error("ITensor is default constructed");
+#endif
     static constexpr auto size = sizeof...(ivs);
-    //TODO: implement scalar case
-    if(size == 0) throw ITError("scalar real case not yet supported");
     const std::array<IndexVal,size> vals = {{ static_cast<IndexVal>(ivs)...}};
     std::array<int,size> inds;
     detail::permute_map(is_,vals,inds,[](const IndexVal& iv) { return iv.i-1; });
@@ -431,9 +433,10 @@ template <typename... IndexVals>
 Complex ITensor::
 cplx(const IndexVals&... ivs) const
     {
+#ifdef DEBUG
+    if(!*this) Error("ITensor is default constructed");
+#endif
     static constexpr auto size = sizeof...(ivs);
-    //TODO: implement scalar case
-    if(size == 0) throw ITError("scalar complex case not yet supported");
     const std::array<IndexVal,size> vals = {{ static_cast<IndexVal>(ivs)...}};
     std::array<int,size> inds;
     detail::permute_map(is_,vals,inds,[](const IndexVal& iv) { return iv.i-1; });
@@ -460,8 +463,6 @@ void ITensor::
 set(Real val, const IndexVals&... ivs)
     {
     static constexpr auto size = sizeof...(ivs);
-    //TODO: implement scalar case
-    if(size == 0) throw ITError("scalar real case not yet supported");
     scaleTo(1.);
     const std::array<IndexVal,size> vals = {{ static_cast<IndexVal>(ivs)...}};
     std::array<int,size> inds;
@@ -474,8 +475,6 @@ void ITensor::
 set(Complex val, const IndexVals&... ivs)
     {
     static constexpr auto size = sizeof...(ivs);
-    //TODO: implement scalar case
-    if(size == 0) throw ITError("scalar complex case not yet supported");
     scaleTo(1.);
     const std::array<IndexVal,size> vals = {{ static_cast<IndexVal>(ivs)...}};
     std::array<int,size> inds;
@@ -588,7 +587,7 @@ tieIndex(const ITensor& T,
 
 //Compute the norm of an ITensor.
 //Thinking of elements as a vector, equivalent to sqrt(v*v).
-//Result is equivalent to sqrt(toReal(T*T)) 
+//Result is equivalent to sqrt((T*T).real()) 
 //[and similar for complex case] but computed much more efficiently.
 Real 
 norm(const ITensor& T);

@@ -41,13 +41,18 @@ ITensor(const Index& i1,const Index& i2)
     }
     
 
-
 ITensor::
 ITensor(Real val) 
+    :
+    d_(std::make_shared<ITScalar<Real>>(val))
     { 
-    //TODO implement this constructor
-    //ScalarITData class?
-    //fill(val);
+    }
+
+ITensor::
+ITensor(Complex val) 
+    :
+    d_(std::make_shared<ITScalar<Complex>>(val))
+    { 
     }
 
 ITensor::
@@ -153,6 +158,10 @@ operator*=(const ITensor& other)
     //TODO: redefine btas::contract to take pair of iterators
     //      to annotations instead of containers
     //      reimplement current version as just as wrapper
+    //TODO: make sure:
+    //         1. scalar * dense
+    //         2. scalar * scalar
+    //      cases are implemented
 
     //Set Lind, Rind to zero. Special value 0 marks
     //uncontracted indices. Later will assign unique numbers
@@ -540,62 +549,6 @@ random(ITensor T, const OptSet& opts)
     return T;
     }
 
-Real
-toReal(const ITensor& T)
-	{ 
-#ifdef DEBUG
-    if(!T) Error("ITensor is default constructed");
-#endif
-
-    if(T.inds().rn() != 0)
-        {
-        PrintVar(T.inds());
-        Error("ITensor not a scalar");
-        }
-
-    Error("Not implemented");
-
-    //TODO
-
-	//try {
-	//    return r_->v(1)*scale_.real(); 
-	//    }
-	//catch(const TooBigForReal& e)
-	//    {
-	//    cout << "too big for real() in toReal" << endl;
-	//    cerr << "too big for real() in toReal" << endl;
-	//    cout << "r_->v(1) is " << r_->v(1) << endl;
-	//    cout << "scale is " << scale() << endl;
-	//    cout << "rethrowing" << endl;
-	//    throw e;
-	//    }
-	//catch(TooSmallForReal)
-	//    {
-	//    //cout << "warning: too small for real() in toReal" << endl;
-	//    //cerr << "warning: too small for real() in toReal" << endl;
-	//    //cout << "r_->v(1) is " << r_->v(1) << endl;
-	//    //cout << "scale is " << scale() << endl;
-	//    return 0.;
-	//    }
-	return NAN; //shouldn't reach this line
-	}
-
-Complex
-toComplex(const ITensor& T)
-    {
-#ifdef DEBUG
-    if(!T) Error("ITensor is default constructed");
-#endif
-    if(T.inds().rn() != 0)
-        {
-        PrintVar(T.inds());
-        Error("ITensor not a scalar");
-        }
-
-    //TODO
-    Error("Not implemented");
-    return Complex(1,0);
-    }
 
 struct NormVisitor
     {

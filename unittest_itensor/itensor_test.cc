@@ -5,10 +5,12 @@
 using namespace itensor;
 using detail::contains;
 
+const static Real Epsilon = 1E-10;
+
 Real static
 rng()
     {
-    static std::mt19937 rng(std::time(NULL));
+    static auto rng = std::mt19937(std::time(NULL));
     static auto dist = std::uniform_real_distribution<Real>{0., 1.};
     return dist(rng);
     }
@@ -40,6 +42,27 @@ TEST_CASE("ITensor")
     auto T2 = random(l1,l2);
     auto T3 = random(l1,l2,s1);
     auto T4 = random(l1,l2,s1,s2);
+
+    SECTION("Scalar Constructors and Element Access")
+        {
+        Real r1 = 0.204;
+        ITensor Tr(r1);
+        auto x = Tr.real();
+        CHECK(fabs(r1-x) < Epsilon);
+        Real r2 = -8.43;
+        Tr.set(r2);
+        x = Tr.real();
+        CHECK(fabs(r2-x) < Epsilon);
+
+        Complex z1 = 4+3_i;
+        ITensor Tc(z1);
+        auto w = Tc.cplx();
+        CHECK(std::norm(w-z1) < Epsilon);
+        Complex z2 = 8-2_i;
+        Tc.set(z2);
+        w = Tc.cplx();
+        CHECK(std::norm(w-z2) < Epsilon);
+        }
 
     SECTION("Basic Accessors")
         {
@@ -75,7 +98,7 @@ TEST_CASE("ITensor")
         //.visit applies non-modifying function object / lambda to each element
         T1.visit([](auto x) 
                 { 
-                CHECK_CLOSE(x,1.,1E-10);
+                CHECK_CLOSE(x,1.,Epsilon);
                 });
 
         CHECK( !isComplex(T1) );
@@ -87,7 +110,7 @@ TEST_CASE("ITensor")
 
         T2.visit([z](auto x) 
                 { 
-                CHECK_CLOSE(x,z,1E-10);
+                CHECK_CLOSE(x,z,Epsilon);
                 });
         }
         
@@ -99,7 +122,7 @@ TEST_CASE("ITensor")
         T1 *= fac;
         T1.visit([fac](auto x) 
                 { 
-                CHECK_CLOSE(x,fac,1E-10);
+                CHECK_CLOSE(x,fac,Epsilon);
                 });
         }
 
@@ -110,7 +133,7 @@ TEST_CASE("ITensor")
         T1 *= Complex(1,1);
         T1.visit([fac](auto x) 
                 { 
-                CHECK_CLOSE(x,2*fac,1E-10);
+                CHECK_CLOSE(x,2*fac,Epsilon);
                 });
         }
 
@@ -122,21 +145,21 @@ TEST_CASE("ITensor")
         T2.apply([](auto x){ return x*x; }); 
         T2.visit([val2](auto x) 
                 { 
-                CHECK_CLOSE(x,val2,1E-10);
+                CHECK_CLOSE(x,val2,Epsilon);
                 });
 
         T2.fill(val);
         T2.apply(Square());
         T2.visit([val2](auto x) 
                 { 
-                CHECK_CLOSE(x,val2,1E-10);
+                CHECK_CLOSE(x,val2,Epsilon);
                 });
 
         //Can use visit to sum all elements, for example
         T2.fill(1.);
         Real total = 0;
         T2.visit([&total](auto x){ total += realPart(x); }); 
-        CHECK_CLOSE(total,T2.inds().dim(),1E-10);
+        CHECK_CLOSE(total,T2.inds().dim(),Epsilon);
         }
 
     SECTION("Element Accessors")
@@ -155,19 +178,19 @@ TEST_CASE("ITensor")
             }
         T2.visit([&total3](auto x) { total3 += realPart(x); } );
 
-        CHECK_CLOSE(total1,total3,1E-10);
-        CHECK_CLOSE(total2,total3,1E-10);
+        CHECK_CLOSE(total1,total3,Epsilon);
+        CHECK_CLOSE(total2,total3,Epsilon);
 
         //Check .set method with Real argument
         const auto val1 = rng();
         T2.set(val1,l2(2),l1(1));
-        CHECK_CLOSE(T2.real(l2(2),l1(1)), val1, 1E-10);
+        CHECK_CLOSE(T2.real(l2(2),l1(1)), val1, Epsilon);
 
         //Check .set method with Complex argument
         const auto val2 = Complex(rng(),rng());
         T2.set(val2,l2(2),l1(1));
         CHECK( isComplex(T2) );
-        CHECK_CLOSE(T2.cplx(l2(2),l1(1)), val2, 1E-10);
+        CHECK_CLOSE(T2.cplx(l2(2),l1(1)), val2, Epsilon);
         }
 
     SECTION("tieIndex")
@@ -193,7 +216,7 @@ TEST_CASE("ITensor")
         for(int i1 = 1; i1 <= l1.m(); ++i1)
         for(int i2 = 1; i2 <= l2.m(); ++i2)
             {
-            CHECK_CLOSE( Radd.real(l1(i1),l2(i2)) , (fac1+fac2)*T2.real(l1(i1),l2(i2)) , 1E-10);
+            CHECK_CLOSE( Radd.real(l1(i1),l2(i2)) , (fac1+fac2)*T2.real(l1(i1),l2(i2)) , Epsilon);
             }
         }
 
@@ -214,7 +237,7 @@ TEST_CASE("ITensor")
                 {
                 val += T3.real(l1(i1),l2(i2),s1(j1)) * T2.real(l1(i1),l2(i2));
                 }
-            CHECK_CLOSE( val, R1.real(s1(j1)) , 1E-10);
+            CHECK_CLOSE( val, R1.real(s1(j1)) , Epsilon);
             }
 
         const auto fac2 = rng();
@@ -235,7 +258,7 @@ TEST_CASE("ITensor")
                 {
                 val += fac2 * T3.real(l1(i1),l2(i2),s1(j1)) * T2.real(l1(i1),l2(i2p));
                 }
-            CHECK_CLOSE( val , R2.real(s1(j1),l2(i2),prime(l2)(i2p)) , 1E-10 );
+            CHECK_CLOSE( val , R2.real(s1(j1),l2(i2),prime(l2)(i2p)) , Epsilon );
             }
 
         }

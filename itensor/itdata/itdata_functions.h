@@ -7,6 +7,7 @@
 #include "itensor/global.h"
 #include "btas/tensor.h"
 #include "itensor/itdata/itdense.h"
+#include "itensor/itdata/itscalar.h"
 #include "btas/tensor_func.h"
 #include "btas/generic/contract.h"
 #include "btas/generic/axpy_impl.h"
@@ -32,6 +33,17 @@ struct ApplyIT
         return NewData();
         }
 
+    //TODO:
+    //Could unify this with ITDense by providing
+    //subset of Tensor interface, like data() pointer
+    template <typename T>
+    NewData
+    operator()(ITScalar<T>& d) const
+        {
+        d.x_ = f_(d.x_);
+        return NewData();
+        }
+
     private:
     F& f_;
     };
@@ -53,6 +65,13 @@ struct ApplyRange
         storage temp = 
             btas::make_view(f_(d.t_.range()),d.t_.storage());
         d.t_ = std::move(temp);
+        return NewData();
+        }
+
+    template <typename T>
+    NewData
+    operator()(ITScalar<T>& d) const
+        {
         return NewData();
         }
 
@@ -94,10 +113,27 @@ struct Contract
         //static const auto One = product_type(1.),
         //                  Zero = product_type(0.);
         auto res = new ITDense<product_type>();
+        //TODO:
         Error("Contract not implemented for tensors of different element types.");
         //btas::contract(One,a1.t_,Lind_,a2.t_,Rind_,Zero,res->t_,Pind_);
         return NewData(res);
         }
+
+    template <typename T>
+    NewData
+    operator()(const ITDense<T>&  a1,
+               const ITScalar<T>& a2) const
+        {
+        auto res = a1;
+        res *= a2.v_;
+        return NewData(res);
+        }
+
+    template <typename T>
+    NewData
+    operator()(const ITScalar<T>& a1,
+               const ITDense<T>& a2) const 
+        { return operator()(a2,a1); }
  
     private:
     const annotation& Lind_,
@@ -171,6 +207,13 @@ struct GetElt
     operator()(const ITDense<T>& d)
         {
         elt_ = d.t_(inds_);
+        return NewData();
+        }
+
+    NewData
+    operator()(const ITScalar<T>& d)
+        {
+        elt_ = d.x_;
         return NewData();
         }
 
@@ -262,6 +305,10 @@ struct PrintIT
     operator()(const ITDense<Real>& d) const;
     NewData
     operator()(const ITDense<Complex>& d) const;
+    NewData
+    operator()(const ITScalar<Real>& d) const;
+    NewData
+    operator()(const ITScalar<Complex>& d) const;
     };
 
 template<int size>
@@ -286,6 +333,20 @@ struct SetEltComplex
     operator()(ITDense<Complex>& d) const
         {
         d.t_(inds_) = elt_;
+        return NewData();
+        }
+
+    NewData
+    operator()(const ITScalar<Real>& d) const
+        {
+        auto nd = new ITScalar<Complex>(elt_);
+        return NewData(nd);
+        }
+
+    NewData
+    operator()(ITScalar<Complex>& d) const
+        {
+        d.x_ = elt_;
         return NewData();
         }
 
@@ -314,6 +375,20 @@ struct SetEltReal
     operator()(ITDense<Complex>& d) const
         {
         d.t_(inds_) = Complex(elt_,0);
+        return NewData();
+        }
+
+    NewData
+    operator()(ITScalar<Real>& d) const
+        {
+        d.x_ = elt_;
+        return NewData();
+        }
+
+    NewData
+    operator()(ITScalar<Complex>& d) const
+        {
+        d.x_ = Complex(elt_,0);
         return NewData();
         }
 

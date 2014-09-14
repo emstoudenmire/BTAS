@@ -23,7 +23,7 @@ SOURCES+= itensor.cc
 
 HEADERS=util/option.h print.h global.h real.h complex.h index.h error.h \
         indexset.h itdata/itdata.h itdata/itdense.h itdata/itdata_functions.h \
-        itensor.h 
+        itensor.h itdata/itscalar.h
         #qn.h iqindex.h iqtdat.h iqtensor.h \
         condenser.h combiner.h qcounter.h iqcombiner.h \
         spectrum.h svdalgs.h mps.h mpo.h core.h observer.h DMRGObserver.h \

@@ -1,6 +1,6 @@
 ### User Configurable Options
 
-CCCOM=clang++ -std=c++11
+CCCOM=clang++ -std=c++1y
 
 PREFIX=..
 ITENSOR_LIBDIR=$(PREFIX)/lib

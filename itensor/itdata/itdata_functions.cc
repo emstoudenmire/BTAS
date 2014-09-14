@@ -131,7 +131,7 @@ operator()(const ITDense<Complex>& d) const
             if(std::norm(val) > 1E-10)
                 {
                 const auto sgn = (val.imag() < 0 ? '-' : '+');
-                s_ << val.real() << sgn << fabs(val.imag()) << "i\n";
+                s_ << val.real() << sgn << fabs(val.imag()) << "_i\n";
                 }
             else
                 {
@@ -142,50 +142,42 @@ operator()(const ITDense<Complex>& d) const
     return NewData();
     }
 
-//void RealITData::
-//contractEqImpl(Ptr& newdat,
-//               const RealITData* other,
-//               const btas::varray<size_t>& Tind,
-//               const btas::varray<size_t>& Oind,
-//               const btas::varray<size_t>& Rind)
-//    {
-//    storage res;
-//    btas::contract(1.,t_,Tind,other->t_,Oind,0.,res,Rind);
-//    t_.swap(res);
-//    }
-//
-//void RealITData::
-//plusEqImpl(const RealITData* d, Ptr& newdat, Real fac)
-//    { 
-//    //axpy computes t_ += d->t_ * fac
-//    btas::axpy(fac,d->t_,t_);
-//    }
-//
-//
-//void RealITData::
-//generate(std::function<Real()> rfunc, Ptr& newdat)
-//    {
-//    t_.generate(rfunc);
-//    }
-//
-//void RealITData::
-//apply(detail::MapBase* m)
-//    {
-//    m->rmap(t_.data(),t_.data()+t_.size());
-//    }
-//
-//void RealITData::
-//visit(detail::VisitBase* v) const
-//    {
-//    v->rvisit(t_.data(),t_.data()+t_.size());
-//    }
-//
-//
-//ITData::Range RealITData::
-//range() const
-//    {
-//    return t_.range();
-//    }
-//
+NewData PrintIT::
+operator()(const ITScalar<Real>& d) const
+    {
+    s_ << "}\n";
+    Real scalefac = 1.0;
+    if(!x_.isTooBigForReal()) scalefac = x_.real0();
+    else s_ << "  (omitting too large scale factor)\n";
+
+    auto val = d.x_*scalefac;
+    if(fabs(val) > 1E-10)
+        s_ << "  " << val << "\n";
+    else
+        s_ << format("  %.8E\n",val);
+    return NewData();
+    }
+
+NewData PrintIT::
+operator()(const ITScalar<Complex>& d) const
+    {
+    s_ << "}\n";
+    Real scalefac = 1.0;
+    if(!x_.isTooBigForReal()) scalefac = x_.real0();
+    else s_ << "  (omitting too large scale factor)\n";
+
+    auto val = d.x_*scalefac;
+    auto sgn = (val.imag() < 0 ? '-' : '+');
+    if(std::norm(val) > 1E-10)
+        {
+        s_ << "  " << val.real() << sgn << fabs(val.imag()) << "_i\n";
+        }
+    else
+        {
+        s_ << format("  %.8E%s%.8E_i\n",val.real(),sgn,fabs(val.imag()));
+        }
+    return NewData();
+    }
+
 
 }; //namespace itensor

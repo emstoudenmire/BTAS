@@ -41,6 +41,9 @@ test: $(OBJECTS)
 	$(CCCOM) $(CCFLAGS) $(OBJECTS) -o test $(LIBFLAGS)
 
 
+simpletest-g: mkdebugdir .debug_objs/simpletest.o
+	$(CCCOM) $(CCGFLAGS) .debug_objs/simpletest.o -o simpletest-g $(LIBGFLAGS)
+
 mkdebugdir:
 	mkdir -p .debug_objs
 

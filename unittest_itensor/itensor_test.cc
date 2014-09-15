@@ -294,9 +294,7 @@ TEST_CASE("ITensor")
         T3 *= fac1;
         //Automatically contracts over common indices l1, l2
         const auto R1 = T3 * T2;
-
         CHECK( hasIndex(R1,s1) );
-
         for(int j1 = 1; j1 <= s1.m(); ++j1)
             {
             Real val = 0;
@@ -370,7 +368,22 @@ TEST_CASE("ITensor")
         T0a.fill(fac1*(1.+1._i));
         T0b.fill(fac2*(-2.+3._i));
         auto R7 = fac3*T0a*T0b;
-        CHECK_CLOSE(R7.cplx(), fac3*T0a.cplx()*T0b.cplx(), Epsilon);
+
+        //
+        // Mixing real / complex (currently inefficient)
+        //
+        auto T2c = T2 * (1.+1._i);
+        const auto R8 = T3 * T2c;
+        for(int j1 = 1; j1 <= s1.m(); ++j1)
+            {
+            Complex val = 0;
+            for(int i1 = 1; i1 <= l1.m(); ++i1)
+            for(int i2 = 1; i2 <= l2.m(); ++i2)
+                {
+                val += T3.cplx(l1(i1),l2(i2),s1(j1)) * T2c.cplx(l1(i1),l2(i2));
+                }
+            CHECK_CLOSE( val, R8.cplx(s1(j1)) , Epsilon);
+            }
         }
 
     //SECTION("Elements")

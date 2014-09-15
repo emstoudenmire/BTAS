@@ -511,19 +511,20 @@ operator<<(std::ostream & s, const ITensor& T);
 
 ITensor inline
 operator*(ITensor A, const ITensor& B) { A *= B; return A; }
-
 ITensor inline
 operator*(ITensor T, Real fac) { T *= fac; return T; }
-
 ITensor inline
 operator*(Real fac, ITensor T) { T *= fac; return T; }
-
+ITensor inline
+operator*(ITensor T, Complex fac) { T *= fac; return T; }
+ITensor inline
+operator*(Complex fac, ITensor T) { T *= fac; return T; }
 ITensor inline
 operator/(ITensor T, Real fac) { T /= fac; return T; }
-
+ITensor inline
+operator/(ITensor T, Complex fac) { T /= fac; return T; }
 ITensor inline
 operator+(ITensor A, const ITensor& B) { A += B; return A; }
-
 ITensor inline
 operator-(ITensor A, const ITensor& B) { A -= B; return A; }
 
@@ -627,6 +628,8 @@ tieIndex(const ITensor& T,
 
     return ITensor(new_index,std::move(nd),T.scale());
     }
+
+//TODO: implement groupIndex (see combiner.h for needed interface)
 
 }; //namespace itensor
 

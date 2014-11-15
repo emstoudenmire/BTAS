@@ -22,6 +22,7 @@ class ITDense;
 
 template <typename T_>
 class ITScalar;
+
 struct Func1Base
     {
     NewData virtual
@@ -42,10 +43,10 @@ struct Func1Base
         }
     };
 
-template <typename Derived>
+template <typename Callable>
 struct Func1 : public Func1Base
     {
-    Func1(Derived& d) : d_(d) { }
+    Func1(Callable& d) : d_(d) { }
 
     NewData virtual
     operator()(ITDense<Real>& t) const { return detail::call<NewData>(d_,t); }
@@ -57,7 +58,7 @@ struct Func1 : public Func1Base
     operator()(ITScalar<Complex>& t) const { return detail::call<NewData>(d_,t); }
 
     private:
-    Derived& d_;
+    Callable& d_;
     };
 
 struct ConstFunc1Base
@@ -80,10 +81,10 @@ struct ConstFunc1Base
         }
     };
 
-template <typename Derived>
+template <typename Callable>
 struct ConstFunc1 : public ConstFunc1Base
     {
-    ConstFunc1(Derived& d) : d_(d) { }
+    ConstFunc1(Callable& d) : d_(d) { }
 
     NewData virtual
     operator()(const ITDense<Real>& t) const { return detail::call<NewData>(d_,t); }
@@ -95,7 +96,7 @@ struct ConstFunc1 : public ConstFunc1Base
     operator()(const ITScalar<Complex>& t) const { return detail::call<NewData>(d_,t); }
 
     private:
-    Derived& d_;
+    Callable& d_;
     };
 
 struct Func2Base
@@ -145,10 +146,10 @@ struct Func2Base
         }
     };
 
-template <typename Derived>
+template <typename Callable>
 struct Func2 : public Func2Base
     {
-    Func2(Derived&& d) : d_(d) { }
+    Func2(Callable&& d) : d_(d) { }
 
     NewData virtual
     operator()(const ITDense<Real>& a1,const ITDense<Real>& a2) const final { return detail::call<NewData>(d_,a1,a2); }
@@ -187,7 +188,7 @@ struct Func2 : public Func2Base
     operator()(const ITScalar<Complex>& a1,const ITDense<Complex>& a2) const final { return detail::call<NewData>(d_,a1,a2); }
 
     private:
-    Derived& d_;
+    Callable& d_;
     };
 
 struct Func2ModBase
@@ -237,10 +238,10 @@ struct Func2ModBase
         }
     };
 
-template <typename Derived>
+template <typename Callable>
 struct Func2Mod : public Func2ModBase
     {
-    Func2Mod(Derived&& d) : d_(d) { }
+    Func2Mod(Callable&& d) : d_(d) { }
 
     NewData virtual
     operator()(ITDense<Real>& a1,const ITDense<Real>& a2) const final { return detail::call<NewData>(d_,a1,a2); }
@@ -279,7 +280,7 @@ struct Func2Mod : public Func2ModBase
     operator()(ITScalar<Complex>& a1,const ITDense<Complex>& a2) const final { return detail::call<NewData>(d_,a1,a2); }
 
     private:
-    Derived& d_;
+    Callable& d_;
     };
 
 class ITData
@@ -337,7 +338,8 @@ struct ITDispatch : public ITData
     NewData
     plugInto(const Func1Base& f) final
         {
-        return f(*(static_cast<Derived*>(this)));
+        auto& dt = *(static_cast<Derived*>(this));
+        return f(dt);
         }
 
     NewData

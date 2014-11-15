@@ -1,7 +1,8 @@
 CCCOM=clang++ -std=c++1y
 OPTIMIZATIONS= -O2
 DEBUGFLAGS=-DDEBUG -DMATRIXBOUNDS -DITENSOR_USE_AT -DBOUNDS -g -O0 -Wall -Wno-long-long
-INCLUDEFLAGS=-I..
+BOOST_DIR=/usr/local/include
+INCLUDEFLAGS=-I.. -I$(BOOST_DIR)
 
 #Define source files ----------
 

@@ -6,6 +6,8 @@
 #include ../this_dir.mk
 include ../options.mk
 
+BOOST_DIR=/usr/local/include
+
 ####################################
 
 SOURCES=util/option.cc 
@@ -39,8 +41,8 @@ HEADERS=util/option.h print.h global.h real.h complex.h index.h error.h \
 
 ####################################
 
-CCFLAGS=-I.. $(ITENSOR_INCLUDEFLAGS) $(OPTIMIZATIONS) -Wno-tautological-compare
-CCGFLAGS=-I.. $(ITENSOR_INCLUDEFLAGS) $(DEBUGFLAGS) -Wno-tautological-compare
+CCFLAGS=-I.. $(ITENSOR_INCLUDEFLAGS) $(OPTIMIZATIONS) -Wno-tautological-compare -I$(BOOST_DIR)
+CCGFLAGS=-I.. $(ITENSOR_INCLUDEFLAGS) $(DEBUGFLAGS) -Wno-tautological-compare -I$(BOOST_DIR)
 
 OBJECTS= $(patsubst %.cc,%.o, $(SOURCES))
 GOBJECTS= $(patsubst %.cc,.debug_objs/%.o, $(SOURCES))

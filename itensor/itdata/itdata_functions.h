@@ -240,9 +240,14 @@ struct GenerateIT
     };
 
 template<typename T, int size>
-struct GetElt
+class GetElt
     {
-    GetElt(const std::array<int,size>& inds)
+    using Inds = std::array<int,size>;
+    T elt_;
+    const Inds& inds_;
+    public:
+
+    GetElt(const Inds& inds)
         : inds_(inds)
         { }
 
@@ -250,33 +255,28 @@ struct GetElt
 
     template <typename V,
               typename std::enable_if<std::is_convertible<V,T>::value>::type* = nullptr>
-    NewData
+    void
     operator()(const ITDense<V>& d)
         {
         elt_ = T(d.t_(inds_));
-        return NewData();
         }
 
     template <typename V,
               typename std::enable_if<std::is_convertible<V,T>::value>::type* = nullptr>
-    NewData
+    void
     operator()(const ITScalar<V>& d)
         {
         elt_ = T(d.x_);
-        return NewData();
         }
 
     template <class D>
-    NewData
+    void
     operator()(const D& d)
         {
         throw ITError("ITensor does not have requested element type");
-        return NewData();
         }
 
     private:
-    T elt_;
-    const std::array<int,size>& inds_;
     };
 
 struct MultComplex
@@ -418,13 +418,13 @@ struct PrintIT
         : s_(s), x_(x)
         { }
 
-    NewData
+    void
     operator()(const ITDense<Real>& d) const;
-    NewData
+    void
     operator()(const ITDense<Complex>& d) const;
-    NewData
+    void
     operator()(const ITScalar<Real>& d) const;
-    NewData
+    void
     operator()(const ITScalar<Complex>& d) const;
     };
 

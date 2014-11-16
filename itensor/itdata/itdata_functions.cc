@@ -79,7 +79,7 @@ operator()(ITDense<Complex>& d) const
     return NewData();
     }
 
-NewData PrintIT::
+void PrintIT::
 operator()(const ITDense<Real>& d) const
     {
     s_ << "}\n";
@@ -91,7 +91,7 @@ operator()(const ITDense<Real>& d) const
 
     const auto rr = Tr.rank();
 
-    if(rr == 0) return NewData();
+    if(rr == 0) return;
 
     for(const auto I : Tr)
         {
@@ -112,10 +112,9 @@ operator()(const ITDense<Real>& d) const
                 s_ << format("%.8E\n",val);
             }
         }
-    return NewData();
     }
 
-NewData PrintIT::
+void PrintIT::
 operator()(const ITDense<Complex>& d) const 
     {
     s_ << "}\n";
@@ -127,7 +126,7 @@ operator()(const ITDense<Complex>& d) const
 
     const auto rr = Tr.rank();
 
-    if(rr == 0) return NewData();
+    if(rr == 0) return;
 
     for(const auto I : Tr)
         {
@@ -153,10 +152,9 @@ operator()(const ITDense<Complex>& d) const
                 }
             }
         }
-    return NewData();
     }
 
-NewData PrintIT::
+void PrintIT::
 operator()(const ITScalar<Real>& d) const
     {
     s_ << "}\n";
@@ -169,10 +167,9 @@ operator()(const ITScalar<Real>& d) const
         s_ << "  " << val << "\n";
     else
         s_ << format("  %.8E\n",val);
-    return NewData();
     }
 
-NewData PrintIT::
+void PrintIT::
 operator()(const ITScalar<Complex>& d) const
     {
     s_ << "}\n";
@@ -190,7 +187,6 @@ operator()(const ITScalar<Complex>& d) const
         {
         s_ << format("  %.8E%s%.8E_i\n",val.real(),sgn,fabs(val.imag()));
         }
-    return NewData();
     }
 
 

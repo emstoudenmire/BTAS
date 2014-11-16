@@ -357,8 +357,7 @@ Elements(const ITensor& t,
     std::array<int,size> perm;
     detail::calc_permutation(t.inds(),inds,perm);
 
-    GetData<T_> g(&d_);
-    applyFunc(g,t.data());
+    applyFunc<GetData<T_>>(t.data(),{&d_});
 
     d_ = btas::permute(d_,perm);
 
@@ -411,8 +410,7 @@ cplx(const IndexVals&... ivs) const
     const std::array<IndexVal,size> vals = {{ static_cast<IndexVal>(ivs)...}};
     std::array<int,size> inds;
     detail::permute_map(is_,vals,inds,[](const IndexVal& iv) { return iv.i-1; });
-    GetElt<Complex,size> g(inds);
-    applyFunc(g,d_);
+    auto g = applyFunc<GetElt<Complex,size>>(d_,{inds});
 	try {
 	    return Complex(g)*scale_.real(); 
 	    }
@@ -452,7 +450,7 @@ set(Real val, const IndexVals&... ivs)
     const std::array<IndexVal,size> vals = {{ static_cast<IndexVal>(ivs)...}};
     std::array<int,size> inds;
     detail::permute_map(is_,vals,inds,[](const IndexVal& iv) { return iv.i-1; });
-    applyFunc(SetEltReal<size>(val,inds),d_);
+    applyFunc<SetEltReal<size>>(d_,{val,inds});
     }
 
 template <typename... IndexVals>
@@ -464,7 +462,7 @@ set(Complex val, const IndexVals&... ivs)
     const std::array<IndexVal,size> vals = {{ static_cast<IndexVal>(ivs)...}};
     std::array<int,size> inds;
     detail::permute_map(is_,vals,inds,[](const IndexVal& iv) { return iv.i-1; });
-    applyFunc(SetEltComplex<size>(val,inds),d_);
+    applyFunc<SetEltComplex<size>>(d_,{val,inds});
     }
 
 //template <typename T, typename... inds>
@@ -484,7 +482,7 @@ generate(Func&& f)
     {
     solo();
     scaleTo(1);
-    applyFunc(GenerateIT<decltype(f)>(std::forward<Func>(f)),d_);
+    applyFunc<GenerateIT<decltype(f)>>(d_,{std::forward<Func>(f)});
     return *this;
     }
 
@@ -494,7 +492,7 @@ apply(Func&& f)
     {
     solo();
     scaleTo(1);
-    applyFunc(ApplyIT<decltype(f)>(std::forward<Func>(f)),d_);
+    applyFunc<ApplyIT<decltype(f)>>(d_,{std::forward<Func>(f)});
     return *this;
     }
 
@@ -502,7 +500,7 @@ template <typename Func>
 const ITensor& ITensor::
 visit(Func&& f) const
     {
-    applyFunc(VisitIT<decltype(f)>(std::forward<Func>(f),scale()),d_);
+    applyFunc<VisitIT<decltype(f)>>(d_,{std::forward<Func>(f),scale()});
     return *this;
     }
 
@@ -624,7 +622,7 @@ tieIndex(const ITensor& T,
 
     auto nd = T.data().clone();
     const auto f = [&I](const btas::Range& r) { return tieIndex(r,I); };
-    applyFunc(ApplyRange<decltype(f)>(f),nd);
+    applyFunc<ApplyRange<decltype(f)>>(nd,{f});
 
     return ITensor(new_index,std::move(nd),T.scale());
     }

@@ -140,9 +140,12 @@ ITensor(IndexSet&& iset,
 //    }
 
 
-struct IsScalar
+class IsScalar
     {
     bool value = false;
+    public:
+
+    explicit operator bool() const { return value; }
 
     template <typename T>
     NewData
@@ -171,16 +174,13 @@ operator*=(const ITensor& other)
     if(this == &other)
         return operator=( ITensor(sqr(norm(*this))) );
 
-    IsScalar st,so;
-    applyFunc(so,other.d_);
-    if(so.value)
+    if(applyFunc<IsScalar>(other.d_))
         {
         operator*=(other.cplx());
         return *this;
         }
 
-    applyFunc(st,d_);
-    if(st.value)
+    if(applyFunc<IsScalar>(this->d_))
         {
         auto z = this->cplx();
         operator=(other);
@@ -305,7 +305,7 @@ operator*=(const ITensor& other)
     //cout << "}" << endl;
     //exit(0);
 
-    applyFunc(Contract{Lind,Rind,Pind},d_,other.d_);
+    applyFunc<Contract>(d_,other.d_,{Lind,Rind,Pind});
 
     IndexSet new_index(std::move(newind),nuniq);
 
@@ -342,7 +342,7 @@ operator*=(Complex z)
     {
     if(z.imag() == 0) return operator*=(z.real());
     solo();
-    applyFunc(MultComplex{z},d_);
+    applyFunc<MultComplex>(d_,{z});
     return *this;
     }
 
@@ -452,13 +452,13 @@ operator+=(const ITensor& other)
 
     if(same_ind_order) 
         { 
-        applyFunc(PlusEQ{scalefac},d_,other.d_);
+        applyFunc<PlusEQ>(d_,other.d_,{scalefac});
         }
     else // not same_ind_order
         {
         PlusEQ::perm P(is_.size());
         detail::calc_permutation(is_,other.is_,P);
-        applyFunc(PlusEQ{P,scalefac},d_,other.d_);
+        applyFunc<PlusEQ>(d_,other.d_,{P,scalefac});
         }
 
     return *this;
@@ -485,7 +485,7 @@ fill(Real r)
     if(!(*this)) return *this;
     solo();
     scale_.reset();
-    applyFunc(FillReal(r),d_);
+    applyFunc<FillReal>(d_,{r});
     return *this;
     }
 
@@ -495,7 +495,7 @@ fill(Complex z)
     if(!(*this)) return *this;
     solo();
     scale_.reset();
-    applyFunc(FillCplx(z),d_);
+    applyFunc<FillCplx>(d_,{z});
     return *this;
     }
 
@@ -506,7 +506,7 @@ scaleTo(const LogNumber& newscale)
     if(newscale.sign() == 0) Error("Trying to scale an ITensor to a 0 scale");
     solo();
     scale_ /= newscale;
-    applyFunc(MultReal(scale_.real0()),d_);
+    applyFunc<MultReal>(d_,{scale_.real0()});
     scale_ = newscale;
     }
 
@@ -568,7 +568,7 @@ operator<<(ostream & s, const ITensor& t)
 
     if(ff_set || Global::printdat())
         {
-        if(t) applyFunc(PrintIT(s,t.scale()),t.data());
+        if(t) applyFunc<PrintIT>(t.data(),{s,t.scale()});
         else           s << " (default constructed)}\n";
         }
     return s;
@@ -619,35 +619,36 @@ conj(const ITensor& T)
     }
 
 
-struct CheckComplex
+class CheckComplex
     {
-    bool isComplex;
-    CheckComplex() : isComplex(false) { }
+    bool isComplex_;
+    public:
 
-    NewData
-    operator()(const ITDense<Real>& d) { isComplex = false; return NewData(); }
-    NewData
-    operator()(const ITDense<Complex>& d) { isComplex = true; return NewData(); }
-    NewData
-    operator()(const ITScalar<Real>& d) { isComplex = false; return NewData(); }
-    NewData
-    operator()(const ITScalar<Complex>& d) { isComplex = true; return NewData(); }
+    CheckComplex() : isComplex_(false) { }
+
+    operator bool() const { return isComplex_; }
+
+    void
+    operator()(const ITDense<Real>& d) { isComplex_ = false; }
+    void
+    operator()(const ITDense<Complex>& d) { isComplex_ = true; }
+    void
+    operator()(const ITScalar<Real>& d) { isComplex_ = false; }
+    void
+    operator()(const ITScalar<Complex>& d) { isComplex_ = true; }
 
     template <class T>
-    NewData
+    void
     operator()(const T& d)
         {
         Error("CheckComplex not implemented for data type.");
-        return NewData();
         }
     };
 
 bool
 isComplex(const ITensor& t)
     {
-    CheckComplex cc;
-    applyFunc(cc,t.data());
-    return cc.isComplex;
+    return applyFunc<CheckComplex>(t.data());
     }
 
 //LogNumber

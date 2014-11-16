@@ -386,10 +386,10 @@ TEST_CASE("ITensor")
             }
         }
 
-    //SECTION("Elements")
-    //    {
+    SECTION("Elements")
+        {
     //    PrintData(T2);
-    //    Elements<Real> eT2a(T2,l1,l2);
+        Elements<Real> eT2a(T2,l1,l2);
     //    PrintVar(eT2a);
     //    Elements<Real> eT2b(T2,l2,l1);
     //    PrintVar(eT2b);
@@ -399,6 +399,6 @@ TEST_CASE("ITensor")
     //    PrintVar(eT2a(1,3));
 
     //    CHECK( eT2a(1,2) == eT2b(2,1) );
-    //    }
+        }
 
     }

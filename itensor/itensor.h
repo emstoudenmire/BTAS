@@ -317,23 +317,24 @@ class Elements
     template <typename T>
     struct GetData
         {
-        using ptr_type = typename ITDense<T>::storage*;
+        using storage = typename ITDense<T>::storage;
+        using ptr_type = const storage*;
 
-        GetData(ptr_type p) : p_(p) { }
+        GetData() : p_(nullptr) { }
 
-        NewData
-        operator()(const ITDense<T>& d) const
+        operator storage const&() const { return *p_; }
+
+        void
+        operator()(const ITDense<T>& d)
             {
-            *p_ = d.t_;
-            return NewData();
+            p_ = &(d.t_);
             }
 
         template <typename OtherITData>
-        NewData
-        operator()(const OtherITData& d) const
+        void
+        operator()(const OtherITData& d)
             {
             throw ITError("ITensor data not of type ITDense<T>");
-            return NewData();
             }
 
         private:
@@ -357,8 +358,7 @@ Elements(const ITensor& t,
     std::array<int,size> perm;
     detail::calc_permutation(t.inds(),inds,perm);
 
-    applyFunc<GetData<T_>>(t.data(),{&d_});
-
+    d_ = applyFunc<GetData<T_>>(t.data());
     d_ = btas::permute(d_,perm);
 
     const T_ fac = t.scale().real0(); 

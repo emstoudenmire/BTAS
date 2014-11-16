@@ -142,25 +142,23 @@ ITensor(IndexSet&& iset,
 
 class IsScalar
     {
-    bool value = false;
+    bool value_ = false;
     public:
 
-    explicit operator bool() const { return value; }
+    explicit operator bool() const { return value_; }
 
     template <typename T>
-    NewData
+    void
     operator()(const ITScalar<T>& d)
         {
-        value = true;
-        return NewData();
+        value_ = true;
         }
 
     template <class T>
-    NewData
+    void
     operator()(const T& d)
         {
-        value = false;
-        return NewData();
+        value_ = false;
         }
     };
 
@@ -180,7 +178,8 @@ operator*=(const ITensor& other)
         return *this;
         }
 
-    if(applyFunc<IsScalar>(this->d_))
+    const auto& Thisd = this->d_;
+    if(applyFunc<IsScalar>(Thisd))
         {
         auto z = this->cplx();
         operator=(other);

@@ -108,6 +108,35 @@ call(T&& obj, V&& v)
     return call_impl<Ret,T,V>(std::forward<decltype(obj)>(obj),v,0);
     }
 
+/////////////////////////
+
+template <class T, typename V>
+void 
+call_impl(T&& obj, V&& v, int)
+    {
+    obj(v);
+    }
+template <class T, typename V>
+void
+call_impl(T&& obj, V&& v, long) 
+    {
+    throw std::runtime_error("Object does not support operator() for specified type.");
+    }
+//
+// The call(obj,v) function uses substitution-failure-is-not-an-error (sfinae)
+// to either "plug" v into obj's operator() method if it has one defined
+// or else to throw a runtime error if not.
+// Use call(obj,v) to convert the absence of a specific operator() method
+// to be a run-time error instead of a compile-time error.
+//
+template <class T, typename V>
+void
+call(T&& obj, V&& v)
+    {
+    call_impl<T,V>(std::forward<decltype(obj)>(obj),v,0);
+    }
+
+/////////////////////////
 
 template <typename Ret, class T, typename V1, typename V2>
 auto 
@@ -138,6 +167,35 @@ call(T&& obj, V1&& v1, V2&& v2)
                                   std::forward<V2>(v2),0);
     }
 
+/////////////////////////
+
+template <class T, typename V1, typename V2>
+void 
+call_impl(T&& obj, V1&& v1, V2&& v2, int)
+    {
+    obj(v1,v2);
+    }
+template <class T, typename V1, typename V2>
+void
+call_impl(T&& obj, V1&& v1, V2&& v2, long) 
+    {
+    throw std::runtime_error("Object does not support operator() for specified type.");
+    }
+//
+// The call(obj,v1,v2) function uses substitution-failure-is-not-an-error (sfinae)
+// to either "plug" v1,v2 into obj's operator() method if it has one defined
+// or else to throw a runtime error if not.
+// Use call(obj,v1,v2) to convert the absence of a specific operator() method
+// to be a run-time error instead of a compile-time error.
+//
+template <class T, typename V1, typename V2>
+void
+call(T&& obj, V1&& v1, V2&& v2)
+    {
+    call_impl<T,V1,V2>(std::forward<T>(obj),
+                       std::forward<V1>(v1),
+                       std::forward<V2>(v2),0);
+    }
 
 
 }; //namespace detail
